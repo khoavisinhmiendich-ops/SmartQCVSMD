@@ -9632,7 +9632,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
     const r=clone(raw||{});if(!r.id)r.id=typeof uid==='function'?uid('CLS'):'CLS-'+Date.now();if(!r.date)r.date=typeof todayISO==='function'?todayISO():new Date().toISOString().slice(0,10);if(!r.weekday)r.weekday=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][new Date().getDay()];
     ['doctor','staff','outsideHours','totalPatients','totalVSMD','immunologyTest','microbiologyTest','sampleFollowup','machineIssue'].forEach(k=>{if(r[k]===undefined||r[k]===null)r[k]='';});
     mergeRows('imm',r);mergeRows('mic',r);r.followups=Array.isArray(r.followups)?r.followups:[];r.emergencies=Array.isArray(r.emergencies)?r.emergencies:[];
-    while(r.followups.length<10)r.followups.push({patient:'',year:'',dept:'',diagnosis:'',test:''});while(r.emergencies.length<10)r.emergencies.push({patient:'',year:'',dept:'',diagnosis:'',test:''});
+    while(r.followups.length<10)r.followups.push({patient:'',year:'',dept:'',diagnosis:'',test:''});while(r.emergencies.length<15)r.emergencies.push({patient:'',year:'',dept:'',diagnosis:'',test:''});
     return r;
   }
   function saveCLSDraft(r){state.clsDraft=clone(r);if(typeof queueSave==='function')queueSave();}
