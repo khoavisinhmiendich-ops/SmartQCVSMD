@@ -971,7 +971,25 @@ function cloudWorkspaceId(){
   const built=(window.SMART_QC_CONFIG&&window.SMART_QC_CONFIG.supabase)||null;
   return localStorage.getItem(CLOUD_WORKSPACE_KEY)||built?.workspace||'smartqc-qyh-shared';
 }
-function cloudHash(obj){ try{return JSON.stringify(obj);}catch(e){return '';} }
+function cloudCanon(v){
+  if(Array.isArray(v)) return v.map(cloudCanon);
+  if(v && typeof v==='object'){ const o={}; Object.keys(v).sort().forEach(k=>{ o[k]=cloudCanon(v[k]); }); return o; }
+  return v;
+}
+/* Supabase (jsonb) trả payload với thứ tự khóa khác bản đã gửi -> hash phải chuẩn hóa thứ tự khóa,
+   nếu không bản lưu của chính máy này bị nhận nhầm là "cập nhật từ thiết bị khác". */
+function cloudHash(obj){ try{return JSON.stringify(cloudCanon(obj));}catch(e){return '';} }
+let cloudPersistSeq=0, lastLocalEditTs=0, pendingCloudRemote=null, pendingCloudTimer=null;
+['input','keydown','change','paste','compositionstart','compositionupdate'].forEach(ev=>{
+  try{ document.addEventListener(ev,()=>{ lastLocalEditTs=Date.now(); },true); }catch(e){}
+});
+function cloudUserIsBusy(){
+  const ae=document.activeElement;
+  const typing=!!(ae && ae!==document.body && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable));
+  const modalOpen=!!(document.getElementById('modalRoot') && document.getElementById('modalRoot').children.length);
+  const recentEdit=(Date.now()-lastLocalEditTs)<2500;
+  return typing || modalOpen || recentEdit || isSaving || saveQueuedWhileBusy;
+}
 function cloudStatusText(){
   if(!cloudConfig) return 'Chưa kết nối Supabase';
   if(cloudUser) return 'Đang đồng bộ Supabase';
@@ -1008,7 +1026,7 @@ async function cloudPersistState(){
   const hash=cloudHash(payload);
   const {error}=await supabaseClient.from('smartqc_shared_state').upsert({workspace_id:cloudWorkspaceId(),payload,updated_at:new Date().toISOString()},{onConflict:'workspace_id'});
   if(error) throw error;
-  lastCloudHash=hash;
+  lastCloudHash=hash; cloudPersistSeq++;
   return true;
 }
 async function subscribeCloudState(){
@@ -1019,30 +1037,45 @@ async function subscribeCloudState(){
       const remote=payload?.new?.payload;
       if(!remote || !state) return;
       const h=cloudHash(remote);
+      /* Bản dữ liệu của chính máy này (hoặc không có gì mới) -> bỏ qua, không vẽ lại, không báo. */
       if(h===lastCloudHash) return;
-      /* FIX Báo cáo trực CLS: không để realtime Supabase render lại phiếu đang nhập.
-         Trước khi nhận state cloud, chụp toàn bộ dữ liệu hiện có trên phiếu CLS (kể cả ô đang gõ).
-         Sau đó ghép lại draft cục bộ và không render lại view CLS trong lúc người dùng đang nhập. */
-      const clsView=document.getElementById('view-reports-cls');
-      const clsEditing=(typeof currentView!=='undefined' && currentView==='reports-cls' &&
-        clsView && clsView.classList.contains('active') &&
-        !!clsView.querySelector('input:focus,select:focus,textarea:focus'));
-      let localClsDraft=null;
-      if(clsEditing && typeof clsRead==='function'){
-        try{ localClsDraft=JSON.parse(JSON.stringify(clsRead())); }catch(e){}
-      }
-
-      state=remote;
-      if(localClsDraft) state.clsDraft=localClsDraft;
-      migrateState(); lastCloudHash=h;
-      await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
-
-      if(typeof currentView!=='undefined' && currentView){
-        renderNav();
-        if(!clsEditing) renderView(currentView);
-      }
-      if(!clsEditing) toast('pass','Đã đồng bộ dữ liệu','Dữ liệu QC vừa được cập nhật từ thiết bị khác.');
+      /* Đang nhập liệu / đang mở hộp thoại / còn dữ liệu chưa kịp lưu -> KHÔNG áp dụng và KHÔNG vẽ lại.
+         Giữ bản cập nhật để áp dụng sau khi nhập xong. */
+      if(cloudUserIsBusy()){ pendingCloudRemote={remote,h,seq:cloudPersistSeq}; scheduleCloudFlush(); return; }
+      await applyCloudRemote(remote,h,true);
     }).subscribe();
+}
+function scheduleCloudFlush(){
+  clearTimeout(pendingCloudTimer);
+  pendingCloudTimer=setTimeout(async ()=>{
+    const p=pendingCloudRemote; if(!p) return;
+    if(cloudUserIsBusy()){ scheduleCloudFlush(); return; }
+    pendingCloudRemote=null;
+    /* Nếu trong lúc chờ máy này đã ghi dữ liệu mới lên cloud thì bản chờ đã cũ -> bỏ, không ghi đè dữ liệu vừa nhập. */
+    if(p.seq!==cloudPersistSeq || p.h===lastCloudHash) return;
+    await applyCloudRemote(p.remote,p.h,true);
+  },1500);
+}
+document.addEventListener('focusout',()=>{ if(pendingCloudRemote) scheduleCloudFlush(); },true);
+async function applyCloudRemote(remote,h,notify){
+  /* Giữ lại nội dung phiếu CLS đang hiện trên màn hình (nếu có) để không mất dữ liệu đã gõ. */
+  let localClsDraft=null;
+  const clsView=document.getElementById('view-reports-cls');
+  if(typeof currentView!=='undefined' && currentView==='reports-cls' && clsView && clsView.classList.contains('active') && typeof clsRead==='function'){
+    try{ localClsDraft=JSON.parse(JSON.stringify(clsRead())); }catch(e){}
+  }
+  /* Ghi nhớ vị trí cuộn để vẽ lại xong không bị nhảy về đầu trang. */
+  const sx=window.scrollX, sy=window.scrollY;
+  state=remote;
+  if(localClsDraft) state.clsDraft=localClsDraft;
+  migrateState(); lastCloudHash=h;
+  await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
+  if(typeof currentView!=='undefined' && currentView){
+    renderNav();
+    renderView(currentView);
+    try{ window.scrollTo(sx,sy); }catch(e){}
+  }
+  if(notify) toast('pass','Đã đồng bộ dữ liệu','Dữ liệu QC vừa được cập nhật từ thiết bị khác.');
 }
 async function cloudSignIn(email,password){
   if(!supabaseClient) throw new Error('Chưa cấu hình Supabase');
@@ -8942,8 +8975,8 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
     const el=document.getElementById('view-reports-cls');if(!el)return;const r=normalizeCLS(state.clsDraft||{});state.clsDraft=clone(r);
     const card=`<div class="card"><div class="card-head"><div><h3>SỔ GHI CHÉP THƯỜNG TRỰC</h3><span class="hint">MS: 44/BV-01 · (Áp dụng cho các khoa cận lâm sàng)</span></div></div><div class="card-body">
       <div class="form-grid c3"><label class="field"><span class="fl-label">Thứ</span><select id="cls_weekday">${['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','Chủ nhật'].map(d=>`<option ${d===r.weekday?'selected':''}>${d}</option>`).join('')}</select></label><label class="field"><span class="fl-label">Ngày/tháng/năm</span><input id="cls_date" type="date" value="${esc(r.date)}"></label><label class="field"><span class="fl-label">Bác Sĩ</span><input id="cls_doctor" value="${esc(r.doctor)}"></label><label class="field"><span class="fl-label">XN</span><input value="Vi sinh - Miễn dịch" readonly></label><label class="field"><span class="fl-label">Người trực</span><select id="cls_staff"><option value="">— Chọn người trực —</option>${window.SMART_QC_STAFF_NAMES.map(n=>`<option value="${esc(n)}" ${n===r.staff?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label class="field"><span class="fl-label">Ngoài giờ</span><select id="cls_outsideHours"><option value="">— Không có / chọn người —</option>${window.SMART_QC_STAFF_NAMES.map(n=>`<option value="${esc(n)}" ${n===r.outsideHours?'selected':''}>${esc(n)}</option>`).join('')}</select></label><div class="cls-total-row"><label class="field"><span class="fl-label">Tổng bệnh nhân</span><input id="cls_totalPatients" type="number" value="${esc(r.totalPatients)}"></label><label class="field"><span class="fl-label">Tổng bệnh nhân VSMD</span><input id="cls_totalVSMD" type="number" value="${esc(r.totalVSMD)}"></label></div></div>
-      <section class="cls-sec"><div class="cls-final-heading"><b>1. Miễn dịch</b><label>Test <input id="cls_immunologyTest" type="number" min="0" value="${esc(r.immunologyTest)}"></label><button type="button" class="btn ghost sm" id="cls-add-imm">+ Thêm xét nghiệm</button></div><input class="cls-filter" id="cls-filter-imm" placeholder="Lọc xét nghiệm Miễn dịch"><div class="table-wrap"><table id="clsimm"><thead><tr><th>STT</th><th>TÊN XÉT NGHIỆM</th><th>SỐ CA</th><th>TIÊU BẢN</th></tr></thead><tbody>${renderTestRows(r.immunology,'imm')}</tbody></table></div>
-      <div class="cls-final-heading"><b>2. Vi sinh</b><label>Test <input id="cls_microbiologyTest" type="number" min="0" value="${esc(r.microbiologyTest)}"></label><button type="button" class="btn ghost sm" id="cls-add-mic">+ Thêm xét nghiệm</button></div><input class="cls-filter" id="cls-filter-mic" placeholder="Lọc xét nghiệm Vi sinh"><div class="table-wrap"><table id="clsmic"><thead><tr><th>STT</th><th>TÊN XÉT NGHIỆM</th><th>SỐ CA</th><th>TIÊU BẢN</th></tr></thead><tbody>${renderTestRows(r.microbiology,'mic')}</tbody></table></div></section>
+      <section class="cls-sec"><div class="cls-final-heading"><b>1. Miễn dịch</b><label>Test <input id="cls_immunologyTest" type="number" min="0" value="${esc(r.immunologyTest)}"></label><button type="button" class="btn ghost sm" id="cls-add-imm">+ Thêm xét nghiệm</button><button type="button" class="btn ghost sm" id="cls-pdf-imm">📄 Thêm từ PDF</button><input type="file" id="cls-pdf-imm-file" accept="application/pdf" style="display:none"></div><input class="cls-filter" id="cls-filter-imm" placeholder="Lọc xét nghiệm Miễn dịch"><div class="table-wrap"><table id="clsimm"><thead><tr><th>STT</th><th>TÊN XÉT NGHIỆM</th><th>SỐ CA</th><th>TIÊU BẢN</th></tr></thead><tbody>${renderTestRows(r.immunology,'imm')}</tbody></table></div>
+      <div class="cls-final-heading"><b>2. Vi sinh</b><label>Test <input id="cls_microbiologyTest" type="number" min="0" value="${esc(r.microbiologyTest)}"></label><button type="button" class="btn ghost sm" id="cls-add-mic">+ Thêm xét nghiệm</button><button type="button" class="btn ghost sm" id="cls-pdf-mic">📄 Thêm từ PDF</button><input type="file" id="cls-pdf-mic-file" accept="application/pdf" style="display:none"></div><input class="cls-filter" id="cls-filter-mic" placeholder="Lọc xét nghiệm Vi sinh"><div class="table-wrap"><table id="clsmic"><thead><tr><th>STT</th><th>TÊN XÉT NGHIỆM</th><th>SỐ CA</th><th>TIÊU BẢN</th></tr></thead><tbody>${renderTestRows(r.microbiology,'mic')}</tbody></table></div></section>
       <section class="cls-sec cls-sample-followup-section"><h4>II/ Mẫu lưu – hẹn KQ</h4><datalist id="cls_sampleTestOptions">${[...listFor('imm',r),...listFor('mic',r)].filter((n,i,a)=>a.indexOf(n)===i).map(n=>`<option value="${esc(n)}"></option>`).join('')}</datalist><div class="table-wrap"><table class="cls-sample-followup-table"><thead><tr><th>STT</th><th>TÊN XÉT NGHIỆM</th><th>SỐ MẪU</th><th>ID</th></tr></thead><tbody id="cls-sample-followup-rows">${r.sampleFollowupRows.map((x,i)=>`<tr data-sample-row><td>${i+1}</td><td><input data-sample-filter list="cls_sampleTestOptions" value="${esc(x.test)}" placeholder="Lọc/chọn xét nghiệm…" autocomplete="off"><input data-sample-field="test" type="hidden" value="${esc(x.test)}"></td><td><input data-sample-field="sampleNo" value="${esc(x.sampleNo)}" placeholder="Số mẫu"></td><td><input data-sample-field="id" value="${esc(x.id)}" placeholder="ID"></td></tr>`).join('')}</tbody></table></div><div class="btn-row" style="margin-top:8px"><button type="button" class="btn ghost sm" id="cls-add-sample-row">+ Thêm hàng</button></div></section>
       <section class="cls-sec"><h4>III/ Xét nghiệm theo dõi</h4><div class="table-wrap"><table><thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead><tbody>${renderCaseRows(r.followups,'fu')}</tbody></table></div></section>
       <section class="cls-sec"><h4>IV/ Xét nghiệm cấp cứu</h4><div class="table-wrap"><table><thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead><tbody>${renderCaseRows(r.emergencies,'em')}</tbody></table></div></section>
@@ -8994,6 +9027,9 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   .smart-admin-form{font-family:'Times New Roman',Times,serif;color:#111;background:#fff;font-size:11pt;line-height:1.3}.smart-admin-form{width:100%;box-sizing:border-box}.adm-head,.adm-meta,.adm-data,.adm-sign{width:100%;border-collapse:collapse;table-layout:fixed}.adm-head td{border:0;padding:0 0 7px;vertical-align:top}.adm-head-left{width:62%;text-align:center;font-size:11pt}.adm-head-right{width:38%;text-align:right;font-size:10pt}.smart-admin-form h1{text-align:center;font-size:15pt;margin:8px 0 3px;text-transform:uppercase}.smart-admin-form h2{font-size:12pt;margin:10px 0 5px}.adm-center{text-align:center;margin:0 0 9px}.adm-meta{margin:5px 0 10px}.adm-meta th,.adm-meta td{border:1px solid #222;padding:4px 6px;vertical-align:middle}.adm-meta th{width:18%;text-align:left;font-weight:700}.adm-meta td{text-align:left}.adm-data{margin:5px 0 10px}.adm-data th,.adm-data td{border:1px solid #222;padding:4px 5px;text-align:center;vertical-align:middle;word-break:break-word}.adm-data th{font-weight:700;background:#f2f2f2}.adm-data .left{text-align:left}.ext-data th:nth-child(1){width:5%}.ext-data th:nth-child(2){width:20%}.ext-data th:nth-child(3){width:9%}.ext-data th:nth-child(4){width:9%}.ext-data th:nth-child(5){width:12%}.ext-data th:nth-child(6){width:12%}.ext-data th:nth-child(7){width:12%}.ext-data th:nth-child(8){width:21%}.cls-data th:nth-child(1){width:8%}.cls-data th:nth-child(2){width:52%}.cls-data th:nth-child(3){width:20%}.cls-data th:nth-child(4){width:20%}.cls-case-data th:nth-child(1){width:6%}.cls-case-data th:nth-child(2){width:22%}.cls-case-data th:nth-child(3){width:10%}.cls-case-data th:nth-child(4){width:18%}.cls-case-data th:nth-child(5){width:24%}.cls-case-data th:nth-child(6){width:20%}.adm-section{margin-top:7px}.adm-note{border:1px solid #222;padding:6px;min-height:24px;white-space:pre-wrap}.adm-sign{margin-top:24px}.adm-sign th,.adm-sign td{border:0;text-align:center;padding:3px}.adm-sign th{font-weight:700}.adm-sign td{height:58px;vertical-align:top}.cls-sign-print{width:45%;margin-left:auto}.cls-total-print{float:right;font-weight:700;font-size:10.5pt}
   @page landscapeExt{size:A4 landscape;margin:10mm}@page portraitCls{size:A4 portrait;margin:12mm}@media print{body.smart-print-landscape #newPrintHost{display:block!important}.ext-admin-form{page:landscapeExt}.cls-admin-form{page:portraitCls}.smart-admin-form table{page-break-inside:auto}.smart-admin-form tr{page-break-inside:avoid;page-break-after:auto}.smart-admin-form thead{display:table-header-group}.smart-admin-form h1,.smart-admin-form h2{page-break-after:avoid}.adm-data{font-size:9.5pt}.ext-admin-form .adm-head{margin-bottom:2mm}.cls-admin-form{font-size:11pt}}
   `;document.head.appendChild(css);
+
+  window.normalizeCLS=normalizeCLS; window.listFor=listFor; window.IMM_STD=IMM_STD; window.MIC_STD=MIC_STD;
+  window.saveCLSDraft=saveCLSDraft; window.renderCLSFinal=renderCLSFinal;
 
   /* Re-render the active CLS screen after all previous patches have loaded. */
   setTimeout(()=>{try{if(typeof currentView!=='undefined'&&currentView==='reports-cls')renderCLSFinal();}catch(e){console.error('Final CLS render:',e);}},20);
@@ -12275,3 +12311,231 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 > tr:first-
 html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 thead{display:table-header-group!important}
 html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-inside:avoid!important;page-break-inside:avoid!important}
 </style>
+
+<script id="smart-qc-cls-pdf-automap-20260930">
+(function(){
+  'use strict';
+  if(window.__SMQ_CLS_PDF__) return; window.__SMQ_CLS_PDF__=true;
+
+  /* ============== Chuẩn hoá & khớp mờ (fuzzy match) tên xét nghiệm ============== */
+  const STOP=new Set(['xet','nghiem','test','chan','doan','huyet','thanh','dinh','tinh','luong',
+    'mau','soi','truc','tiep','nhuom','tim','ky','sinh','trung','trong','va','cua','cho','benh',
+    'pham','duong','duc','phuong','phap','thong','thuong','bang','total','eliza','ab','tu','dong',
+    'mien','dich','phuong','phap','va','hoac','chi','diem','ung','thu','tien','liet','tuyen']);
+  function noAccent(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d'); }
+  function norm(s){ return noAccent(s).toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim(); }
+  function toks(s){ return norm(s).split(' ').filter(t=>t && !STOP.has(t)); }
+  function baseName(name){ return String(name||'').replace(/\s*\((ĐT|ĐL|R|Test nhanh)\)\s*$/i,'').trim(); }
+  function bracketTag(line){
+    const m=String(line||'').match(/\[([^\]]+)\]\s*$/);
+    return m? norm(m[1]) : '';
+  }
+  function scoreOne(extractedToks,line,name){
+    const ct=toks(baseName(name));
+    if(!ct.length) return 0;
+    const set=new Set(extractedToks);
+    let hit=0; ct.forEach(t=>{ if(set.has(t)) hit++; });
+    let sc=hit/ct.length;
+    if(hit===0) return 0;
+    const txt=norm(line), tag=bracketTag(line);
+    const hasDT=/\(ĐT\)$/i.test(name), hasDL=/\(ĐL\)$/i.test(name), hasR=/\(R\)$/i.test(name), hasTN=/\(Test nhanh\)$/i.test(name);
+    if(tag){
+      if(hasDT && /dinh tinh/.test(tag)) sc+=0.5;
+      if(hasDL && /dinh luong/.test(tag)) sc+=0.5;
+    }else{
+      const dt=/dinh tinh/.test(txt), dl=/dinh luong/.test(txt);
+      if(hasDT && dt && !dl) sc+=0.3;
+      if(hasDL && dl && !dt) sc+=0.3;
+    }
+    if(hasR && /(mien dich tu dong|may mien dich|\bR\b)/i.test(txt)) sc+=0.3;
+    if(hasTN && /test nhanh/.test(txt)) sc+=0.3;
+    return sc;
+  }
+  /* Xếp hạng mọi tên trong danh mục gốc theo điểm khớp giảm dần cho 1 dòng trích xuất. */
+  function rankCandidates(line,canonList){
+    const et=toks(line);
+    return canonList.map(name=>({name,score:scoreOne(et,line,name)}))
+      .filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  }
+  const MIN_SCORE=0.34;
+
+  /* ============== Trích dòng dữ liệu "Số ca / Tiêu bản" từ PDF ============== */
+  let pdfjsReady=null;
+  function ensurePdfJs(){
+    if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if(pdfjsReady) return pdfjsReady;
+    pdfjsReady=new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+      s.onload=()=>{
+        try{
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+          resolve(window.pdfjsLib);
+        }catch(e){ reject(e); }
+      };
+      s.onerror=()=>reject(new Error('Không tải được thư viện đọc PDF (kiểm tra kết nối mạng).'));
+      document.head.appendChild(s);
+    });
+    return pdfjsReady;
+  }
+  async function pdfToLines(file){
+    const pdfjsLib=await ensurePdfJs();
+    const buf=await file.arrayBuffer();
+    const doc=await pdfjsLib.getDocument({data:buf}).promise;
+    const lines=[];
+    for(let p=1;p<=doc.numPages;p++){
+      const page=await doc.getPage(p);
+      const content=await page.getTextContent();
+      const buckets=new Map();
+      content.items.forEach(it=>{
+        const y=Math.round(it.transform[5]/2)*2;
+        if(!buckets.has(y)) buckets.set(y,[]);
+        buckets.get(y).push(it);
+      });
+      [...buckets.keys()].sort((a,b)=>b-a).forEach(y=>{
+        const items=buckets.get(y).sort((a,b)=>a.transform[4]-b.transform[4]);
+        const text=items.map(it=>it.str).join(' ').replace(/\s+/g,' ').trim();
+        if(text) lines.push(text);
+      });
+    }
+    return lines;
+  }
+  function linesToRows(lines){
+    const nl=l=>noAccent(l).toLowerCase();
+    let start=-1,end=lines.length;
+    for(let i=0;i<lines.length;i++){
+      if(start<0 && /so ca thuc hien/.test(nl(lines[i]))) start=i+1;
+      else if(start>=0 && /tong so/.test(nl(lines[i]))){ end=i; break; }
+    }
+    if(start<0) start=0;
+    const rows=[];
+    for(let i=start;i<end;i++){
+      const m=lines[i].trim().match(/^(\d{1,3})\s+(.+?)\s+(\d{1,6})\s+(\d{1,6})$/);
+      if(!m) continue;
+      rows.push({stt:m[1],raw:m[2].trim(),cases:m[3],specimen:m[4]});
+    }
+    return rows;
+  }
+
+  /* ============== Gán khớp kiểu "đấu giá": điểm cao chọn trước, trùng thì nhường ============== */
+  function autoAssign(rows,canonList){
+    const ranked=rows.map(r=>({row:r,cands:rankCandidates(r.raw,canonList)}));
+    ranked.sort((a,b)=>(b.cands[0]?.score||0)-(a.cands[0]?.score||0));
+    const taken=new Set();
+    ranked.forEach(item=>{
+      let pick=null;
+      for(const c of item.cands){
+        if(c.score<MIN_SCORE) break;
+        if(!taken.has(c.name)){ pick=c; break; }
+      }
+      if(pick){ taken.add(pick.name); item.match=pick.name; item.score=pick.score; }
+      else { item.match=''; item.score=0; }
+    });
+    return ranked;
+  }
+
+  /* ============== Giao diện xem trước & xác nhận ============== */
+  const esc2=v=>typeof escapeHtml==='function'?escapeHtml(v??''):String(v??'');
+  function openPdfMapModal(type,file,canonList,currentRows){
+    pdfToLines(file).then(lines=>{
+      const rows=linesToRows(lines);
+      if(!rows.length){
+        if(typeof toast==='function') toast('warning','Không đọc được dữ liệu','Không tìm thấy bảng "II. SỐ CA THỰC HIỆN" hợp lệ trong file PDF này.');
+        return;
+      }
+      const matched=autoAssign(rows,canonList);
+      const curMap=new Map((currentRows||[]).map(x=>[x.name,x]));
+      const nameWarn=(type==='imm' && !/\bmd\b/i.test(file.name)) || (type==='mic' && !/\bvs\b/i.test(file.name));
+      const optionsFor=(selectedName)=>canonList.map(n=>`<option value="${esc2(n)}" ${n===selectedName?'selected':''}>${esc2(n)}</option>`).join('');
+      const rowsHtml=matched.map((m,idx)=>{
+        const cur=m.match?curMap.get(m.match):null;
+        const curTxt=cur?`${esc2(cur.cases)||'—'} / ${esc2(cur.specimen)||'—'}`:'—';
+        return `<tr data-idx="${idx}">
+          <td style="text-align:center"><input type="checkbox" class="smqpdf-chk" ${m.match?'checked':''}></td>
+          <td style="max-width:260px">${esc2(m.row.raw)}</td>
+          <td><select class="smqpdf-sel" style="width:100%"><option value="">— Bỏ qua —</option>${optionsFor(m.match)}</select></td>
+          <td style="text-align:center;color:#64748b;font-size:11px">${curTxt}</td>
+          <td style="width:70px"><input type="number" class="smqpdf-cases" value="${esc2(m.row.cases)}" style="width:100%"></td>
+          <td style="width:70px"><input type="number" class="smqpdf-spec" value="${esc2(m.row.specimen)}" style="width:100%"></td>
+        </tr>`;
+      }).join('');
+      const html=`
+        <div style="max-height:62vh;overflow:auto">
+          ${nameWarn?`<div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:8px 10px;border-radius:8px;margin-bottom:10px;font-size:12.5px">⚠ Tên file "<b>${esc2(file.name)}</b>" không chứa "${type==='imm'?'md/MD':'vs/VS'}" như quy ước — vẫn đọc bình thường, bạn kiểm tra kỹ phần khớp bên dưới trước khi áp dụng.</div>`:''}
+          <div style="font-size:12.5px;color:#475569;margin-bottom:8px">Hệ thống đã tự khớp ${matched.filter(m=>m.match).length}/${matched.length} dòng. Hãy kiểm tra lại, bỏ chọn hoặc đổi mục khớp nếu cần rồi bấm "Áp dụng".</div>
+          <table style="width:100%;border-collapse:collapse" class="smqpdf-table">
+            <thead><tr style="background:#f1f5f9">
+              <th style="padding:6px"></th><th style="padding:6px;text-align:left">Trích xuất từ PDF</th>
+              <th style="padding:6px;text-align:left">Khớp với xét nghiệm</th><th style="padding:6px">Hiện có<br>(ca/tiêu bản)</th>
+              <th style="padding:6px">Số ca</th><th style="padding:6px">Tiêu bản</th>
+            </tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        <div class="btn-row" style="margin-top:14px;justify-content:flex-end;gap:8px">
+          <button type="button" class="btn ghost" id="smqpdf-cancel">Hủy</button>
+          <button type="button" class="btn primary" id="smqpdf-apply">Áp dụng vào ${type==='imm'?'Miễn dịch':'Vi sinh'}</button>
+        </div>`;
+      if(typeof showModal!=='function') return;
+      showModal(`Xem trước dữ liệu từ PDF · ${type==='imm'?'1/ Miễn dịch':'2/ Vi sinh'}`, html, 'wide');
+      document.querySelectorAll('.smqpdf-table tbody tr').forEach((tr,idx)=>{
+        tr.querySelector('.smqpdf-chk').addEventListener('change',e=>{
+          const on=e.target.checked;
+          tr.querySelectorAll('select,input').forEach(el=>{ if(el!==e.target) el.disabled=!on; });
+        });
+      });
+      document.getElementById('smqpdf-cancel').onclick=()=>closeModal();
+      document.getElementById('smqpdf-apply').onclick=()=>{
+        const r=normalizeCLS(state.clsDraft||{});
+        const key=type==='imm'?'immunology':'microbiology';
+        const map=new Map(r[key].map(x=>[x.name,x]));
+        document.querySelectorAll('.smqpdf-table tbody tr').forEach(tr=>{
+          const on=tr.querySelector('.smqpdf-chk').checked;
+          const name=tr.querySelector('.smqpdf-sel').value;
+          if(!on||!name) return;
+          const cases=tr.querySelector('.smqpdf-cases').value;
+          const spec=tr.querySelector('.smqpdf-spec').value;
+          const existing=map.get(name)||{name,cases:'',specimen:''};
+          existing.cases=cases; existing.specimen=spec;
+          map.set(name,existing);
+        });
+        r[key]=listFor(type,r).map(n=>map.get(n)||{name:n,cases:'',specimen:''});
+        state.clsDraft=r;
+        if(typeof queueSave==='function') queueSave();
+        closeModal();
+        if(typeof renderCLSFinal==='function') renderCLSFinal();
+        else if(typeof window.renderReportsCLS==='function') window.renderReportsCLS();
+        if(typeof toast==='function') toast('success','Đã áp dụng dữ liệu từ PDF','Vui lòng kiểm tra lại số liệu trước khi lưu phiếu.');
+      };
+    }).catch(err=>{
+      console.error(err);
+      if(typeof toast==='function') toast('danger','Lỗi đọc file PDF',err?.message||'');
+    });
+  }
+
+  function bindPdfButtons(){
+    const bind=(btnId,fileId,type)=>{
+      const btn=document.getElementById(btnId), inp=document.getElementById(fileId);
+      if(!btn||!inp||btn.dataset.smqBound) return;
+      btn.dataset.smqBound='1';
+      btn.addEventListener('click',()=>inp.click());
+      inp.addEventListener('change',()=>{
+        const f=inp.files&&inp.files[0]; inp.value='';
+        if(!f) return;
+        if(typeof IMM_STD==='undefined'||typeof MIC_STD==='undefined') return;
+        const r=normalizeCLS(state.clsDraft||{});
+        openPdfMapModal(type,f,type==='imm'?IMM_STD:MIC_STD,r[type==='imm'?'immunology':'microbiology']);
+      });
+    };
+    bind('cls-pdf-imm','cls-pdf-imm-file','imm');
+    bind('cls-pdf-mic','cls-pdf-mic-file','mic');
+  }
+  const prevRenderCLS2=window.renderReportsCLS;
+  window.renderReportsCLS=function(){
+    const out=typeof prevRenderCLS2==='function'?prevRenderCLS2.apply(this,arguments):undefined;
+    try{ bindPdfButtons(); }catch(e){ console.error('CLS PDF buttons:',e); }
+    return out;
+  };
+})();
+</script>
+
