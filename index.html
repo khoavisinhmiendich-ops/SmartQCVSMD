@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/icon-180.png">
 <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="512x512" href="./icons/icon-512.png">
-<title>SMART VSMD — Quản lý Khoa Vi sinh - Miễn dịch</title>
+<title>SMART VSMD — Quản lý chất lượng Khoa Vi sinh - Miễn dịch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
@@ -21,7 +21,7 @@
 <!-- JSZip dùng để tạo Word .docx thật, mở/chỉnh sửa trực tiếp trong Microsoft Word -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <!-- Supabase: đồng bộ dữ liệu lâu dài giữa máy tính và điện thoại. Chỉ dùng Publishable/Anon key + RLS, KHÔNG dùng service_role trên trình duyệt. -->
-<!-- SMART QC cloud config: Vercel build injects the public Supabase URL/key here.
+<!-- SMART VSMD cloud config: Vercel build injects the public Supabase URL/key here.
      This file must contain ONLY the publishable/anon key, never service_role/secret. -->
 <script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -516,7 +516,7 @@ table.lot-rapid-table th:nth-child(4),table.lot-rapid-table td:nth-child(4){widt
 .sidebar-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:35;}
 .sidebar-scrim.show{display:block;}
 
-/* ===== SMART QC 2026 FIX: chart, export and footer ===== */
+/* ===== SMART VSMD 2026 FIX: chart, export and footer ===== */
 .login-screen{position:relative;padding:24px;}
 .login-copyright{position:absolute;left:20px;right:20px;bottom:14px;text-align:center;font-size:10.8px;color:var(--text-faint);line-height:1.45;}
 .app-copyright{font-size:11px;color:var(--text-faint);text-align:center;padding:10px 18px 14px;border-top:1px solid var(--border);background:var(--surface);line-height:1.45;}
@@ -789,8 +789,8 @@ input, select, textarea, button, option, table, th, td, label, span, div, p, h1,
     <div class="login-logo">
       <div class="brand-mark" style="width:44px;height:44px;font-size:17px;">QC</div>
       <div>
-        <b style="display:block;font-size:17px;font-weight:700;">SMART QC</b>
-        <span style="font-size:11.5px;color:var(--text-muted);">Quản lý chất lượng nội kiểm Khoa Vi sinh - Miễn dịch</span>
+        <b style="display:block;font-size:17px;font-weight:700;">SMART VSMD</b>
+        <span style="font-size:11.5px;color:var(--text-muted);">Quản lý chất lượng Khoa Vi sinh - Miễn dịch</span>
       </div>
     </div>
 
@@ -799,7 +799,7 @@ input, select, textarea, button, option, table, th, td, label, span, div, p, h1,
       <div class="mono" id="passKeyClock" style="font-size:12.5px;color:var(--text-muted);text-align:center;padding:8px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px;"></div>
       <label class="field">
         <span class="fl-label">Pass Key</span>
-        <input id="appPassKey" type="password" autocomplete="off" inputmode="text" placeholder="Nhập Pass Key để mở SMART QC" onkeydown="if(event.key==='Enter')unlockApp()">
+        <input id="appPassKey" type="password" autocomplete="off" inputmode="text" placeholder="Nhập Pass Key để mở SMART VSMD" onkeydown="if(event.key==='Enter')unlockApp()">
       </label>
       <button class="btn primary" style="width:100%;justify-content:center;margin-top:6px;" onclick="unlockApp()">Mở ứng dụng</button>
       <div id="passKeyError" style="display:none;color:var(--danger);font-size:11.5px;text-align:center;margin-top:10px;"></div>
@@ -816,13 +816,13 @@ input, select, textarea, button, option, table, th, td, label, span, div, p, h1,
         <option value="NV. Nguyễn Gia Khang (CNXN)">NV. Nguyễn Gia Khang (CNXN)</option>
         <option value="NV. Nguyễn Hồng Lợi (CNXN)">NV. Nguyễn Hồng Lợi (CNXN)</option>
         <option value="NV. Bùi Thị Tiến Phước (CNXN)">NV. Bùi Thị Tiến Phước (CNXN)</option>
-        <option value="NV. Nguyễn Thị Kim Phượng (CNXN)">NV. Nguyễn Thị Kim Phượng (CNXN)</option>
         <option value="NV. Trần Thị Cẩm Ly (CNXN)">NV. Trần Thị Cẩm Ly (CNXN)</option>
         <option value="NV. Nguyễn Thị Ngọc Trâm (CNXN)">NV. Nguyễn Thị Ngọc Trâm (CNXN)</option>
-        <option value="NV. Lê Diệu Đan (CNXN)">NV. Lê Diệu Đan (CNXN)</option>
+        <option value="NV. Nguyễn Thị Kim Phượng (CNXN)">NV. Nguyễn Thị Kim Phượng (CNXN)</option>
         <option value="NV. Nguyễn Thị Tú (CNXN)">NV. Nguyễn Thị Tú (CNXN)</option>
-        <option value="NV. Nguyễn Thị Thùy Linh (CNXN)">NV. Nguyễn Thị Thùy Linh (CNXN)</option>
         <option value="NV. Nguyễn Thị Bích Phượng (CNXN)">NV. Nguyễn Thị Bích Phượng (CNXN)</option>
+        <option value="NV. Lê Diệu Đan (CNXN)">NV. Lê Diệu Đan (CNXN)</option>
+        <option value="NV. Nguyễn Thị Thùy Linh (CNXN)">NV. Nguyễn Thị Thùy Linh (CNXN)</option>
       </select>
     </label>
     <label class="field">
@@ -847,7 +847,7 @@ input, select, textarea, button, option, table, th, td, label, span, div, p, h1,
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="brand-mark">QC</div>
-      <div class="brand-text"><b>Bệnh viện TW Quy Hòa</b><span>QL Khoa Vi sinh - Miễn Dịch</span></div>
+      <div class="brand-text"><b>Bệnh viện TW Quy Hòa</b><span>Nội kiểm Khoa Vi sinh - Miễn Dịch</span></div>
       <button class="sidebar-toggle" onclick="toggleSidebarCollapse()" title="Thu nhỏ / mở rộng thanh bên" aria-label="Thu nhỏ / mở rộng thanh bên">
         <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></span>
       </button>
@@ -875,7 +875,7 @@ input, select, textarea, button, option, table, th, td, label, span, div, p, h1,
         <div class="view-sub" id="viewSub"></div>
       </div>
       <div class="header-spacer"></div>
-      <button class="icon-btn no-print" id="installAppBtn" onclick="installPWA()" title="Cài SMART QC lên điện thoại hoặc máy tính" aria-label="Cài ứng dụng" style="display:none;">
+      <button class="icon-btn no-print" id="installAppBtn" onclick="installPWA()" title="Cài SMART VSMD lên điện thoại hoặc máy tính" aria-label="Cài ứng dụng" style="display:none;">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14a2 2 0 002-2v-2M3 17v2a2 2 0 002 2"/></svg>
       </button>
       <div class="sys-status no-print" id="sysStatus"><span class="sdot"></span>Hệ thống hoạt động</div>
@@ -899,13 +899,13 @@ input, select, textarea, button, option, table, th, td, label, span, div, p, h1,
 
 <script>
 /* =====================================================================
-   SMART QC — APP LOGIC
+   SMART VSMD — APP LOGIC
    ===================================================================== */
 window.addEventListener('error',function(e){
-  console.error('[SMART QC] JavaScript error:',e.error||e.message||e);
+  console.error('[SMART VSMD] JavaScript error:',e.error||e.message||e);
 });
 window.addEventListener('unhandledrejection',function(e){
-  console.error('[SMART QC] Unhandled promise rejection:',e.reason||e);
+  console.error('[SMART VSMD] Unhandled promise rejection:',e.reason||e);
 });
 const STORAGE_KEY='smartqc_database_v1';
 /* Bản sao lưu dự phòng độc lập: không đổi khi cập nhật mã nguồn app. */
@@ -1127,7 +1127,7 @@ async function saveCloudSetupFromModal(){
 }
 function openCloudLogin(){
   closeModal();
-  showModal('Đăng nhập Supabase', `<label class="field"><span class="fl-label">Email</span><input id="cloudEmail" type="email" autocomplete="email"></label><label class="field"><span class="fl-label">Mật khẩu</span><input id="cloudPassword" type="password" autocomplete="current-password"></label><div class="btn-row" style="margin-top:14px;"><button class="btn primary" onclick="cloudLoginFromModal()">Đăng nhập & đồng bộ</button><button class="btn ghost" onclick="closeModal()">Huỷ</button></div><div style="font-size:11.5px;color:var(--text-faint);margin-top:10px;">Tài khoản này là tài khoản Supabase để xác thực đồng bộ; không thay đổi mục Người dùng/Người thực hiện của SMART QC.</div>`);
+  showModal('Đăng nhập Supabase', `<label class="field"><span class="fl-label">Email</span><input id="cloudEmail" type="email" autocomplete="email"></label><label class="field"><span class="fl-label">Mật khẩu</span><input id="cloudPassword" type="password" autocomplete="current-password"></label><div class="btn-row" style="margin-top:14px;"><button class="btn primary" onclick="cloudLoginFromModal()">Đăng nhập & đồng bộ</button><button class="btn ghost" onclick="closeModal()">Huỷ</button></div><div style="font-size:11.5px;color:var(--text-faint);margin-top:10px;">Tài khoản này là tài khoản Supabase để xác thực đồng bộ; không thay đổi mục Người dùng/Người thực hiện của SMART VSMD.</div>`);
 }
 async function cloudLoginFromModal(){
   try{ const email=document.getElementById('cloudEmail').value.trim(), password=document.getElementById('cloudPassword').value; if(!email||!password) throw new Error('Nhập email và mật khẩu'); await cloudSignIn(email,password); closeModal(); renderNav(); if(typeof currentView!=='undefined') renderView(currentView||'dashboard'); toast('pass','Đã kết nối Supabase','Dữ liệu sẽ tự động đồng bộ giữa các thiết bị cùng Workspace.'); }catch(e){ toast('danger','Đăng nhập Supabase thất bại',e.message||'Kiểm tra lại tài khoản hoặc mật khẩu.'); } }
@@ -1332,7 +1332,7 @@ function migrateState(){
     });
   };
   ensureCatalog(
-    ['HBsAg','HBsAb','HBeAg','Dengue Ag','Test Sốt xuất huyết','HEV IgM','HAV IgM','Helicobacter pylori Ab','TB IgM/IgG','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý','Heroin-Morphine-Opiates','Clamydia Trachomatis','Malaria P.f/P.v','Định lượng Pro-calcitonin [Máu]'],
+    ['HBsAg','HBsAb','HBeAg','Dengue Ag','Test Sốt Xuất Huyết','HEV IgM','HAV IgM','Helicobacter pylori Ab','TB IgM/IgG','Xét nghiệm sàng lọc và định tính 5 loại ma tuý','Heroin-Morphine-Opiates','Clamydia Trachomatis','Malaria P.f/P.v','Procalcitonin'],
     'Test nhanh','RT','Test nhanh'
   );
   ensureCatalog(['ASLO','RF','CRP','RPR','TPHA'],'Test nước','WT','Test nước');
@@ -1352,10 +1352,10 @@ function migrateState(){
     'NV. Bùi Thị Tiến Phước (CNXN)',
     'NV. Trần Thị Cẩm Ly (CNXN)',
     'NV. Nguyễn Thị Ngọc Trâm (CNXN)',
-    'NV. Lê Diệu Đan (CNXN)',
     'NV. Nguyễn Thị Kim Phượng (CNXN)',
     'NV. Nguyễn Thị Tú (CNXN)',
     'NV. Nguyễn Thị Bích Phượng (CNXN)',
+    'NV. Lê Diệu Đan (CNXN)',
     'NV. Nguyễn Thị Thùy Linh (CNXN)',
   ];
   if(!Array.isArray(state.settings.users) || state.settings.users.length===0){
@@ -1621,7 +1621,7 @@ function buildInitialCatalog(){
   s.rapidWaterTests = [
     ...[
       'HBsAg','HBsAb','HBeAg','Dengue Ag','Test Sốt Xuất Huyết','HEV IgM','HAV IgM',
-      'Helicobacter pylori Ab ','TB IgM/IgG','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý','Heroin-Morphine-Opiates',
+      'Helicobacter pylori Ab','TB IgM/IgG','Xét nghiệm sàng lọc và định tính 5 loại ma tuý','Heroin-Morphine-Opiates',
       'Clamydia Trachomatis','Malaria P.f/P.v','Procalcitonin'
     ].map(name=>({id:uid('RT'), name, category:'Test nhanh', code:name.replace(/[^A-Za-z0-9]/g,'').toUpperCase(), method:'Test nhanh', unit:'Kết quả'})),
     ...[
@@ -3389,7 +3389,7 @@ function renderSystem(){
         <div class="card-body settings-list">
           <div class="row"><div><div class="t">Lưu trữ tự động</div><div class="d">Mọi thao tác được lưu lại ngay; khi kết nối Supabase, dữ liệu tự đồng bộ lâu dài giữa máy tính và điện thoại</div></div><span class="pill pass"><span class="dot"></span>Đang bật</span></div>
           <div class="row"><div><div class="t">Đồng bộ Supabase</div><div class="d">${escapeHtml(cloudStatusText())}</div></div><button class="btn ghost sm" onclick="openCloudSetup()">Thiết lập</button></div>
-          <div class="row"><div><div class="t">Cài ứng dụng SMART QC</div><div class="d">Cài biểu tượng SMART QC lên màn hình chính điện thoại hoặc máy tính như một ứng dụng</div></div><button class="btn ghost sm" onclick="installPWA()">Cài ứng dụng</button></div>
+          <div class="row"><div><div class="t">Cài ứng dụng SMART VSMD</div><div class="d">Cài biểu tượng SMART VSMD lên màn hình chính điện thoại hoặc máy tính như một ứng dụng</div></div><button class="btn ghost sm" onclick="installPWA()">Cài ứng dụng</button></div>
           <div class="row"><div><div class="t">Tổng số bản ghi QC</div><div class="d">Toàn bộ lịch sử đã lưu</div></div><b class="mono">${state.results.length}</b></div>
           <div class="row"><div><div class="t">Khôi phục danh mục gốc</div><div class="d">Xoá toàn bộ QC/cảnh báo hiện tại và khôi phục danh mục máy/xét nghiệm ban đầu (theo hồ sơ máy)</div></div>
             <button class="btn danger sm" onclick="confirmResetDemo()">Khôi phục danh mục gốc</button></div>
@@ -3673,7 +3673,7 @@ async function doLogin(){
   if(app) app.style.display='flex';
   bootApp();
   try{ await persistNow(); }
-  catch(e){ console.warn('[SMART QC] Login state save deferred:',e); }
+  catch(e){ console.warn('[SMART VSMD] Login state save deferred:',e); }
 }
 function doLogout(){
   document.getElementById('app').style.display='none';
@@ -3681,7 +3681,7 @@ function doLogout(){
   resetPassKeyGate();
 }
 /* =====================================================================
-   PWA — cài SMART QC lên điện thoại/máy tính, không thay đổi giao diện chính
+   PWA — cài SMART VSMD lên điện thoại/máy tính, không thay đổi giao diện chính
    ===================================================================== */
 let pwaInstallReady=false;
 let pwaInstallChecked=false;
@@ -3689,7 +3689,7 @@ window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault(); deferredInstallPrompt=e; pwaInstallReady=true; pwaInstallChecked=true;
   const btn=document.getElementById('installAppBtn'); if(btn) btn.style.display='inline-flex';
 });
-window.addEventListener('appinstalled',()=>{ deferredInstallPrompt=null; pwaInstallReady=false; const btn=document.getElementById('installAppBtn'); if(btn) btn.style.display='none'; toast('pass','Đã cài SMART QC','Biểu tượng ứng dụng đã được thêm vào thiết bị.'); });
+window.addEventListener('appinstalled',()=>{ deferredInstallPrompt=null; pwaInstallReady=false; const btn=document.getElementById('installAppBtn'); if(btn) btn.style.display='none'; toast('pass','Đã cài SMART VSMD','Biểu tượng ứng dụng đã được thêm vào thiết bị.'); });
 async function installPWA(){
   if(deferredInstallPrompt){
     try{
@@ -3704,13 +3704,13 @@ async function installPWA(){
   const isSecure=window.isSecureContext || location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1';
   const isStandalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
   if(isStandalone){
-    toast('pass','SMART QC đã được cài','Ứng dụng đang chạy ở chế độ ứng dụng.');
+    toast('pass','SMART VSMD đã được cài','Ứng dụng đang chạy ở chế độ ứng dụng.');
   }else if(isiOS){
     toast('warning','Cài ứng dụng','Trên iPhone/iPad: mở bằng Safari → Chia sẻ → Thêm vào Màn hình chính.');
   }else if(isLocal || !isSecure){
-    toast('warning','Cài ứng dụng','Hãy mở SMART QC từ địa chỉ HTTPS (ví dụ Vercel), không mở trực tiếp file HTML trên máy tính.');
+    toast('warning','Cài ứng dụng','Hãy mở SMART VSMD từ địa chỉ HTTPS (ví dụ Vercel), không mở trực tiếp file HTML trên máy tính.');
   }else{
-    toast('warning','Cài ứng dụng','Trình duyệt chưa cung cấp cửa sổ cài đặt. Hãy tải lại trang sau khi triển khai SMART QC bằng HTTPS để trình duyệt nhận Manifest và Service Worker mới.');
+    toast('warning','Cài ứng dụng','Trình duyệt chưa cung cấp cửa sổ cài đặt. Hãy tải lại trang sau khi triển khai SMART VSMD bằng HTTPS để trình duyệt nhận Manifest và Service Worker mới.');
   }
 }
 if('serviceWorker' in navigator){
@@ -3719,8 +3719,8 @@ if('serviceWorker' in navigator){
       const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
       await navigator.serviceWorker.ready;
       pwaInstallChecked=true;
-      console.info('[SMART QC PWA] Service Worker ready:',reg.scope);
-    }catch(e){ console.warn('[SMART QC PWA] Service Worker register failed',e); }
+      console.info('[SMART VSMD PWA] Service Worker ready:',reg.scope);
+    }catch(e){ console.warn('[SMART VSMD PWA] Service Worker register failed',e); }
   });
 }
 
@@ -3758,7 +3758,7 @@ function bootApp(){
   resetPassKeyGate();
   await loadState();
   if(cloudConfig && !cloudUser){
-    setTimeout(()=>toast('warning','SMART QC đã sẵn sàng kết nối cloud','Vào Hệ thống → Dữ liệu → Đồng bộ Supabase → Đăng nhập cloud trên thiết bị này.'),900);
+    setTimeout(()=>toast('warning','SMART VSMD đã sẵn sàng kết nối cloud','Vào Hệ thống → Dữ liệu → Đồng bộ Supabase → Đăng nhập cloud trên thiết bị này.'),900);
   }
   const sel=document.getElementById('loginUser');
   const users=Array.isArray(state.settings.users)
@@ -3769,10 +3769,15 @@ function bootApp(){
       'TK. Nguyễn Thị Bình (ThS)',
       'KTVTK. Nguyễn Thái Hòa (CKIXN)',
       'NV. Nguyễn Gia Khang (CNXN)',
+      'NV. Nguyễn Hồng Lợi (CNXN)',
       'NV. Bùi Thị Tiến Phước (CNXN)',
       'NV. Trần Thị Cẩm Ly (CNXN)',
       'NV. Nguyễn Thị Ngọc Trâm (CNXN)',
+      'NV. Nguyễn Thị Kim Phượng (CNXN)',
+      'NV. Nguyễn Thị Tú (CNXN)',
+      'NV. Nguyễn Thị Bích Phượng (CNXN)',
       'NV. Lê Diệu Đan (CNXN)',
+      'NV. Nguyễn Thị Thùy Linh (CNXN)',
     ];
   }
   sel.innerHTML=state.settings.users
@@ -3789,7 +3794,7 @@ function bootApp(){
 restoreSidebarState();
 
 /* =====================================================================
-   SMART QC FIX 2026 — QC CHART + XLSX + PRINT/PDF
+   SMART VSMD FIX 2026 — QC CHART + XLSX + PRINT/PDF
    ===================================================================== */
 function qcFixSortKey(r){return String(r.date||'')+'T'+String(r.time||'00:00');}
 function qcFixSeries(testId,machineId,days){
@@ -4029,7 +4034,7 @@ function reportHandlingRowsForChart(handled){
 
 function qcExcelChartSvg(rows){
   const normalized=qcExcelRows(rows||[]);
-  return qcBuildSvg(normalized,{title:'SMART QC — Biểu đồ QC Levey–Jennings',subtitle:normalized.length+' điểm dữ liệu · mỗi Level là một đường liên tục'});
+  return qcBuildSvg(normalized,{title:'SMART VSMD — Biểu đồ QC Levey–Jennings',subtitle:normalized.length+' điểm dữ liệu · mỗi Level là một đường liên tục'});
 }
 
 async function qcSvgToPngDataUrl(svgText,width=2200,height=1000){
@@ -4112,7 +4117,7 @@ async function exportReportXLSX(){
   if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
   try{
     const wb=new ExcelJS.Workbook();
-    wb.creator='SMART QC';wb.created=new Date();wb.modified=new Date();
+    wb.creator='SMART VSMD';wb.created=new Date();wb.modified=new Date();
     const border={top:{style:'thin',color:{argb:'FF555555'}},left:{style:'thin',color:{argb:'FF555555'}},bottom:{style:'thin',color:{argb:'FF555555'}},right:{style:'thin',color:{argb:'FF555555'}}};
     const headerStyle=c=>{c.font={name:'Times New Roman',size:8.5,bold:true};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF3FB'}};c.border=border;};
     const bodyStyle=(c,alt)=>{c.font={name:'Times New Roman',size:8.5};c.alignment={vertical:'top',horizontal:'left',wrapText:true};c.border=border;if(alt)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8FAFC'}};};
@@ -4150,7 +4155,7 @@ async function exportReportXLSX(){
       const ws=wb.addWorksheet('Báo cáo QC',{views:[{showGridLines:false}]});
       ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:1,paperSize:9,margins:{left:.12,right:.12,top:.12,bottom:.12,header:.03,footer:.03},horizontalCentered:true,verticalCentered:false};
       [11,8,16,20,7,10,10,10,10,12,17,21].forEach((w,i)=>ws.getColumn(i+1).width=w);
-      ws.mergeCells('A1:L1');ws.getCell('A1').value=`SMART QC — ${title}`;ws.getCell('A1').font={name:'Times New Roman',size:15,bold:true};ws.getCell('A1').alignment={horizontal:'center',vertical:'middle'};ws.getRow(1).height=26;
+      ws.mergeCells('A1:L1');ws.getCell('A1').value=`SMART VSMD — ${title}`;ws.getCell('A1').font={name:'Times New Roman',size:15,bold:true};ws.getCell('A1').alignment={horizontal:'center',vertical:'middle'};ws.getRow(1).height=26;
       ws.mergeCells('A2:L2');ws.getCell('A2').value=`${fmtDMY(from)} – ${fmtDMY(to)} · ${rows.length} kết quả · Biểu đồ QC + dữ liệu chính đầy đủ`;ws.getCell('A2').font={name:'Times New Roman',size:9,italic:true};ws.getCell('A2').alignment={horizontal:'center'};
       for(let r=4;r<=24;r++)ws.getRow(r).height=19;
       const imageId=wb.addImage({base64:png,extension:'png'});ws.addImage(imageId,{tl:{col:0,row:3},br:{col:12,row:25}});
@@ -4169,7 +4174,7 @@ async function exportReportXLSX(){
     const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='bao_cao_'+type+'_qc_'+todayISO()+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
     toast('pass','Đã xuất Excel hoàn chỉnh','Biểu đồ QC và dữ liệu được căn gọn trong vùng in, tự co vừa 1 trang A4 ngang, không tràn viền.');
-  }catch(err){console.error('SMART QC Excel export error:',err);toast('danger','Xuất Excel thất bại',err?.message||'Không thể tạo file Excel có biểu đồ và dữ liệu đầy đủ.');}
+  }catch(err){console.error('SMART VSMD Excel export error:',err);toast('danger','Xuất Excel thất bại',err?.message||'Không thể tạo file Excel có biểu đồ và dữ liệu đầy đủ.');}
 }
 function exportReportCSV(){return exportReportXLSX();}
 
@@ -4592,7 +4597,7 @@ function printVirologyTC(recordId){
     /\bwindow\.[A-Za-z_$][\w$]*\s*=\s*/,
     /\b(?:document\.getElementById|querySelectorAll|addEventListener)\s*\(/,
     /\}\)\(\);?\s*$/m,
-    /SMART QC\s*[—-]\s*(?:FIX|NEW):/i
+    /SMART VSMD\s*[—-]\s*(?:FIX|NEW):/i
   ];
   function looksLikeLeakedCode(text){
     if(!text)return false;
@@ -4648,7 +4653,7 @@ function renderWhonetConnection(){
     <div class="grid g-kpi whonet-kpis" style="margin-top:14px"><div class="kpi"><div class="kpi-label">Cấu hình</div><div class="kpi-value">${cfg.onlineGatewayUrl&&cfg.baclinkFolder&&cfg.whonetFolder?'OK':'—'}</div><div class="kpi-sub">Online Gateway / BacLink / WHONET</div></div><div class="kpi"><div class="kpi-label">Đang chờ</div><div class="kpi-value">${pending}</div><div class="kpi-sub">Theo nhật ký WHONET</div></div><div class="kpi"><div class="kpi-label">Đã xử lý</div><div class="kpi-value">${synced}</div><div class="kpi-sub">Theo nhật ký WHONET</div></div></div>
     <div class="two-col whonet-grid" style="margin-top:14px">
       <div class="card"><div class="card-head"><h3>Cổng kết nối</h3><span class="hint">Cấu hình trên máy Windows có BacLink/WHONET</span></div><div class="card-body"><div class="whonet-settings"><div><b>Nguồn dữ liệu</b><span>${escapeHtml(cfg.source||'Chưa cấu hình')}</span></div><div><b>Thư mục BacLink</b><span>${escapeHtml(cfg.baclinkFolder||'Chưa cấu hình')}</span></div><div><b>Thư mục WHONET</b><span>${escapeHtml(cfg.whonetFolder||'Chưa cấu hình')}</span></div><div><b>Tự động xuất Tab-delimited</b><span>${cfg.autoExport?'Bật':'Tắt'}</span></div></div><div class="btn-row" style="margin-top:14px"><button class="btn primary" onclick="openWhonetConfig()">⚙ Cấu hình BacLink / WHONET</button></div></div></div>
-      <div class="card"><div class="card-head"><h3>Trạng thái kết nối</h3><span class="hint">Không lấy dữ liệu từ Nhập QC Vi sinh (TĐ)</span></div><div class="card-body"><div class="whonet-status-list"><div><span class="status-dot pass"></span><b>SMART QC</b><span>Cấu hình WHONET được lưu độc lập</span></div><div><span class="status-dot ${cfg.baclinkFolder?'pass':'warn'}"></span><b>BacLink</b><span>${cfg.baclinkFolder?'Đã cấu hình':'Chưa cấu hình'}</span></div><div><span class="status-dot ${cfg.whonetFolder?'pass':'warn'}"></span><b>WHONET</b><span>${cfg.whonetFolder?'Đã cấu hình':'Chưa cấu hình'}</span></div></div></div></div>
+      <div class="card"><div class="card-head"><h3>Trạng thái kết nối</h3><span class="hint">Không lấy dữ liệu từ Nhập QC Vi sinh (TĐ)</span></div><div class="card-body"><div class="whonet-status-list"><div><span class="status-dot pass"></span><b>SMART VSMD</b><span>Cấu hình WHONET được lưu độc lập</span></div><div><span class="status-dot ${cfg.baclinkFolder?'pass':'warn'}"></span><b>BacLink</b><span>${cfg.baclinkFolder?'Đã cấu hình':'Chưa cấu hình'}</span></div><div><span class="status-dot ${cfg.whonetFolder?'pass':'warn'}"></span><b>WHONET</b><span>${cfg.whonetFolder?'Đã cấu hình':'Chưa cấu hình'}</span></div></div></div></div>
     </div>
     <div class="card" style="margin-top:14px"><div class="card-head"><h3>Nhật ký cổng kết nối</h3><span class="hint">${logs.length} lượt</span></div><div class="card-body"><div class="table-wrap"><table><thead><tr><th>Thời gian</th><th>Thao tác</th><th>File</th><th>Số dòng</th><th>Trạng thái</th></tr></thead><tbody>${logs.slice(0,100).map(x=>`<tr><td class="mono">${escapeHtml(x.time||'')}</td><td>${escapeHtml(x.action||'')}</td><td>${escapeHtml(x.file||'—')}</td><td>${escapeHtml(x.rows??'')}</td><td>${escapeHtml(x.status||'')}</td></tr>`).join('')||'<tr><td colspan="5" class="tbl-empty">Chưa có nhật ký.</td></tr>'}</tbody></table></div></div></div>
   </div>`;
@@ -4710,9 +4715,9 @@ function renderVirologyTD(targetEl){
     <div class="td-section-title">SPECIAL MESSAGES</div>
     <div class="td-report-note"><textarea data-td-field="specialMessages" rows="3"></textarea></div>
     <div class="phoenix-td-gateway">
-      <div class="phoenix-td-gateway-head"><div><b>Cổng nhận KQ Phoenix BD M50</b><span>Nhận tự động file kết quả QC do Phoenix/BD EpiCenter xuất vào thư mục đã chọn và đưa bản ghi vào SMART QC.</span></div><span id="phoenixWatchStatus" class="pill warning"><span class="dot"></span>Chưa kết nối</span></div>
+      <div class="phoenix-td-gateway-head"><div><b>Cổng nhận KQ Phoenix BD M50</b><span>Nhận tự động file kết quả QC do Phoenix/BD EpiCenter xuất vào thư mục đã chọn và đưa bản ghi vào SMART VSMD.</span></div><span id="phoenixWatchStatus" class="pill warning"><span class="dot"></span>Chưa kết nối</span></div>
       <div class="phoenix-td-gateway-body">
-        <div class="phoenix-td-source"><b>Luồng dữ liệu</b><span>Phoenix BD M50 → BD EpiCenter → File KQ → SMART QC (TĐ)</span></div>
+        <div class="phoenix-td-source"><b>Luồng dữ liệu</b><span>Phoenix BD M50 → BD EpiCenter → File KQ → SMART VSMD (TĐ)</span></div>
         <div class="phoenix-td-actions"><button class="btn primary" onclick="connectPhoenixAutoPort()">🌐 Kết nối online Phoenix BD M50</button><button class="btn" onclick="scanPhoenixNow()">↻ Kiểm tra KQ mới</button><button class="btn ghost" onclick="stopPhoenixAutoPort()">■ Dừng tự động</button></div>
         <div class="phoenix-td-info"><span><b>Thư mục:</b> <em id="phoenixWatchFolder">Chưa chọn</em></span><span><b>Định dạng:</b> TXT / CSV / TSV / JSON</span><span><b>Tần suất:</b> tự kiểm tra mỗi 3 giây khi cổng đang mở</span></div>
       </div>
@@ -4747,7 +4752,7 @@ async function connectPhoenixAutoPort(){
     queueSave();
     updatePhoenixWatchFolderLabel();
     setPhoenixWatchStatus('pass','Đang tự động nhận KQ');
-    toast('pass','Đã kết nối cổng Phoenix','SMART QC sẽ tự kiểm tra file KQ mới trong thư mục đã chọn.');
+    toast('pass','Đã kết nối cổng Phoenix','SMART VSMD sẽ tự kiểm tra file KQ mới trong thư mục đã chọn.');
     await scanPhoenixNow(true);
     phoenixWatchTimer=setInterval(()=>scanPhoenixNow(true),3000);
   }catch(e){
@@ -4809,7 +4814,7 @@ async function scanPhoenixNow(silent=false){
       const f=await entry.getFile(); files++;
       const r=await readPhoenixFileEntry(f,phoenixWatchHandle.name); total+=r.added||0;
     }
-    if(total){queueSave();renderVirologyHubPanel('virology-td');setPhoenixWatchStatus('pass',`Đang tự động nhận KQ · +${total}`);toast('pass','Đã tự động nhận KQ Phoenix',`${total} dòng mới đã được đưa vào SMART QC.`);}
+    if(total){queueSave();renderVirologyHubPanel('virology-td');setPhoenixWatchStatus('pass',`Đang tự động nhận KQ · +${total}`);toast('pass','Đã tự động nhận KQ Phoenix',`${total} dòng mới đã được đưa vào SMART VSMD.`);}
     else if(!silent)setPhoenixWatchStatus('pass','Đang kết nối · không có KQ mới');
   }catch(e){
     if(!silent)toast('warning','Không quét được thư mục Phoenix',e?.message||'Kiểm tra quyền truy cập thư mục.');
@@ -4894,7 +4899,7 @@ function printPhoenixQCReport(recordId){
   const meta=metaEntries.map(([k,v])=>`<div><b>${esc(labels[k]||k)}</b><br>${esc(v)}</div>`).join('');
 
   // Với dữ liệu nhận tự động từ Phoenix, in thêm toàn bộ trường gốc để không mất thông tin
-  // do file Phoenix có thể chứa các cột không có ô tương ứng trên giao diện SMART QC.
+  // do file Phoenix có thể chứa các cột không có ô tương ứng trên giao diện SMART VSMD.
   const rawEntries=isObj(d.rawData)?Object.entries(d.rawData).filter(([k,v])=>!Array.isArray(v)&&scalar(v)&&hasVal(v)):[];
   const knownKeys=new Set(metaEntries.map(([k])=>k).concat(['SPECIAL MESSAGES','Special Messages','Messages','Message']));
   const rawExtra=rawEntries.filter(([k])=>!knownKeys.has(k)&&!knownKeys.has(String(k).trim()));
@@ -4916,7 +4921,7 @@ function printPhoenixQCReport(recordId){
 
 function openWhonetConfig(){
   const c=state.whonetConfig||{};
-  showModal('Cấu hình cổng BacLink / WHONET',`<div style="font-size:12px;color:var(--text-muted);line-height:1.55;margin-bottom:12px">Cấu hình này dành riêng cho luồng kết nối online Phoenix/BD EpiCenter → SMART QC → BacLink → WHONET. Không dùng dữ liệu của Nhập QC Vi sinh (TĐ). Không lưu mật khẩu tài khoản hệ thống.</div>
+  showModal('Cấu hình cổng BacLink / WHONET',`<div style="font-size:12px;color:var(--text-muted);line-height:1.55;margin-bottom:12px">Cấu hình này dành riêng cho luồng kết nối online Phoenix/BD EpiCenter → SMART VSMD → BacLink → WHONET. Không dùng dữ liệu của Nhập QC Vi sinh (TĐ). Không lưu mật khẩu tài khoản hệ thống.</div>
   <div class="section-title" style="margin-bottom:8px">Kết nối online</div>
   <label class="field"><span class="fl-label">Online Gateway / API URL</span><input id="wc_gateway" value="${escapeHtml(c.onlineGatewayUrl||'')}" placeholder="https://.../api/phoenix"></label>
   <label class="field"><span class="fl-label">Agent ID / Computer ID</span><input id="wc_agent" value="${escapeHtml(c.agentId||'')}" placeholder="PHOENIX-PC-01"></label>
@@ -4927,7 +4932,7 @@ function openWhonetConfig(){
   <label class="field"><span class="fl-label">Thư mục BacLink (đường dẫn Windows)</span><input id="wc_bac" value="${escapeHtml(c.baclinkFolder||'')}" placeholder="C:\\WHONET\\data"></label>
   <label class="field"><span class="fl-label">Thư mục WHONET</span><input id="wc_whonet" value="${escapeHtml(c.whonetFolder||'')}" placeholder="C:\\WHONET\\data"></label>
   <label class="field"><span class="fl-label">Tự động xuất file Tab-delimited</span><select id="wc_auto"><option value="0" ${!c.autoExport?'selected':''}>Tắt</option><option value="1" ${c.autoExport?'selected':''}>Bật</option></select></label>
-  <label class="field"><span class="fl-label">SMART QC nhận dữ liệu online</span><select id="wc_push_app"><option value="1" ${c.pushToApp!==false?'selected':''}>Bật</option><option value="0" ${c.pushToApp===false?'selected':''}>Tắt</option></select></label>
+  <label class="field"><span class="fl-label">SMART VSMD nhận dữ liệu online</span><select id="wc_push_app"><option value="1" ${c.pushToApp!==false?'selected':''}>Bật</option><option value="0" ${c.pushToApp===false?'selected':''}>Tắt</option></select></label>
   <label class="field"><span class="fl-label">Đẩy tự động sang BacLink</span><select id="wc_push_bac"><option value="1" ${c.pushToBacLink!==false?'selected':''}>Bật</option><option value="0" ${c.pushToBacLink===false?'selected':''}>Tắt</option></select></label>
   <label class="field"><span class="fl-label">WHONET tự động nhận dữ liệu</span><select id="wc_wh_auto"><option value="1" ${c.whonetAutoImport!==false?'selected':''}>Bật</option><option value="0" ${c.whonetAutoImport===false?'selected':''}>Tắt</option></select></label>
   <div class="btn-row"><button class="btn primary" onclick="saveWhonetConfig()">Lưu cấu hình</button><button class="btn ghost" onclick="closeModal()">Đóng</button></div>`,'wide');
@@ -4996,7 +5001,7 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
 
 <script id="smart-office-export-fix">
 /* ================================================================
-   SMART QC — EXCEL / WORD OFFICE EXPORT FIX
+   SMART VSMD — EXCEL / WORD OFFICE EXPORT FIX
    Chỉ bổ sung khả năng xem trước, xuất Excel và xuất Word editable.
    Không thay đổi dữ liệu, logic QC, bố cục hiện có ngoài các nút chức năng.
    Excel: .xlsx thật, merge, border, alignment, filter, freeze, print setup.
@@ -5100,8 +5105,8 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
         const rootRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`;
         const docRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${SMART_QC_DOCX_IMAGES.map((x,i)=>`<Relationship Id="rIdSig${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/signature_${i+1}.${x.ext}"/>`).join('')}</Relationships>`;
         const now=new Date().toISOString();
-        const core=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${xmlEsc(title)}</dc:title><dc:creator>SMART QC</dc:creator><cp:lastModifiedBy>SMART QC</cp:lastModifiedBy><dcterms:created xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="dcterms:W3CDTF">${now}</dcterms:created></cp:coreProperties>`;
-        const app=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>SMART QC</Application><AppVersion>1.0</AppVersion></Properties>`;
+        const core=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${xmlEsc(title)}</dc:title><dc:creator>SMART VSMD</dc:creator><cp:lastModifiedBy>SMART VSMD</cp:lastModifiedBy><dcterms:created xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="dcterms:W3CDTF">${now}</dcterms:created></cp:coreProperties>`;
+        const app=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>SMART VSMD</Application><AppVersion>1.0</AppVersion></Properties>`;
         zip.file('[Content_Types].xml',contentTypes);zip.folder('_rels').file('.rels',rootRels);zip.folder('word').file('document.xml',documentXml);zip.folder('word').file('styles.xml',styles);zip.folder('word').folder('_rels').file('document.xml.rels',docRels);SMART_QC_DOCX_IMAGES.forEach((x,i)=>zip.folder('word').folder('media').file(`signature_${i+1}.${x.ext}`,x.b64,{base64:true}));zip.folder('docProps').file('core.xml',core);zip.folder('docProps').file('app.xml',app);
         const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
         downloadBlob(blob,title.replace(/[^a-zA-Z0-9À-ỹ _-]/g,'_')+'_'+(typeof todayISO==='function'?todayISO():'')+'.docx');
@@ -5114,12 +5119,12 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
 </body></html>`;
       downloadBlob(new Blob(['\ufeff',html],{type:'application/msword;charset=utf-8'}),title.replace(/[^a-zA-Z0-9À-ỹ _-]/g,'_')+'_'+(typeof todayISO==='function'?todayISO():'')+'.doc');
       if(typeof toast==='function')toast('pass','Đã xuất Word','Đã tạo file Word tương thích để mở/chỉnh sửa trong Microsoft Word.');
-    }catch(err){console.error('SMART QC Word export error:',err);if(typeof toast==='function')toast('danger','Xuất Word thất bại',err?.message||'Không thể tạo file Word.');}
+    }catch(err){console.error('SMART VSMD Word export error:',err);if(typeof toast==='function')toast('danger','Xuất Word thất bại',err?.message||'Không thể tạo file Word.');}
   }
 
   async function makeWorkbook(sheetName,title,subtitle,headers,rows,opts={}){
     if(!window.ExcelJS){if(typeof toast==='function')toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return null;}
-    const wb=new ExcelJS.Workbook();wb.creator='SMART QC';wb.created=new Date();wb.modified=new Date();
+    const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();wb.modified=new Date();
     const ws=wb.addWorksheet(sheetName,{views:[{showGridLines:false}]});
     const orientation=opts.orientation||'portrait';
     ws.pageSetup={orientation,fitToPage:true,fitToWidth:1,fitToHeight:opts.fitToHeight===undefined?0:opts.fitToHeight,paperSize:9,
@@ -5177,10 +5182,10 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
             cell.alignment={...(cell.alignment||{}),horizontal:'center',vertical:'middle'};
             ws.addImage(imageId,{tl:{col:cell.col-1,row:cell.row-1},ext:{width:115,height:42}});
             seen.add(cell.address);
-          }catch(e){console.warn('SMART QC signature ExcelJS:',e);}
+          }catch(e){console.warn('SMART VSMD signature ExcelJS:',e);}
         }));
       }
-    }catch(e){console.warn('SMART QC signature scan failed:',e);}
+    }catch(e){console.warn('SMART VSMD signature scan failed:',e);}
   }
 
   window.SMART_QC_ADD_SIGNATURES_EXCELJS=smartAddSignaturesToExcelJS;
@@ -5191,13 +5196,13 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
         ws.pageSetup=Object.assign({paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.22,right:.22,top:.28,bottom:.32,header:.08,footer:.12},horizontalDpi:300,verticalDpi:300},ws.pageSetup||{});
         // Không cắt nội dung khi in Excel: lặp tiêu đề, tự co theo chiều ngang và cho phép nhiều trang theo chiều dọc.
         ws.pageSetup.fitToPage=true; ws.pageSetup.fitToWidth=1; if(ws.pageSetup.fitToHeight===undefined) ws.pageSetup.fitToHeight=0;
-        ws.headerFooter={oddHeader:'&C&"Times New Roman,Bold"SMART QC',oddFooter:'&L&"Times New Roman"Khoa Vi sinh - Miễn dịch&R&Trang &P / &N'};
+        ws.headerFooter={oddHeader:'&C&"Times New Roman,Bold"SMART VSMD',oddFooter:'&L&"Times New Roman"Khoa Vi sinh - Miễn dịch&R&Trang &P / &N'};
         if(ws.autoFilter&&ws.autoFilter.from&&ws.autoFilter.from.row)ws.printTitlesRow=`${ws.autoFilter.from.row}:${ws.autoFilter.from.row}`;
         ws.eachRow(r=>r.eachCell(c=>{if(!c.font)c.font={name:TN,size:9};else c.font={...c.font,name:TN};}));
       });
       await smartAddSignaturesToExcelJS(wb); const buffer=await wb.xlsx.writeBuffer();downloadBlob(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),name);
       if(typeof toast==='function')toast('pass','Đã xuất Excel','File .xlsx chuẩn, có thể mở/chỉnh sửa trực tiếp bằng Microsoft Excel: lọc, sắp xếp, chỉnh ô, định dạng, in và thiết lập trang.');
-    }catch(err){console.error('SMART QC Excel save error:',err);if(typeof toast==='function')toast('danger','Xuất Excel thất bại',err?.message||'Không thể tạo file Excel.');}
+    }catch(err){console.error('SMART VSMD Excel save error:',err);if(typeof toast==='function')toast('danger','Xuất Excel thất bại',err?.message||'Không thể tạo file Excel.');}
   }
 
   /* FIX: các hàm xuất Excel của module Nhập QC Vi sinh được khai báo ở script bổ sung bên ngoài IIFE.
@@ -5586,14 +5591,14 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
     if(!filtered.length){toast('warning','Không có dữ liệu','Không có số liệu QC Vi sinh (TC) phù hợp với các năm đã chọn.');return;}
     if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
     try{
-      const wb=new ExcelJS.Workbook();wb.creator='SMART QC';wb.created=new Date();wb.modified=new Date();
+      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();wb.modified=new Date();
       const border={top:{style:'thin',color:{argb:'FF555555'}},left:{style:'thin',color:{argb:'FF555555'}},bottom:{style:'thin',color:{argb:'FF555555'}},right:{style:'thin',color:{argb:'FF555555'}}};
       const header=c=>{c.font={name:'Times New Roman',size:9,bold:true};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF3FB'}};c.border=border;};
       const body=(c,alt)=>{c.font={name:'Times New Roman',size:9};c.alignment={vertical:'middle',wrapText:true};c.border=border;if(alt)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8FAFC'}};};
       const ws=wb.addWorksheet('Tổng hợp theo năm',{views:[{showGridLines:false}]});
       ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9,margins:{left:.18,right:.18,top:.25,bottom:.25,header:.05,footer:.1}};
       [12,14,26,18,15,15,24].forEach((w,i)=>ws.getColumn(i+1).width=w);
-      ws.mergeCells('A1:G1');ws.getCell('A1').value='SMART QC — BÁO CÁO TỔNG HỢP QC VI SINH THEO NĂM';ws.getCell('A1').font={name:'Times New Roman',size:15,bold:true};ws.getCell('A1').alignment={horizontal:'center'};
+      ws.mergeCells('A1:G1');ws.getCell('A1').value='SMART VSMD — BÁO CÁO TỔNG HỢP QC VI SINH THEO NĂM';ws.getCell('A1').font={name:'Times New Roman',size:15,bold:true};ws.getCell('A1').alignment={horizontal:'center'};
       ws.mergeCells('A2:G2');ws.getCell('A2').value=`${strain||'Tất cả chủng'} · ${abx||'Tất cả kháng sinh'} · Năm: ${years.join(', ')}`;ws.getCell('A2').font={name:'Times New Roman',size:10,italic:true};ws.getCell('A2').alignment={horizontal:'center'};
       const agg=buildAggregates(entries,years,strain,abx);
       ws.getRow(4).values=['Năm','Số phép đo','Trung bình (mm)','Min (mm)','Max (mm)','Chênh lệch TB','Chênh lệch %'];ws.getRow(4).eachCell(header);
@@ -5747,12 +5752,12 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
     if(!filtered.length){toast('warning','Không có dữ liệu','Không có số liệu QC Vi sinh (TĐ) phù hợp với các năm đã chọn.');return;}
     if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
     try{
-      const wb=new ExcelJS.Workbook();wb.creator='SMART QC';wb.created=new Date();wb.modified=new Date();
+      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();wb.modified=new Date();
       const border={top:{style:'thin',color:{argb:'FF555555'}},left:{style:'thin',color:{argb:'FF555555'}},bottom:{style:'thin',color:{argb:'FF555555'}},right:{style:'thin',color:{argb:'FF555555'}}};
       const header=c=>{c.font={name:'Times New Roman',size:9,bold:true};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF3FB'}};c.border=border;};
       const body=(c,alt)=>{c.font={name:'Times New Roman',size:9};c.alignment={vertical:'middle',wrapText:true};c.border=border;if(alt)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8FAFC'}};};
       const ws=wb.addWorksheet('Tổng hợp theo năm',{views:[{showGridLines:false}]});ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9};[12,14,30,20,18,18,22].forEach((w,i)=>ws.getColumn(i+1).width=w);
-      ws.mergeCells('A1:G1');ws.getCell('A1').value='SMART QC — BÁO CÁO TỔNG HỢP QC VI SINH (TĐ) THEO NĂM';ws.getCell('A1').font={name:'Times New Roman',size:15,bold:true};ws.getCell('A1').alignment={horizontal:'center'};
+      ws.mergeCells('A1:G1');ws.getCell('A1').value='SMART VSMD — BÁO CÁO TỔNG HỢP QC VI SINH (TĐ) THEO NĂM';ws.getCell('A1').font={name:'Times New Roman',size:15,bold:true};ws.getCell('A1').alignment={horizontal:'center'};
       ws.mergeCells('A2:G2');ws.getCell('A2').value=`${strain||'Tất cả chủng'} · ${abx||'Tất cả xét nghiệm'} · Năm: ${years.join(', ')}`;ws.getCell('A2').font={name:'Times New Roman',size:10,italic:true};ws.getCell('A2').alignment={horizontal:'center'};
       const agg=buildAggregates(entries,years,strain,abx);ws.getRow(4).values=['Năm','Số phép đo','Trung bình','Min','Max','Chênh lệch TB','Chênh lệch %'];ws.getRow(4).eachCell(header);
       agg.forEach((r,i)=>{const prev=i?agg[i-1]:null,d=prev&&r.n&&prev.n?r.avg-prev.avg:null,p=prev&&d!==null&&prev.avg?r.avg/prev.avg*100-100:null,row=ws.getRow(5+i);row.values=[r.year,r.n,Number.isFinite(r.avg)?r.avg:'—',Number.isFinite(r.min)?r.min:'—',Number.isFinite(r.max)?r.max:'—',d===null?'—':d,p===null?'—':p/100];row.eachCell(c=>body(c,i%2===1));[3,4,5,6].forEach(col=>{if(typeof row.getCell(col).value==='number')row.getCell(col).numFmt='0.00';});if(typeof row.getCell(7).value==='number')row.getCell(7).numFmt='0.00%';});
@@ -6002,7 +6007,7 @@ function chemicalCatalogTests(machine){
 }
 function renderChemicalMD(){
   const el=document.getElementById('view-chemical-md');if(!el)return;chemicalEnsureState();
-  el.innerHTML=`<div class="card"><div class="card-head"><div><h3>Quản lý Hóa chất MD</h3><span class="hint">Quản lý hóa chất theo từng máy, tự động theo ngày và lưu cùng dữ liệu SMART QC.</span></div></div><div class="card-body"><div class="chem-hub-grid"><div class="chem-hub-card" onclick="go('chemical-iflash')"><div class="chem-hub-icon">${iconFlask()}</div><h3>iFlash 9000</h3><p>${chemicalCatalogTests('iflash').length} xét nghiệm · Sổ xét nghiệm + hóa chất phụ dùng chung.</p></div><div class="chem-hub-card" onclick="go('chemical-allergen')"><div class="chem-hub-icon">${iconPackage()}</div><h3>108 dị nguyên</h3><p>Hóa chất dùng chung cho toàn bộ 108 dị nguyên · theo ngày.</p></div><div class="chem-hub-card" onclick="go('chemical-dxi')"><div class="chem-hub-icon">${iconAnalyzer()}</div><h3>DxI 800</h3><p>${chemicalCatalogTests('dxi').length} xét nghiệm · Sổ theo dõi riêng, không có hóa chất phụ.</p></div></div></div></div>`;
+  el.innerHTML=`<div class="card"><div class="card-head"><div><h3>Quản lý Hóa chất MD</h3><span class="hint">Quản lý hóa chất theo từng máy, tự động theo ngày và lưu cùng dữ liệu SMART VSMD.</span></div></div><div class="card-body"><div class="chem-hub-grid"><div class="chem-hub-card" onclick="go('chemical-iflash')"><div class="chem-hub-icon">${iconFlask()}</div><h3>iFlash 9000</h3><p>${chemicalCatalogTests('iflash').length} xét nghiệm · Sổ xét nghiệm + hóa chất phụ dùng chung.</p></div><div class="chem-hub-card" onclick="go('chemical-allergen')"><div class="chem-hub-icon">${iconPackage()}</div><h3>108 dị nguyên</h3><p>Hóa chất dùng chung cho toàn bộ 108 dị nguyên · theo ngày.</p></div><div class="chem-hub-card" onclick="go('chemical-dxi')"><div class="chem-hub-icon">${iconAnalyzer()}</div><h3>DxI 800</h3><p>${chemicalCatalogTests('dxi').length} xét nghiệm · Sổ theo dõi riêng, không có hóa chất phụ.</p></div></div></div></div>`;
 }
 function renderChemicalMachine(machine){
   const el=document.getElementById('view-chemical-'+machine);if(!el)return;chemicalEnsureState();
@@ -6270,7 +6275,7 @@ function renderChemicalAllergen(){
 </style>
 
 
-<!-- SMART QC FINAL OFFICE/PDF COMPLETENESS PATCH -->
+<!-- SMART VSMD FINAL OFFICE/PDF COMPLETENESS PATCH -->
 <style id="smart-final-office-completeness">
 @media print{
   /* Các bảng in trực tiếp: không cắt cột/hàng và luôn lặp tiêu đề bảng */
@@ -6403,7 +6408,7 @@ function renderChemicalAllergen(){
     if(!d?.strain){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TC).');return;}
     if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
     try{
-      const wb=new ExcelJS.Workbook();wb.creator='SMART QC';wb.created=new Date();wb.modified=new Date();
+      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();wb.modified=new Date();
       const ws=wb.addWorksheet('Kết quả QC',{views:[{showGridLines:false}]});ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9,margins:{left:.2,right:.2,top:.25,bottom:.3,header:.08,footer:.12}};
       [30,16,58].forEach((w,i)=>ws.getColumn(i+1).width=w);ws.mergeCells('A1:C1');ws.getCell('A1').value='QC ĐĨA GIẤY KHÁNG SINH - MHA';ws.getCell('A1').font={name:'Times New Roman',size:15,bold:true};ws.getCell('A1').alignment={horizontal:'center'};
       ws.mergeCells('A2:C2');ws.getCell('A2').value=`Chủng: ${d.strain||'—'} · Ngày QC: ${fmtDate(d.qcDate)} · Nhân viên: ${d.staff||'—'}`;ws.getCell('A2').font={name:'Times New Roman',size:10,italic:true};ws.getCell('A2').alignment={horizontal:'center',wrapText:true};
@@ -6424,7 +6429,7 @@ function renderChemicalAllergen(){
     if(!d){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TĐ).');return;}
     if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
     try{
-      const wb=new ExcelJS.Workbook();wb.creator='SMART QC';wb.created=new Date();wb.modified=new Date();
+      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();wb.modified=new Date();
       const labels={hospital:'BỆNH VIỆN',location:'ĐỊA ĐIỂM',panelLot:'Panel Lot Number',testStart:'Test Start',panelType:'Panel Type',status:'Status',idBrothLot:'ID Broth Lot Number',astBrothLot:'AST Broth Lot Number',indicatorLot:'Indicator Lot Number',panelExp:'Expiration Date',testEnd:'Test End',location2:'Location',techId:'Tech ID',idBrothExp:'Expiration Date',astBrothExp:'Expiration Date',indicatorExp:'Expiration Date',sequence:'Sequence Number',accession:'Accession Number',isolate:'Isolate Number',testStrain:'Test Strain',qcStatus:'QC Status',inoculum:'Inoculum Density',instrument:'Instrument ID(s)'};
       const meta=wb.addWorksheet('Thông tin',{views:[{showGridLines:false}]});meta.pageSetup={orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:1,paperSize:9};[34,70].forEach((w,i)=>meta.getColumn(i+1).width=w);meta.getRow(1).values=['Thông tin','Giá trị'];meta.getRow(1).eachCell(head);let mi=2;Object.entries(d).filter(([k,v])=>!['biochemical','antimicrobial','id','createdAt','user','syncStatus','source','specialMessages','rawData'].includes(k)&&!Array.isArray(v)&&v!==''&&v!=null).forEach(([k,v])=>{const r=meta.getRow(mi++);r.values=[labels[k]||k,v];r.height=22;r.eachCell(c=>cell(c,(mi%2)===0));});meta.printArea=`A1:B${mi-1}`;
       const bio=wb.addWorksheet('Biochemical',{views:[{showGridLines:false}]});bio.pageSetup={orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9};[34,28,28].forEach((w,i)=>bio.getColumn(i+1).width=w);bio.getRow(1).values=['Biochemical','Actual','Expected'];bio.getRow(1).eachCell(head);(d.biochemical||[]).forEach((x,i)=>{const r=bio.getRow(2+i);r.values=[x.name||'',x.actual||'',x.expected||''];r.height=21;r.eachCell(c=>cell(c,i%2===1));});bio.printArea=`A1:C${Math.max(2,1+(d.biochemical||[]).length)}`;
@@ -6439,7 +6444,7 @@ function renderChemicalAllergen(){
   window.exportRapidWaterExcel=async function(recordId){
     const arr=state.rapidWaterResults||[],d=recordId?arr.find(r=>r.id===recordId):arr[0];if(!d){toast('warning','Không có dữ liệu','Chưa có phiếu Test nhanh / Test nước.');return;}if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
     try{
-      const test=state.rapidWaterTests.find(t=>t.id===d.testId);const wb=new ExcelJS.Workbook();wb.creator='SMART QC';wb.created=new Date();wb.modified=new Date();
+      const test=state.rapidWaterTests.find(t=>t.id===d.testId);const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();wb.modified=new Date();
       const ws=wb.addWorksheet('Phiếu QC',{views:[{showGridLines:false}]});ws.pageSetup={orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:1,paperSize:9,margins:{left:.22,right:.22,top:.25,bottom:.3,header:.08,footer:.12}};[30,60].forEach((w,i)=>ws.getColumn(i+1).width=w);ws.mergeCells('A1:B1');ws.getCell('A1').value='PHIẾU KẾT QUẢ NỘI KIỂM XÉT NGHIỆM ĐỊNH TÍNH';ws.getCell('A1').font={name:'Times New Roman',size:14,bold:true};ws.getCell('A1').alignment={horizontal:'center',vertical:'middle',wrapText:true};ws.getRow(1).height=28;
       const data=[['Tháng / Năm',(d.date?String(d.date).slice(0,7):String(d.month||'')).split('-').reverse().join('/')],['Ngày',fmtDate(d.date)],['Tên xét nghiệm',test?.name||''],['Loại',test?.category||''],['Phương pháp',d.method||''],['Nhà sản xuất',d.manufacturer||''],['Lot hóa chất',d.reagentLot||''],['Hạn sử dụng',fmtDate(d.expiry)],['Chứng/Mức',d.controlLot||''],['LOT QC',d.qcLot||d.lot||''],['Người thực hiện',d.performer||''],['Người xem xét',d.reviewer||'']];ws.getRow(3).values=['Thông tin','Giá trị'];ws.getRow(3).eachCell(head);data.forEach((x,i)=>{const r=ws.getRow(4+i);r.values=x;r.height=22;r.eachCell(c=>cell(c,i%2===1));});const st=18;ws.getRow(st).values=['Nội dung','Lần 1','Lần 2'];ws.mergeCells(`B${st}:C${st}`);ws.getRow(st).values=['Nội dung','Lần 1','Lần 2'];ws.getRow(st).eachCell(head);[['Chứng Âm',d.run1Neg||'—',d.run2Neg||'—'],['Chứng Dương',d.run1Pos||'—',d.run2Pos||'—']].forEach((x,i)=>{const r=ws.getRow(st+1+i);r.values=x;r.eachCell(c=>cell(c,i%2===1));});ws.mergeCells(`A22:C22`);ws.getCell('A22').value='Nhận xét';ws.getCell('A22').font={name:'Times New Roman',size:10,bold:true};ws.mergeCells('B22:C22');ws.getCell('B22').value=d.note||'—';ws.getCell('B22').alignment={wrapText:true,vertical:'top'};ws.mergeCells('A23:C23');ws.getCell('A23').value='Nhận xét chi tiết / xử lý / phòng ngừa';ws.getCell('A23').font={name:'Times New Roman',size:10,bold:true};ws.mergeCells('A24:C24');ws.getCell('A24').value=`Nhận xét: ${d.comment||'—'}`;ws.getCell('A24').alignment={wrapText:true,vertical:'top'};ws.mergeCells('A25:C25');ws.getCell('A25').value=`Hành động khắc phục: ${d.corrective||'—'}`;ws.getCell('A25').alignment={wrapText:true,vertical:'top'};ws.mergeCells('A26:C26');ws.getCell('A26').value=`Hành động phòng ngừa: ${d.preventive||'—'}`;ws.getCell('A26').alignment={wrapText:true,vertical:'top'};ws.getColumn(3).width=28;[['A28','XN-BM 5.8.5/01','left'],['B28','Lần ban hành: 01.01/01/2026','center'],['C28','Trang 1/1','right']].forEach(([a,t,h])=>{const c=ws.getCell(a);c.value=t;c.font={name:'Times New Roman',size:9,bold:true};c.alignment={horizontal:h,vertical:'middle'};c.border={top:{style:'thin',color:{argb:'FF000000'}}};});ws.printArea='A1:C28';
       await saveWorkbook(wb,'QC_TestNhanh_TestNuoc_'+todayISO()+'.xlsx');
@@ -6647,7 +6652,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
 #view-virology-reports-tc #vr_detail_table tbody tr,#view-virology-reports-td #vtd_detail_table tbody tr{height:auto!important;min-height:0!important;}
 </style>
 
-<!-- SMART QC FINAL PDF NO-CUT / COMPLETE-DATA PATCH -->
+<!-- SMART VSMD FINAL PDF NO-CUT / COMPLETE-DATA PATCH -->
 <style id="smart-final-pdf-no-cut-all">
 @media print{
   html,body{height:auto!important;min-height:0!important;overflow:visible!important;}
@@ -6724,7 +6729,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
       @page{size:A4 ${orientation};margin:6mm}
       ${extraCss||''}`;
     w.document.open();
-    w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${String(title||'SMART QC').replace(/[&<>]/g,'')}</title><style>${base}</style></head><body>${clone.outerHTML}
+    w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${String(title||'SMART VSMD').replace(/[&<>]/g,'')}</title><style>${base}</style></head><body>${clone.outerHTML}
 
 
 
@@ -6917,7 +6922,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
         const totalEl=head?.querySelector('.chem-total-used-box strong');
         if(totalEl)totalEl.textContent=String(total);
       });
-    }catch(e){console.warn('SMART QC chemical replenishment refresh:',e);}
+    }catch(e){console.warn('SMART VSMD chemical replenishment refresh:',e);}
   };
 
   /* Khi người dùng nhập Đầu ngày/Nhận, lưu như cũ rồi cập nhật tự động. */
@@ -7585,9 +7590,9 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
       <div class="td-section-title">SPECIAL MESSAGES</div>
       <div class="td-report-note"><textarea data-td-field="specialMessages" rows="3">${esc(get('specialMessages'))}</textarea></div>
       <div class="phoenix-td-gateway">
-        <div class="phoenix-td-gateway-head"><div><b>Cổng nhận KQ Phoenix BD M50</b><span>Nhận tự động file kết quả QC do Phoenix/BD EpiCenter xuất vào thư mục đã chọn và đưa bản ghi vào SMART QC.</span></div><span id="phoenixWatchStatus" class="pill warning"><span class="dot"></span>Chưa kết nối</span></div>
+        <div class="phoenix-td-gateway-head"><div><b>Cổng nhận KQ Phoenix BD M50</b><span>Nhận tự động file kết quả QC do Phoenix/BD EpiCenter xuất vào thư mục đã chọn và đưa bản ghi vào SMART VSMD.</span></div><span id="phoenixWatchStatus" class="pill warning"><span class="dot"></span>Chưa kết nối</span></div>
         <div class="phoenix-td-gateway-body">
-          <div class="phoenix-td-source"><b>Luồng dữ liệu</b><span>Phoenix BD M50 → BD EpiCenter → File KQ → SMART QC (TĐ)</span></div>
+          <div class="phoenix-td-source"><b>Luồng dữ liệu</b><span>Phoenix BD M50 → BD EpiCenter → File KQ → SMART VSMD (TĐ)</span></div>
           <div class="phoenix-td-actions"><button class="btn primary" onclick="connectPhoenixAutoPort()">🌐 Kết nối online Phoenix BD M50</button><button class="btn" onclick="scanPhoenixNow()">↻ Kiểm tra KQ mới</button><button class="btn ghost" onclick="stopPhoenixAutoPort()">■ Dừng tự động</button></div>
           <div class="phoenix-td-info"><span><b>Thư mục:</b> <em id="phoenixWatchFolder">Chưa chọn</em></span><span><b>Định dạng:</b> TXT / CSV / TSV / JSON</span><span><b>Tần suất:</b> tự kiểm tra mỗi 3 giây khi cổng đang mở</span></div>
         </div>
@@ -7733,7 +7738,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
       const d=recordId?state.virologyTDResults.find(r=>r.id===recordId):collectPhoenixQCReport();
       if(!d){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TĐ).');return;}
       if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
-      const wb=new ExcelJS.Workbook();wb.creator='SMART QC';wb.created=new Date();
+      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();
       const border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
       const font={name:'Times New Roman',size:10};
       const headFont={name:'Times New Roman',size:10,bold:true};
@@ -7800,8 +7805,8 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
       const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`;
       const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`;
       const docrels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`;
-      const core=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>QC Vi sinh (TĐ)</dc:title><dc:creator>SMART QC</dc:creator><cp:lastModifiedBy>SMART QC</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created></cp:coreProperties>`;
-      const app=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>SMART QC</Application></Properties>`;
+      const core=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>QC Vi sinh (TĐ)</dc:title><dc:creator>SMART VSMD</dc:creator><cp:lastModifiedBy>SMART VSMD</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created></cp:coreProperties>`;
+      const app=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>SMART VSMD</Application></Properties>`;
       zip.file('[Content_Types].xml',ct);zip.folder('_rels').file('.rels',rels);zip.folder('word').file('document.xml',docXml);zip.folder('word').file('styles.xml',styles);zip.folder('word').folder('_rels').file('document.xml.rels',docrels);zip.folder('docProps').file('core.xml',core);zip.folder('docProps').file('app.xml',app);
       const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
       const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='QC_ViSinh_TD_'+(d.tdVkName||d.testStrain||'Report').replace(/[^a-zA-Z0-9À-ỹ _-]/g,'_')+'_'+todayISO()+'.docx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
@@ -7840,7 +7845,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
   try{
     if(typeof currentView!=='undefined' && currentView==='virology-tc') renderVirologyTC();
     if(typeof currentView!=='undefined' && currentView==='virology-td') renderVirologyTD();
-  }catch(e){ console.warn('SMART QC requested virology patch init:',e); }
+  }catch(e){ console.warn('SMART VSMD requested virology patch init:',e); }
 })();
 </script>
 
@@ -7936,7 +7941,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
         const totalEl=head?.querySelector('.chem-total-used-box strong');
         if(totalEl)totalEl.textContent=String(total);
       });
-    }catch(e){console.warn('SMART QC chemical formula refresh:',e);}
+    }catch(e){console.warn('SMART VSMD chemical formula refresh:',e);}
   }
   window.refreshChemicalAutoCells=refreshAutoCells;
 
@@ -8026,11 +8031,11 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
   try{
     const active=document.querySelector('.view.active[id^="view-chemical-"]');
     if(active){const id=active.id.replace('view-chemical-','');if(id==='iflash'||id==='dxi')window.renderChemicalMachine(id);}
-  }catch(e){console.error('SMART QC chemical formula patch:',e);}
+  }catch(e){console.error('SMART VSMD chemical formula patch:',e);}
 })();
 </script>
 
-<!-- SMART QC: fix usage when next-day opening includes a replenishment from KHO -->
+<!-- SMART VSMD: fix usage when next-day opening includes a replenishment from KHO -->
 <style id="smart-chemical-usage-replenishment-fix">
 .chem-auto-value{font-variant-numeric:tabular-nums}
 </style>
@@ -8141,7 +8146,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
         const totalEl=head?.querySelector('.chem-total-used-box strong');
         if(totalEl)totalEl.textContent=String(total===null?0:total);
       });
-    }catch(e){console.warn('SMART QC usage/replenishment final fix:',e);}
+    }catch(e){console.warn('SMART VSMD usage/replenishment final fix:',e);}
   };
 
   const prevSet=window.chemicalSet;
@@ -8160,15 +8165,15 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
   }catch(e){}
 })();
 
-/* SMART QC — NEW: VS CHEMICALS / EXTERNAL QC / CLS DUTY REPORT */
+/* SMART VSMD — NEW: VS CHEMICALS / EXTERNAL QC / CLS DUTY REPORT */
 (function(){
 const VSC=[
 ['Kháng sinh','Cefazolin','Lọ'],['Kháng sinh','Ceftriaxone','Lọ'],['Kháng sinh','Ceftazidime','Lọ'],['Kháng sinh','Cefepime','Lọ'],['Kháng sinh','Ertapenem','Lọ'],['Kháng sinh','Imipenem','Lọ'],['Kháng sinh','Meropenem','Lọ'],['Kháng sinh','Ampicillin–sulbactam','Lọ'],['Kháng sinh','Piperacillin–tazobactam','Lọ'],['Kháng sinh','Ceftazidime–avibactam','Lọ'],['Kháng sinh','Gentamicin','Lọ'],['Kháng sinh','Amikacin','Lọ'],['Kháng sinh','Minocycline','Lọ'],['Kháng sinh','Ciprofloxacin','Lọ'],['Kháng sinh','Levofloxacin','Lọ'],['Kháng sinh','Trimethoprim–sulfamethoxazole','Lọ'],['Kháng sinh','Penicillin G','Lọ'],['Kháng sinh','Ampicillin','Lọ'],['Kháng sinh','Oxacillin','Lọ'],['Kháng sinh','Cefoxitin','Lọ'],['Kháng sinh','Vancomycin','Lọ'],['Kháng sinh','Gentamicin','Lọ'],['Kháng sinh','Erythromycin','Lọ'],['Kháng sinh','Clindamycin','Lọ'],['Kháng sinh','Tetracycline','Lọ'],['Kháng sinh','Doxycycline','Lọ'],['Kháng sinh','Linezolid','Lọ'],
 ['Định danh-KSĐ tự động','AST indication Solution','Lọ'],['Định danh-KSĐ tự động','Pmic/ID Panel','Panel'],['Định danh-KSĐ tự động','Nmic/ID Panel','Panel'],['Định danh-KSĐ tự động','AST broth','Lọ'],['Định danh-KSĐ tự động','ID Broth','Lọ'],
 ['Hóa chất phụ-Môi trường pha chế','Bile Esculin Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','Mullerhilton Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','MacKonkey Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','Methyl Red - Voges Proskauer Agar (MR-VP)','Hộp']
 ];
-const IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
-const MIC=['Nấm da','Nấm miệng','Nấm móng','Nấm sinh dục','Demodex','Nhuộm gram','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)','Soi tươi tìm ký sinh trùng (trichomonas)'];
+const IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
+const MIC=['Nấm da','Nấm miệng','Nấm móng','Nấm sinh dục','Demodex','Nhuộm gram','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
 const DEPT=['Hồi sức cấp cứu','Phục hồi chức năng','Y học cổ truyền','Gây mê hồi sức','Ngoại tạo hình','Ngoại tổng hợp','Nội tổng hợp','Vảy nến tự miễn','Da tổng hợp','Da lây nhiễm','Sản','Ngoại KTC','Nhi'], DEPT_ER=[...DEPT,'Phòng lưu'];
 const E=v=>escapeHtml(v??'');
 function ensure(){if(!Array.isArray(state.chemicalVS))state.chemicalVS=[];if(!Array.isArray(state.externalQC))state.externalQC=[];if(!Array.isArray(state.clsReports))state.clsReports=[];if(!state.clsSettings)state.clsSettings={departments:[]};if(!Array.isArray(state.clsSettings.departments))state.clsSettings.departments=[];if(!state.chemicalVS.length)VSC.forEach((x,i)=>state.chemicalVS.push({id:uid('CVS'),seed:i,type:x[0],name:x[1],unit:x[2],lot:'',date:'',expDate:'',daily:{},minStock:20,maxStock:50}));}
@@ -8229,7 +8234,7 @@ window.exportCLS=function(t,id){let r=state.clsReports.find(x=>x.id===id)||state
 
 const css=document.createElement('style');css.textContent=`.cvs-toolbar{display:grid;grid-template-columns:1fr 220px;gap:12px}.cvs-wrap{max-height:calc(100vh - 300px)}.cvs-table{min-width:1500px}.cvs-input{min-width:80px;padding:7px}.cvs-tabs{display:flex;gap:8px}.ext-letterhead,.ext-ph,.cls-head{display:grid;grid-template-columns:1fr 1fr;text-align:center;font-family:'Times New Roman',serif}.ext-title,.ext-center{text-align:center}.ext-input-wrap{max-height:440px}.ext-input{min-width:1050px}.ext-input input{min-width:80px;padding:6px}.ext-note-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ext-ph{font-size:10pt;line-height:1.35}.ext-print,.cls-print{font-family:'Times New Roman',serif;color:#111;background:#fff;font-size:11pt}.ext-print h1,.cls-print h1{text-align:center;font-size:15pt}.ext-print table,.cls-print table{width:100%;border-collapse:collapse;table-layout:fixed}.ext-print th,.ext-print td,.cls-print th,.cls-print td{border:1px solid #333;padding:4px;text-align:center;vertical-align:middle;word-break:break-word}.ext-meta,.cls-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px 18px}.ext-note{min-height:35px;border-bottom:1px dotted #555;white-space:pre-wrap}.ext-sign{margin-top:25px;min-height:70px}.ext-sign-grid{display:grid!important;grid-template-columns:1fr 1fr 1fr!important;grid-template-rows:auto auto!important;text-align:center!important;align-items:start!important;gap:28px 20px!important}.ext-sign-grid>div{min-height:22px}.cls-sign{display:grid;grid-template-columns:1fr 1fr;text-align:center;margin-top:25px;min-height:70px}.cls-bottom-actions{justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}.cls-filter{display:block;max-width:360px;margin:5px 0;padding:7px}.cls-sec{margin-top:15px}.cls-case input,.cls-case select{min-width:120px}.cls-print h2{font-size:12pt}.cls-print h3{font-size:11pt}@media(max-width:700px){.cvs-toolbar,.ext-note-grid,.ext-meta,.cls-meta{grid-template-columns:1fr}.ext-input-wrap{max-height:none}}@media print{body.new-printing>*:not(#newPrintHost){display:none!important}body.new-printing #newPrintHost{display:block!important}@page{size:A4 portrait;margin:8mm}}`;document.head.appendChild(css);
 const oldB=buildViewShells;buildViewShells=function(){oldB();['chemical-vs','external-qc','reports-cls'].forEach(id=>{if(!document.getElementById('view-'+id))document.getElementById('content').insertAdjacentHTML('beforeend',`<div class="view" id="view-${id}"></div>`)});};
-/* SMART QC — FIX: render nội dung 3 module mới khi được chọn */
+/* SMART VSMD — FIX: render nội dung 3 module mới khi được chọn */
 const oldRenderViewNewModules=renderView;
 renderView=function(view){
   if(view==='chemical-vs') renderChemicalVS();
@@ -8241,12 +8246,12 @@ renderView=function(view){
 const oldM=migrateState;migrateState=function(){oldM();ensure()};
 ensure();
 if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls'].includes(currentView)){
-  try{renderView(currentView)}catch(e){console.warn('SMART QC render new module:',e)}
+  try{renderView(currentView)}catch(e){console.warn('SMART VSMD render new module:',e)}
 }
 })();
 
 
-/* SMART QC — FIX HIỂN THỊ QUẢN LÝ HÓA CHẤT VS: render trực tiếp và không phụ thuộc renderView cũ */
+/* SMART VSMD — FIX HIỂN THỊ QUẢN LÝ HÓA CHẤT VS: render trực tiếp và không phụ thuộc renderView cũ */
 (function(){
   function renderVSDirect(){
     try{
@@ -8259,7 +8264,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
       const stock=(c)=>{let total=0;Object.keys(c.daily||{}).filter(k=>k<=d).sort().forEach(k=>{const r=c.daily[k]||{};total=Math.max(0,total+(Number(r.receive)||0)-(Number(r.execute)||0));});return total;};
       const esc=window.escapeHtml||function(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));};
       el.innerHTML=`<div class="card"><div class="card-head"><div><h3>Quản lý Hóa chất VS</h3><span class="hint">Theo dõi theo ngày; Kho = Kho trước + Nhận − Thực hiện, cùng kiểu sổ hóa chất MD iFlash 9000.</span></div><button class="btn primary sm" onclick="openAddChemicalVS()">+ Thêm hóa chất mới</button></div><div class="card-body"><div class="cvs-toolbar"><label class="field"><span class="fl-label">Loại</span><select onchange="state.cvsFilter=this.value;renderChemicalVS()">${types.map(x=>`<option value="${esc(x)}" ${x===f?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label class="field"><span class="fl-label">Ngày</span><input type="date" value="${esc(d)}" onchange="setChemicalVSDate(this.value)"></label></div></div></div><div class="card" style="margin-top:14px"><div class="card-head"><h3>Sổ theo dõi hóa chất VS — ${esc(String(d).split('-').reverse().join('/'))}</h3><span class="tag">${list.length} hóa chất</span></div><div class="table-wrap cvs-wrap"><table class="cvs-table"><thead><tr><th>Loại</th><th>Tên hóa chất</th><th>Đơn vị</th><th>Kho</th><th>Nhận</th><th>Trên máy</th><th>Thực hiện</th><th>Cảnh báo</th><th>LOT</th><th>DATE</th><th>HSD</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map(c=>{const r=(c.daily&&c.daily[d])||{},s=stock(c),w=s<=0?['Nguy hiểm','danger']:s<=Number(c.minStock||20)?['Sắp hết','warning']:['OK','pass'];return `<tr><td><span class="tag">${esc(c.type)}</span></td><td><b>${esc(c.name)}</b></td><td>${esc(c.unit)}</td><td><b>${s}</b></td><td><input class="cvs-input" type="number" min="0" value="${esc(r.receive||'')}" onchange="setChemicalVSDaily('${c.id}','${d}','receive',this.value)"></td><td><input class="cvs-input" type="number" min="0" value="${esc(r.onMachine||'')}" onchange="setChemicalVSDaily('${c.id}','${d}','onMachine',this.value)"></td><td><input class="cvs-input" type="number" min="0" value="${esc(r.execute||'')}" onchange="setChemicalVSDaily('${c.id}','${d}','execute',this.value)"></td><td><span class="pill ${w[1]}"><span class="dot"></span>${w[0]}</span></td><td><input class="cvs-input" value="${esc(r.lot??c.lot??'')}" onchange="setChemicalVSDaily('${c.id}','${d}','lot',this.value)"></td><td><input class="cvs-input" type="date" value="${esc(r.lotDate??c.date??'')}" onchange="setChemicalVSDaily('${c.id}','${d}','lotDate',this.value)"></td><td><input class="cvs-input" type="date" value="${esc(r.expDate??c.expDate??'')}" onchange="setChemicalVSDaily('${c.id}','${d}','expDate',this.value)"></td><td><input class="cvs-input" value="${esc(r.note||'')}" onchange="setChemicalVSDaily('${c.id}','${d}','note',this.value)"></td><td><button class="btn ghost sm" onclick="deleteChemicalVS('${c.id}')">Xóa</button></td></tr>`}).join('')}</tbody></table></div></div>`;
-    }catch(err){console.error('SMART QC VS render error:',err);const el=document.getElementById('view-chemical-vs');if(el)el.innerHTML='<div class="card"><div class="card-body"><b>Quản lý Hóa chất VS</b><p>Không thể hiển thị dữ liệu. Vui lòng tải lại trang.</p></div></div>';}
+    }catch(err){console.error('SMART VSMD VS render error:',err);const el=document.getElementById('view-chemical-vs');if(el)el.innerHTML='<div class="card"><div class="card-body"><b>Quản lý Hóa chất VS</b><p>Không thể hiển thị dữ liệu. Vui lòng tải lại trang.</p></div></div>';}
   }
   window.renderChemicalVS=renderVSDirect;
   const baseGo=window.go;
@@ -8609,7 +8614,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   const oldRenderView=window.renderView;
   window.renderView=function(view){if(view==='reports-cls'){render();return;}return typeof oldRenderView==='function'?oldRenderView(view):undefined;};
   ensureState();
-  if(typeof currentView!=='undefined'&&currentView==='reports-cls')setTimeout(()=>{try{activateCLS();}catch(e){console.warn('SMART QC CLS final render:',e);}},0);
+  if(typeof currentView!=='undefined'&&currentView==='reports-cls')setTimeout(()=>{try{activateCLS();}catch(e){console.warn('SMART VSMD CLS final render:',e);}},0);
 })();
 </script>
 <script id="smart-qc-final-request-fix">
@@ -8675,7 +8680,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
         const html=`<div class="card chem-table-card chem-vs-aux-exact"><div class="card-head"><div><h3>Hóa chất phụ — Môi trường pha chế</h3><span class="hint">Theo dõi theo THÁNG/NĂM, giống sổ hóa chất phụ của iFlash 9000.</span></div><span class="tag">${String(m).padStart(2,'0')}/${y}</span></div><div class="chem-table-wrap"><table class="chem-table chem-aux-table"><thead><tr><th>Tháng/Năm</th>${names.map(n=>`<th>${n[0]}<br>(${n[1]})</th>`).join('')}</tr></thead><tbody><tr><td class="chem-date">${String(m).padStart(2,'0')}/${y}</td>${names.map(n=>`<td><input class="chem-input chem-zero-input" type="number" min="0" step="any" value="${E3(vals[n[2]]??'')}" placeholder="0" onchange="window.vsSetAuxExact('${key}','${n[2]}',this.value)"></td>`).join('')}</tr></tbody></table></div></div>`;
         const auxAnchor=[...el.querySelectorAll('.chem-test-meta-monthly')].pop();if(auxAnchor)auxAnchor.insertAdjacentHTML('afterend',html);else el.insertAdjacentHTML('beforeend',html);
       }
-    }catch(e){console.error('SMART QC final VS fix:',e);}
+    }catch(e){console.error('SMART VSMD final VS fix:',e);}
   };
 
   /* 3. Ngoại kiểm: only data-bearing content; Word/PDF/Excel; both signature lines show (Đã ký). */
@@ -8813,8 +8818,8 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   /* ================================================================
      3. BÁO CÁO TRỰC CLS: danh mục chuẩn + nút thêm mới + xuất sạch dữ liệu.
      ================================================================ */
-  const STD_IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu] (R)','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
-  const STD_MIC=['Nấm da','Nấm miệng','Nấm móng','Nấm sinh dục','Demodex','Nhuộm gram','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)','Soi tươi tìm ký sinh trùng (trichomonas)'];
+  const STD_IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
+  const STD_MIC=['Nấm da','Nấm miệng','Nấm móng','Nấm sinh dục','Demodex','Nhuộm gram','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
   function catalog(type){
     state.clsSettings=state.clsSettings||{};
     const key=type==='imm'?'customImmunology':'customMicrobiology';
@@ -8947,8 +8952,8 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   /* ================================================================
      BÁO CÁO TRỰC CLS — luôn hiển thị đủ danh mục; lọc để nhập từng XN
      ================================================================ */
-  const IMM_STD=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
-  const MIC_STD=['Nấm da','Nấm miệng','Nấm móng','Nấm sinh dục','Demodex','Nhuộm gram','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas),'Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
+  const IMM_STD=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
+  const MIC_STD=['Nấm da','Nấm miệng','Nấm móng','Nấm sinh dục','Demodex','Nhuộm gram','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
   /* Bảng đổi tên xét nghiệm do nút "Sửa xét nghiệm" tạo ra: {tên gốc: tên mới}. */
   function renameMap(type){const k=type==='imm'?'renameImmunology':'renameMicrobiology';const m=state.clsSettings&&state.clsSettings[k];return m&&typeof m==='object'&&!Array.isArray(m)?m:{};}
   function renamed(type,name){const m=renameMap(type);const n=trim(name);return Object.prototype.hasOwnProperty.call(m,n)&&has(m[n])?trim(m[n]):n;}
@@ -9151,7 +9156,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
     z.folder('_rels').file('.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>');
     z.folder('word').file('document.xml',doc);if(footerXml)z.folder('word').file('footer1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+footerXml+'<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p></w:ftr>');z.folder('word').file('styles.xml','<?xml version="1.0" encoding="UTF-8"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>');
     z.folder('word').folder('_rels').file('document.xml.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+(footerXml?'<Relationship Id="rIdSmartFooter1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>':'')+'</Relationships>');
-    z.folder('docProps').file('core.xml',`<?xml version="1.0" encoding="UTF-8"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${xml(title)}</dc:title><dc:creator>SMART QC</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created></cp:coreProperties>`);
+    z.folder('docProps').file('core.xml',`<?xml version="1.0" encoding="UTF-8"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${xml(title)}</dc:title><dc:creator>SMART VSMD</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created></cp:coreProperties>`);
     const blob=await z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});download(blob,`${title}_${new Date().toISOString().slice(0,10)}.docx`);
   }
   // Expose only the requested export helpers for the later CLS export layer.
@@ -10263,7 +10268,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
 </style>
 
 
-<!-- SMART QC — BỔ SUNG 3 MODULE QUẢN LÝ HÓA CHẤT MD THEO YÊU CẦU -->
+<!-- SMART VSMD — BỔ SUNG 3 MODULE QUẢN LÝ HÓA CHẤT MD THEO YÊU CẦU -->
 <style id="smart-chemical-md-added-modules-style">
   .chem-added-hub-note{font-size:11.5px;color:var(--text-muted);margin-top:4px}
   .chem-added-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}
@@ -10411,7 +10416,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
           '</div></td>';
       });rows+='</tr>';
     }
-    el.innerHTML='<div class="card"><div class="card-head"><div><h3>'+title+'</h3><span class="hint">'+description+'</span></div><span class="tag">'+tests.length+' xét nghiệm</span></div><div class="card-body">'+ymControls(kind)+'<div class="chem-legend"><span class="pill pass"><span class="dot"></span> OK</span><span class="pill warning"><span class="dot"></span> Sắp hết</span><span class="pill danger"><span class="dot"></span> Nguy hiểm</span></div></div></div><div class="card chem-table-card"><div class="card-head"><div><h3>Sổ theo dõi hóa chất — '+title+'</h3><span class="hint">Kho, Nhận, Đầu ngày, Cuối ngày, Sử dụng và Cảnh báo được tính độc lập theo từng xét nghiệm và từng ngày. Dữ liệu được lưu vào state SMART QC.</span></div></div><div class="chem-added-table-wrap"><table class="chem-added-machine-table"><thead><tr><th class="chem-added-day">Ngày</th>'+heads+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    el.innerHTML='<div class="card"><div class="card-head"><div><h3>'+title+'</h3><span class="hint">'+description+'</span></div><span class="tag">'+tests.length+' xét nghiệm</span></div><div class="card-body">'+ymControls(kind)+'<div class="chem-legend"><span class="pill pass"><span class="dot"></span> OK</span><span class="pill warning"><span class="dot"></span> Sắp hết</span><span class="pill danger"><span class="dot"></span> Nguy hiểm</span></div></div></div><div class="card chem-table-card"><div class="card-head"><div><h3>Sổ theo dõi hóa chất — '+title+'</h3><span class="hint">Kho, Nhận, Đầu ngày, Cuối ngày, Sử dụng và Cảnh báo được tính độc lập theo từng xét nghiệm và từng ngày. Dữ liệu được lưu vào state SMART VSMD.</span></div></div><div class="chem-added-table-wrap"><table class="chem-added-machine-table"><thead><tr><th class="chem-added-day">Ngày</th>'+heads+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }
 
   function allergen53Stock(day,y,m){let stock=0;for(let d=1;d<=day;d++){const r=chemicalGet('allergen53','shared',date(y,m,d),false)||{};stock=Math.max(0,stock+(has(r.receive)?num(r.receive):0)-(has(r.execute)?num(r.execute):0));}return stock;}
@@ -10467,7 +10472,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       ];
       const ids=new Set((parent.children||[]).map(x=>x.id));parent.children=parent.children||[];extras.forEach(x=>{if(!ids.has(x.id))parent.children.splice(Math.max(0,parent.children.length-1),0,x);});
     }
-  }catch(e){console.warn('SMART QC added chemical nav:',e);}
+  }catch(e){console.warn('SMART VSMD added chemical nav:',e);}
 
   // Mở rộng điều phối view nhưng không thay đổi các view cũ.
   const oldRenderView=window.renderView;
@@ -10522,7 +10527,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
 })();
 </script>
 
-<!-- SMART QC EXTENSION: QC Thuốc nhuộm + QC Môi trường nuôi cấy -->
+<!-- SMART VSMD EXTENSION: QC Thuốc nhuộm + QC Môi trường nuôi cấy -->
 <style id="smart-qc-dye-media-screen-fix">
 /* Bổ sung CSS hiển thị trên màn hình (xem trước + form nhập) cho 2 module Thuốc nhuộm / Môi trường nuôi cấy. Chỉ dùng class riêng của 2 module. */
 .smq-exact-dye-form,.smq-exact-media-form{font-family:'Times New Roman',Times,serif;color:#111;background:#fff;width:100%;margin:0 auto}
@@ -11077,7 +11082,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
         }
         (async()=>{
           try{
-            const out=new ExcelJS.Workbook(); out.creator='SMART QC'; out.created=new Date();
+            const out=new ExcelJS.Workbook(); out.creator='SMART VSMD'; out.created=new Date();
             (wb.SheetNames||[]).forEach(sn=>{
               const src=wb.Sheets[sn], dst=out.addWorksheet(sn);
               const range=src['!ref']?XLSX.utils.decode_range(src['!ref']):{s:{r:0,c:0},e:{r:0,c:0}};
@@ -11094,7 +11099,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
             await window.SMART_QC_ADD_SIGNATURES_EXCELJS(out);
             const buffer=await out.xlsx.writeBuffer();
             downloadBlob(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),filename);
-          }catch(e){console.error('SMART QC SheetJS→ExcelJS signature export:',e);oldWrite.call(this,wb,filename,opts);}
+          }catch(e){console.error('SMART VSMD SheetJS→ExcelJS signature export:',e);oldWrite.call(this,wb,filename,opts);}
         })();
         return;
       }catch(e){return oldWrite.call(this,wb,filename,opts);}
@@ -11237,7 +11242,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
             XLSX.utils.sheet_add_aoa(ws,[['Ngoài giờ',oh]],{origin:{r:row-1,c:0}});
           }
         }
-      }catch(e){console.warn('SMART QC final Excel outside-hours patch:',e);}
+      }catch(e){console.warn('SMART VSMD final Excel outside-hours patch:',e);}
       return baseWrite.call(this,wb,filename,opts);
     };
     wrappedWrite.__smartFinalSigWrap=true;
@@ -11404,7 +11409,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       const ws=XLSX.utils.aoa_to_sheet(a);ws['!cols']=[{wch:8},{wch:38},{wch:14},{wch:18},{wch:24},{wch:24}];
       const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Truc CLS');
       if(window.SMART_QC_ADD_SIGNATURES_EXCELJS&&window.ExcelJS){
-        const out=new ExcelJS.Workbook();out.creator='SMART QC';
+        const out=new ExcelJS.Workbook();out.creator='SMART VSMD';
         const dst=out.addWorksheet('Truc CLS',{views:[{showGridLines:false}]});
         const range=XLSX.utils.decode_range(ws['!ref']||'A1:A1');
         for(let rr=range.s.r;rr<=range.e.r;rr++)for(let cc=range.s.c;cc<=range.e.c;cc++){const cell=ws[XLSX.utils.encode_cell({r:rr,c:cc})];if(cell)dst.getCell(rr+1,cc+1).value=cell.v;}
@@ -11438,7 +11443,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
     if(!out)return out;
     try{
       if(typeof window.SMART_QC_APPLY_SIGNATURES==='function')out=window.SMART_QC_APPLY_SIGNATURES(out);
-    }catch(e){console.warn('SMART QC signature prepare:',e)}
+    }catch(e){console.warn('SMART VSMD signature prepare:',e)}
     /* Ngoài giờ chỉ xuất khi người dùng thực sự nhập dữ liệu. */
     try{
       if(/SỔ GHI CHÉP THƯỜNG TRỰC/i.test(out)&&!/Ngoài\s*giờ\s*:/i.test(out)){
@@ -11458,7 +11463,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
           }
         }
       }
-    }catch(e){console.warn('SMART QC outside-hours prepare:',e)}
+    }catch(e){console.warn('SMART VSMD outside-hours prepare:',e)}
     return out;
   }
 
@@ -11505,9 +11510,9 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
     `;
     try{
       w.document.open();
-      w.document.write('<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>'+esc(title||'SMART QC')+'</title><style>'+css+'\n'+extra+'</style></head><body>'+body+'</body></html>');
+      w.document.write('<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>'+esc(title||'SMART VSMD')+'</title><style>'+css+'\n'+extra+'</style></head><body>'+body+'</body></html>');
       w.document.close();
-      const printNow=()=>{try{w.focus();w.print();}catch(e){console.error('SMART QC universal print:',e)}};
+      const printNow=()=>{try{w.focus();w.print();}catch(e){console.error('SMART VSMD universal print:',e)}};
       const imgs=Array.from(w.document.images||[]);
       if(!imgs.length){setTimeout(printNow,450);return;}
       let left=imgs.length,done=false;
@@ -11519,10 +11524,10 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   window.__smartUniversalPrint=universalPrint;
 
   /* All common PDF/print entry points use one clean print window. */
-  window.__smartDoPrint=function(html){return universalPrint('SMART QC',html,'portrait')};
-  window.printNew=function(html){return universalPrint('SMART QC',html,'portrait')};
-  window.printWithClass=function(html,orientation){return universalPrint('SMART QC',html,orientation||'portrait')};
-  window.openPrint=function(title,html,landscape){return universalPrint(title||'SMART QC',html,landscape?'landscape':'portrait')};
+  window.__smartDoPrint=function(html){return universalPrint('SMART VSMD',html,'portrait')};
+  window.printNew=function(html){return universalPrint('SMART VSMD',html,'portrait')};
+  window.printWithClass=function(html,orientation){return universalPrint('SMART VSMD',html,orientation||'portrait')};
+  window.openPrint=function(title,html,landscape){return universalPrint(title||'SMART VSMD',html,landscape?'landscape':'portrait')};
 
   /* Direct window.print() calls from legacy modules: print the prepared host/report,
      never the hidden application shell. */
@@ -11531,7 +11536,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
     const html=sourceHTML();
     if(html){
       const landscape=document.body.classList.contains('smart-print-landscape')||document.body.classList.contains('printing-report')||document.body.classList.contains('printing-report-handling');
-      return universalPrint('SMART QC',html,landscape?'landscape':'portrait');
+      return universalPrint('SMART VSMD',html,landscape?'landscape':'portrait');
     }
     if(nativePrint)return nativePrint();
   };
@@ -11887,7 +11892,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       const period=mm?mm[1].padStart(2,'0')+'/'+mm[2]:'';
       const headCells=[...table.tHead.rows[0].cells];
       const isGrid=!!rows[0]&&[...rows[0].cells].some((td,i)=>i>0&&td.querySelector('.smqx-item'));
-      const wb=new ExcelJS.Workbook();wb.creator='SMART QC';
+      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';
       const ws=wb.addWorksheet('Hóa chất',{views:[{state:'frozen',xSplit:1,ySplit:isGrid?4:3}]});
       const thin={style:'thin',color:{argb:'FF000000'}},bd={top:thin,left:thin,bottom:thin,right:thin};
       const F=(b,s)=>({name:'Times New Roman',size:s||10,bold:!!b});
@@ -12185,7 +12190,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
         const v=(state.chemicalMDView&&state.chemicalMDView.helminth)||chemicalTodayParts();
         window.smartAddedSetYM('helminth',v.year,v.month);
       }else window.renderChemicalMachine(kind);
-    }catch(e){console.error('SMART QC add chemical item:',e);}
+    }catch(e){console.error('SMART VSMD add chemical item:',e);}
   }
 
   function addTest(kind){
@@ -12277,7 +12282,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
     });
   }
   let pending=false;
-  function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;try{decorate();}catch(e){console.error('SMART QC add chemical item:',e);}});}
+  function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;try{decorate();}catch(e){console.error('SMART VSMD add chemical item:',e);}});}
   const host=document.getElementById('content')||document.body;
   new MutationObserver(schedule).observe(host,{childList:true,subtree:true});
   schedule();
@@ -12606,4 +12611,23 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
   };
 })();
 </script>
-
+<style id="smart-cls-form-wide-case-specimen-cells">
+/* Form Sổ ghi chép thường trực: 1/ Miễn dịch và 2/ Vi sinh.
+   Mở rộng ô SỐ CA và TIÊU BẢN để hiển thị đủ số (ví dụ 10, 20, 1234...).
+   Chỉ áp dụng cho màn hình hẹp (cùng ngưỡng 900px với giao diện hiện có); màn hình rộng giữ nguyên. */
+@media(max-width:900px){
+  #clsimm th:nth-child(3),#clsimm td:nth-child(3),
+  #clsimm th:nth-child(4),#clsimm td:nth-child(4),
+  #clsmic th:nth-child(3),#clsmic td:nth-child(3),
+  #clsmic th:nth-child(4),#clsmic td:nth-child(4){min-width:96px;width:96px;padding-left:6px;padding-right:6px}
+  #clsimm td:nth-child(3) input,#clsimm td:nth-child(4) input,
+  #clsmic td:nth-child(3) input,#clsmic td:nth-child(4) input{width:100%;min-width:0;box-sizing:border-box;padding-left:6px;padding-right:6px;text-align:center}
+}
+</style>
+<style id="smart-pdf-preview-wide-case-specimen-cells">
+/* Xem trước dữ liệu từ PDF (1/ Miễn dịch và 2/ Vi sinh):
+   mở rộng cột SỐ CA và TIÊU BẢN để hiển thị đủ số. */
+.smqpdf-table th:nth-child(5),.smqpdf-table td:nth-child(5),
+.smqpdf-table th:nth-child(6),.smqpdf-table td:nth-child(6){width:110px!important;min-width:110px!important}
+.smqpdf-table td:nth-child(5) input,.smqpdf-table td:nth-child(6) input{width:100%!important;min-width:0;box-sizing:border-box;padding-left:6px!important;padding-right:6px!important;text-align:center}
+</style>
