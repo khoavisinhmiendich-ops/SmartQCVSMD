@@ -12,6 +12,368 @@
 <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="512x512" href="./icons/icon-512.png">
 <title>SMART VSMD — Quản lý chất lượng Khoa Vi sinh - Miễn dịch</title>
+<!-- SMART VSMD Shield: chống mã độc/xâm nhập, giám sát toàn vẹn dữ liệu, cảnh báo tấn công -->
+<script id="smart-security-shield-20261001">
+(function(){
+  'use strict';
+  if(window.__SMQ_SHIELD__) return; window.__SMQ_SHIELD__=true;
+
+  /* ================= Cấu hình ================= */
+  var STORAGE_KEY='smartqc_database_v1', BACKUP_KEY='smartqc_database_backup_v1';
+  var RECK='smartqc_security_record_v1', LOGK='smartqc_security_log_v1', AUTHK='smartqc_security_auth_v1';
+  var ALLOW=['cdnjs.cloudflare.com','cdn.jsdelivr.net','fonts.googleapis.com','fonts.gstatic.com','supabase.co','supabase.in'];
+  var DANGER=/<\s*\/?\s*(script|iframe|object|embed)\b|javascript\s*:|<[^>]{0,200}\bon(error|load|focus|mouseover|toggle|animationstart)\s*=/i;
+  var _get=Storage.prototype.getItem, _set=Storage.prototype.setItem;
+  function lsGet(k){try{return _get.call(localStorage,k);}catch(e){return null;}}
+  function lsSet(k,v){try{_set.call(localStorage,k,v);return true;}catch(e){return false;}}
+  var pending=[], lastEv={}, domReady=false, bannerEl=null, evCount=0;
+
+  /* ================= Băm nhanh (đồng bộ) để nhận biết dữ liệu bị sửa ngoài ứng dụng ================= */
+  function h53(str,seed){var h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(var i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
+    h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);}
+  function hashOf(s){s=String(s);return s.length+':'+h53(s,0).toString(36)+h53(s,7).toString(36);}
+
+  /* ================= Cảnh báo ================= */
+  function ensureBanner(){
+    if(bannerEl&&document.body&&document.body.contains(bannerEl)) return bannerEl;
+    if(!document.body) return null;
+    var b=document.createElement('div'); b.id='smq-shield-banner'; b.setAttribute('role','alert');
+    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483000;background:#b91c1c;color:#fff;font:13px/1.45 "IBM Plex Sans",Arial,sans-serif;padding:9px 14px;display:none;box-shadow:0 2px 10px rgba(0,0,0,.35);align-items:center;gap:10px';
+    var msg=document.createElement('div'); msg.className='smq-msg'; msg.style.cssText='flex:1;min-width:0';
+    var act=document.createElement('button'); act.className='smq-act'; act.type='button'; act.style.cssText='display:none;background:#fff;color:#b91c1c;border:0;border-radius:6px;padding:5px 10px;font-weight:600;cursor:pointer';
+    var x=document.createElement('button'); x.type='button'; x.textContent='✕'; x.setAttribute('aria-label','Đóng'); x.style.cssText='background:transparent;color:#fff;border:0;font-size:16px;cursor:pointer';
+    x.onclick=function(){b.style.display='none';};
+    act.onclick=function(){ if(window.SMART_SECURITY) window.SMART_SECURITY.restoreLatest(true); };
+    b.appendChild(msg); b.appendChild(act); b.appendChild(x); document.body.appendChild(b); bannerEl=b; return b;
+  }
+  function showBanner(e,canRestore){
+    var b=ensureBanner(); if(!b){ document.addEventListener('DOMContentLoaded',function(){showBanner(e,canRestore);},{once:true}); return; }
+    b.style.background=e.level==='warning'?'#b45309':'#b91c1c';
+    b.querySelector('.smq-msg').textContent='🛡 CẢNH BÁO BẢO MẬT: '+e.title+(e.detail?' — '+e.detail:'')+(evCount>1?'  ('+evCount+' cảnh báo)':'');
+    b.querySelector('.smq-act').style.display=canRestore?'inline-block':'none';
+    if(canRestore) b.querySelector('.smq-act').textContent='Khôi phục bản an toàn';
+    b.style.display='flex';
+  }
+  function logEv(level,title,detail,canRestore){
+    detail=String(detail==null?'':detail).slice(0,300);
+    var key=title+'|'+detail, now=Date.now();
+    if(lastEv[key]&&now-lastEv[key]<10000) return null; lastEv[key]=now;
+    var e={t:new Date().toISOString(),level:level,title:title,detail:detail}; evCount++;
+    try{var a=JSON.parse(lsGet(LOGK)||'[]'); a.unshift(e); lsSet(LOGK,JSON.stringify(a.slice(0,100)));}catch(_){}
+    if(pending.length<30) pending.push(e);
+    try{console.warn('[SMART VSMD Shield]',title,detail);}catch(_){}
+    showBanner(e,!!canRestore); return e;
+  }
+
+  /* ================= IndexedDB: bản chụp an toàn + khu cách ly ================= */
+  var DBN='smartqc_security_v1';
+  function idb(){return new Promise(function(res,rej){try{var r=indexedDB.open(DBN,1);r.onupgradeneeded=function(){var d=r.result;if(!d.objectStoreNames.contains('snap'))d.createObjectStore('snap',{keyPath:'t'});if(!d.objectStoreNames.contains('quar'))d.createObjectStore('quar',{keyPath:'t'});};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
+  function idbPut(store,rec,keep){return idb().then(function(d){return new Promise(function(res){var tx=d.transaction(store,'readwrite'),s=tx.objectStore(store);s.put(rec);
+    var all=s.getAllKeys();all.onsuccess=function(){var ks=all.result.sort();while(ks.length>keep){s.delete(ks.shift());}};tx.oncomplete=function(){res(true);};tx.onerror=function(){res(false);};});}).catch(function(){return false;});}
+  function idbLatest(store){return idb().then(function(d){return new Promise(function(res){var o=d.transaction(store,'readonly').objectStore(store).getAll();o.onsuccess=function(){var a=o.result||[];a.sort(function(x,y){return y.t-x.t;});res(a);};o.onerror=function(){res([]);};});}).catch(function(){return [];});}
+  function snapshot(raw,reason){return idbPut('snap',{t:Date.now(),reason:reason,hash:hashOf(raw),len:raw.length,raw:raw},6);}
+  function quarantine(raw,reason){if(raw==null)return;return idbPut('quar',{t:Date.now(),reason:reason,hash:hashOf(raw),len:raw.length,raw:raw},4);}
+
+  /* ================= Ghi nhận / đánh giá dữ liệu chính ================= */
+  function record(raw){lsSet(RECK,JSON.stringify({h:hashOf(raw),len:raw.length,t:Date.now()}));}
+  function readRec(){try{return JSON.parse(lsGet(RECK)||'null');}catch(e){return null;}}
+  function validJson(raw){try{var o=JSON.parse(raw);return !!o&&typeof o==='object';}catch(e){return false;}}
+  function suspicious(raw,refLen){
+    if(raw==null) return true;
+    if(raw.charAt(0)!=='{'||raw.charAt(raw.length-1)!=='}') return true;
+    if(refLen>20000&&raw.length<refLen*0.3) return true;
+    return false;
+  }
+  var snapTimer=null,lastSnap=0;
+  function scheduleSnap(){
+    if(snapTimer) return;
+    snapTimer=setTimeout(function(){snapTimer=null;var raw=lsGet(STORAGE_KEY);var rec=readRec();
+      if(raw&&rec&&rec.h===hashOf(raw)&&validJson(raw)&&Date.now()-lastSnap>8*60*1000){lastSnap=Date.now();snapshot(raw,'định kỳ');}},120000);
+  }
+  /* Mọi lần ứng dụng ghi dữ liệu chính đều được ghi nhận mã băm; ghi bất thường (rỗng/hỏng/giảm đột ngột) sẽ được lưu bản trước đó. */
+  Storage.prototype.setItem=function(k,v){
+    if(k===STORAGE_KEY&&this===window.localStorage){
+      var prev=lsGet(STORAGE_KEY), r=_set.apply(this,arguments), next=String(v);
+      try{
+        var bad=suspicious(next,prev?prev.length:0);
+        if(bad&&prev&&validJson(prev)){snapshot(prev,'trước thay đổi bất thường');logEv('danger','Dữ liệu thay đổi bất thường','Dữ liệu chính bị ghi rỗng/hỏng/giảm đột ngột. Bản trước đó đã được lưu an toàn.',true);}
+        record(next); scheduleSnap();
+      }catch(_){}
+      return r;
+    }
+    return _set.apply(this,arguments);
+  };
+  function handleMismatch(raw,rec,where){
+    var bad=suspicious(raw,rec.len)||!validJson(raw||'');
+    quarantine(raw,'sai lệch mã băm ('+where+')');
+    if(bad){
+      var bk=lsGet(BACKUP_KEY);
+      if(bk&&hashOf(bk)===rec.h&&validJson(bk)){
+        lsSet(STORAGE_KEY,bk); logEv('danger','Đã tự động khôi phục dữ liệu','Dữ liệu chính bị sửa/hỏng ngoài ứng dụng; đã khôi phục từ bản sao lưu nội bộ và cách ly bản bị sửa.');
+        return 'restored';
+      }
+      if(where==='runtime'&&typeof state!=='undefined'&&state&&typeof persistNow==='function'){
+        try{persistNow();logEv('danger','Đã tự động khôi phục dữ liệu','Dữ liệu trong bộ nhớ đã được ghi đè lại lên bản bị sửa ngoài ứng dụng.');return 'restored';}catch(_){}
+      }
+      logEv('danger','Dữ liệu bị phá hoại — đang khôi phục','Đang khôi phục từ bản chụp an toàn gần nhất.',true);
+      restoreLatest(false,true); return 'restoring';
+    }
+    record(raw);
+    logEv('warning','Dữ liệu bị thay đổi ngoài ứng dụng','Phát hiện chỉnh sửa trực tiếp vào kho dữ liệu (không qua SMART VSMD). Bản gốc đã cách ly; có thể khôi phục bản an toàn nếu không phải bạn thực hiện.',true);
+    return 'warned';
+  }
+  function restoreLatest(askConfirm,auto){
+    return idbLatest('snap').then(function(list){
+      var s=null;for(var i=0;i<list.length;i++){if(list[i].raw&&validJson(list[i].raw)){s=list[i];break;}}
+      if(!s){logEv('warning','Chưa có bản chụp an toàn','Chưa có bản chụp nào để khôi phục. Hãy dùng chức năng sao lưu/cloud nếu có.');return false;}
+      if(askConfirm&&!window.confirm('Khôi phục dữ liệu về bản an toàn lúc '+new Date(s.t).toLocaleString('vi-VN')+' ? Dữ liệu hiện tại sẽ được cách ly.')) return false;
+      var cur=lsGet(STORAGE_KEY); if(cur) quarantine(cur,'trước khi khôi phục');
+      lsSet(STORAGE_KEY,s.raw); record(s.raw);
+      var flag='smq_restore_reload';
+      if(auto){try{if(sessionStorage.getItem(flag)){return true;} sessionStorage.setItem(flag,'1');}catch(_){}}
+      try{location.reload();}catch(_){}
+      return true;
+    });
+  }
+  function verifyStored(where){
+    var raw=lsGet(STORAGE_KEY), rec=readRec();
+    if(!rec){ if(raw!=null) record(raw); return; }
+    if(raw!=null&&rec.h===hashOf(raw)) return;
+    if(raw==null){ handleMismatch(null,rec,where); return; }
+    handleMismatch(raw,rec,where);
+  }
+  try{verifyStored('startup');}catch(e){console.error('Shield startup',e);}
+  window.addEventListener('storage',function(e){
+    if(e.storageArea!==window.localStorage) return;
+    if(e.key===STORAGE_KEY||e.key===null){setTimeout(function(){try{verifyStored('runtime');}catch(_){}},900);}
+  });
+  setTimeout(function(){var raw=lsGet(STORAGE_KEY);if(raw&&validJson(raw)&&lsGet(RECK)){snapshot(raw,'khởi động');lastSnap=Date.now();}},4000);
+
+  /* ================= Chặn kết nối/tải mã từ nguồn lạ ================= */
+  function hostOk(u){
+    try{var x=new URL(String(u),location.href);
+      if(/^(blob:|data:|about:)$/.test(x.protocol)) return true;
+      if(x.protocol==='file:'||x.origin===location.origin) return true;
+      var h=x.hostname.toLowerCase();
+      return ALLOW.some(function(a){return h===a||h.slice(-(a.length+1))==='.'+a;});
+    }catch(e){return false;}
+  }
+  var _fetch=window.fetch;
+  if(typeof _fetch==='function') window.fetch=function(i,o){
+    var u=typeof i==='string'?i:(i&&i.url)||String(i);
+    if(!hostOk(u)){logEv('danger','Đã chặn kết nối ra ngoài trái phép',u);return Promise.reject(new TypeError('Blocked by SMART VSMD shield'));}
+    return _fetch.apply(this,arguments);
+  };
+  var _xo=XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open=function(m,u){
+    if(!hostOk(u)){logEv('danger','Đã chặn kết nối ra ngoài trái phép',u);throw new Error('Blocked by SMART VSMD shield');}
+    return _xo.apply(this,arguments);
+  };
+  if(navigator.sendBeacon){var _sb=navigator.sendBeacon.bind(navigator);navigator.sendBeacon=function(u,d){if(!hostOk(u)){logEv('danger','Đã chặn gửi dữ liệu ra ngoài (beacon)',u);return false;}return _sb(u,d);};}
+  if(window.WebSocket){var _WS=window.WebSocket;var W=function(u,p){if(!hostOk(String(u).replace(/^ws/i,'http'))){logEv('danger','Đã chặn kết nối WebSocket lạ',u);throw new Error('Blocked by SMART VSMD shield');}return p===undefined?new _WS(u):new _WS(u,p);};
+    W.prototype=_WS.prototype;['CONNECTING','OPEN','CLOSING','CLOSED'].forEach(function(k){try{W[k]=_WS[k];}catch(_){}});window.WebSocket=W;}
+  function guardSrcSetter(C,prop){
+    try{var d=Object.getOwnPropertyDescriptor(C.prototype,prop);if(!d||!d.set)return;
+      Object.defineProperty(C.prototype,prop,{get:d.get,enumerable:d.enumerable,configurable:true,set:function(v){
+        if(!hostOk(v)||/^\s*(javascript|data):/i.test(String(v))){logEv('danger','Đã chặn tải mã/khung lạ',v);return;} d.set.call(this,v);}});}catch(_){}
+  }
+  guardSrcSetter(window.HTMLScriptElement,'src');
+  guardSrcSetter(window.HTMLIFrameElement,'src');
+  guardSrcSetter(window.HTMLEmbedElement,'src');
+  guardSrcSetter(window.HTMLObjectElement,'data');
+  var _sa=Element.prototype.setAttribute;
+  Element.prototype.setAttribute=function(n,v){
+    try{var t=this.tagName,ln=String(n).toLowerCase();
+      if((ln==='src'&&/^(SCRIPT|IFRAME|EMBED)$/.test(t))||(ln==='data'&&t==='OBJECT')){if(!hostOk(v)||/^\s*data:/i.test(String(v))){logEv('danger','Đã chặn tải mã/khung lạ',v);return;}}
+      if(/^(href|src|action|formaction|xlink:href)$/.test(ln)&&/^\s*javascript:/i.test(String(v))){logEv('danger','Đã vô hiệu hoá liên kết javascript: độc hại',t);return;}
+    }catch(_){}
+    return _sa.apply(this,arguments);
+  };
+  try{var meta=document.createElement('meta');meta.httpEquiv='Content-Security-Policy';meta.content="object-src 'none'; base-uri 'self'; form-action 'self'";(document.head||document.documentElement).appendChild(meta);}catch(_){}
+
+  /* ================= Giám sát DOM: gỡ phần tử độc hại bị chèn vào ================= */
+  document.addEventListener('DOMContentLoaded',function(){domReady=true;},{once:true});
+  var SEL='script,iframe,frame,object,embed,applet,base,meta[http-equiv],link[rel],form[action],[onerror],[onload],[onfocus],[onmouseover],[onanimationstart],[ontoggle],[href^="javascript:" i],[src^="javascript:" i],[formaction^="javascript:" i],[srcdoc]';
+  var EXFIL=/document\.cookie|localStorage|sessionStorage|\beval\s*\(|\batob\s*\(|sendBeacon|XMLHttpRequest|\bfetch\s*\(|\bimport\s*\(|\.src\s*=|location\s*=|location\.href/i;
+  function fixEl(n){
+    try{
+      var tag=n.tagName,u;
+      if(tag==='SCRIPT'){
+        var src=n.getAttribute('src');
+        if(src){ if(!hostOk(src)||/^\s*data:/i.test(src)){n.remove();logEv('danger','Đã gỡ script từ nguồn lạ',src);} }
+        else if(domReady&&!n.hasAttribute('data-smq-ok')){n.remove();logEv('danger','Đã gỡ mã script chèn trái phép',(n.textContent||'').slice(0,120));}
+        return;
+      }
+      if(/^(IFRAME|FRAME|OBJECT|EMBED|APPLET)$/.test(tag)){
+        u=n.getAttribute('src')||n.getAttribute('data')||'';
+        var okFrame=/^(about:blank|blob:)/i.test(u)||(u&&hostOk(u)&&(function(){try{return new URL(u,location.href).origin===location.origin;}catch(e){return false;}})());
+        if(!okFrame){n.remove();logEv('danger','Đã gỡ khung/đối tượng nhúng lạ',u||tag);return;}
+      }
+      if(tag==='BASE'){n.remove();logEv('danger','Đã gỡ thẻ <base> chèn trái phép','');return;}
+      if(tag==='META'&&/refresh/i.test(n.getAttribute('http-equiv')||'')){n.remove();logEv('danger','Đã gỡ thẻ chuyển hướng trái phép','');return;}
+      if(tag==='LINK'&&/stylesheet|preload|modulepreload|import/i.test(n.getAttribute('rel')||'')&&n.getAttribute('href')&&!hostOk(n.getAttribute('href'))){n.remove();logEv('danger','Đã gỡ liên kết tài nguyên lạ',n.getAttribute('href'));return;}
+      if(tag==='FORM'&&n.getAttribute('action')&&!hostOk(n.getAttribute('action'))){n.removeAttribute('action');logEv('danger','Đã vô hiệu hoá biểu mẫu gửi dữ liệu ra ngoài',n.getAttribute('action')||'');}
+      var attrs=Array.prototype.slice.call(n.attributes);
+      for(var i=0;i<attrs.length;i++){
+        var an=attrs[i].name.toLowerCase(),av=attrs[i].value;
+        if(an==='srcdoc'){n.removeAttribute(attrs[i].name);logEv('danger','Đã gỡ thuộc tính srcdoc đáng ngờ',tag);}
+        else if(/^(href|src|action|formaction|xlink:href)$/.test(an)&&/^\s*javascript:/i.test(av)){n.removeAttribute(attrs[i].name);logEv('danger','Đã vô hiệu hoá liên kết javascript: độc hại',tag);}
+        else if(/^on(error|load|focus|mouseover|toggle|animationstart)$/.test(an)&&EXFIL.test(av)){n.removeAttribute(attrs[i].name);logEv('danger','Đã gỡ trình xử lý sự kiện độc hại',av.slice(0,100));}
+      }
+    }catch(_){}
+  }
+  function scanNode(n){
+    if(!n||n.nodeType!==1) return;
+    try{ if(n.matches(SEL)) fixEl(n); var l=n.querySelectorAll?n.querySelectorAll(SEL):[]; for(var i=0;i<l.length;i++) fixEl(l[i]); }catch(_){}
+  }
+  try{
+    new MutationObserver(function(recs){
+      for(var i=0;i<recs.length;i++){var r=recs[i];
+        if(r.type==='childList'){for(var j=0;j<r.addedNodes.length;j++) scanNode(r.addedNodes[j]);}
+        else if(r.type==='attributes'&&r.target.nodeType===1) fixEl(r.target);
+      }
+    }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['href','src','action','formaction','srcdoc','onerror','onload','onfocus','onmouseover','ontoggle','onanimationstart']});
+  }catch(_){}
+  /* Quét lại toàn bộ trang sau khi tải xong (loại script ngoài danh sách tin cậy đã nằm sẵn trong trang) */
+  window.addEventListener('load',function(){
+    var ss=document.getElementsByTagName('script');
+    for(var i=0;i<ss.length;i++){var s=ss[i].getAttribute('src'); if(s&&!hostOk(s)) logEv('danger','Phát hiện script từ nguồn lạ trong trang',s);}
+    scanNode(document.body);
+  });
+  try{ if(window.top!==window.self){ try{void window.top.location.href;}catch(e){ logEv('warning','Trang đang bị nhúng trong khung của trang khác','Nguy cơ giả mạo giao diện (clickjacking). Hãy mở SMART VSMD trực tiếp bằng địa chỉ chính thức.'); } } }catch(_){}
+
+  /* ================= Chống nhiễm Prototype (Prototype Pollution) ================= */
+  var protoBase={}; Object.getOwnPropertyNames(Object.prototype).forEach(function(k){protoBase[k]=1;});
+  setInterval(function(){
+    Object.getOwnPropertyNames(Object.prototype).forEach(function(k){
+      if(!protoBase[k]){try{delete Object.prototype[k];}catch(_){} logEv('danger','Đã diệt mã nhiễm vào Object.prototype','thuộc tính: '+k);}
+    });
+  },5000);
+
+  /* ================= Quét tệp tải lên (virus / macro / giả mạo định dạng) ================= */
+  var BADEXT=/\.(exe|dll|bat|cmd|com|scr|pif|msi|jar|js|jse|vbs|vbe|wsf|wsh|hta|ps1|psm1|lnk|reg|apk|sh|docm|xlsm|xlsb|pptm|xltm|dotm|iso|cpl|msc)$/i;
+  var TEXTEXT=/\.(csv|txt|tsv|json|svg|html?|xml|md)$/i;
+  function readBuf(f,a,b){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=function(){rej(r.error);};r.readAsArrayBuffer(f.slice(a,b));});}
+  function scanFile(f){
+    var name=f.name||'',ok={ok:true};
+    if(BADEXT.test(name)) return Promise.resolve({ok:false,reason:name+' — định dạng tệp thực thi/macro bị cấm'});
+    return readBuf(f,0,1024).then(function(buf){
+      var u=new Uint8Array(buf),head=String.fromCharCode.apply(null,Array.prototype.slice.call(u,0,8));
+      if(head.slice(0,2)==='MZ'||head.slice(0,4)==='\x7fELF'||head.slice(0,2)==='#!') return {ok:false,reason:name+' — nội dung là tệp thực thi/script giả dạng tài liệu'};
+      var lower=name.toLowerCase();
+      var all=String.fromCharCode.apply(null,Array.prototype.slice.call(u,0,1024));
+      if(/\.pdf$/.test(lower)&&all.indexOf('%PDF-')<0) return {ok:false,reason:name+' — không phải PDF hợp lệ (giả mạo định dạng)'};
+      if(/\.(xlsx|docx|pptx|zip)$/.test(lower)&&head.slice(0,2)!=='PK') return {ok:false,reason:name+' — không phải tệp Office hợp lệ (giả mạo định dạng)'};
+      if(f.size>30*1024*1024) return ok;
+      if(/\.(xlsx|docx|pptx|zip|pdf)$/.test(lower)){
+        return readBuf(f,0,f.size).then(function(b2){
+          var s=new TextDecoder('latin1').decode(b2);
+          if(/\.pdf$/.test(lower)&&/\/(JavaScript|Launch)\b/.test(s)) return {ok:false,reason:name+' — PDF chứa mã JavaScript/Launch (nguy cơ mã độc)'};
+          if(!/\.pdf$/.test(lower)&&s.indexOf('vbaProject.bin')>=0) return {ok:false,reason:name+' — tệp Office chứa macro (VBA)'};
+          return ok;});
+      }
+      if(TEXTEXT.test(lower)||f.type==='text/plain'||f.type==='application/json'){
+        return readBuf(f,0,Math.min(f.size,5*1024*1024)).then(function(b2){
+          var t=new TextDecoder('utf-8').decode(b2);
+          if(DANGER.test(t)) return {ok:false,reason:name+' — chứa mã script/HTML độc hại'};
+          return ok;});
+      }
+      return ok;
+    }).catch(function(){return ok;});
+  }
+  document.addEventListener('change',function(e){
+    if(e.__smqScanned) return;
+    var t=e.target; if(!(t&&t.tagName==='INPUT'&&t.type==='file'&&t.files&&t.files.length)) return;
+    e.stopImmediatePropagation();
+    var files=Array.prototype.slice.call(t.files);
+    Promise.all(files.map(scanFile)).then(function(rs){
+      var bad=rs.filter(function(r){return !r.ok;})[0];
+      if(bad){ try{t.value='';}catch(_){} logEv('danger','Đã chặn tệp nghi nhiễm virus',bad.reason); return; }
+      var ev=new Event('change',{bubbles:true}); ev.__smqScanned=true; t.dispatchEvent(ev);
+    });
+  },true);
+
+  /* ================= Chống dò Pass Key (khóa tạm sau nhiều lần sai) ================= */
+  function authState(){try{return JSON.parse(lsGet(AUTHK)||'{}')||{};}catch(e){return {};}}
+  function wrapUnlock(){
+    if(typeof window.unlockApp!=='function'||window.unlockApp.__smq) return false;
+    var orig=window.unlockApp;
+    var w=function(){
+      var a=authState(),now=Date.now();
+      if(a.lockUntil&&now<a.lockUntil){
+        var el=document.getElementById('passKeyError');
+        if(el){el.textContent='Đã khóa tạm do nhập sai nhiều lần. Thử lại sau '+Math.ceil((a.lockUntil-now)/60000)+' phút.';el.style.display='block';}
+        var inp=document.getElementById('appPassKey'); if(inp) inp.value='';
+        return;
+      }
+      var r=orig.apply(this,arguments);
+      var ok=(typeof smartQcUnlocked!=='undefined')&&smartQcUnlocked===true;
+      if(ok){lsSet(AUTHK,JSON.stringify({fails:0,rounds:a.rounds||0,lockUntil:0}));}
+      else{
+        var fails=(a.fails||0)+1,rounds=a.rounds||0,lock=0;
+        if(fails>=5){rounds++;lock=now+Math.min(60,5*Math.pow(2,rounds-1))*60000;fails=0;
+          logEv('danger','Nghi vấn dò Pass Key (brute-force)','Nhập sai Pass Key 5 lần liên tiếp — đã khóa đăng nhập tạm thời.');
+          var el2=document.getElementById('passKeyError'); if(el2){el2.textContent='Nhập sai quá nhiều lần. Đăng nhập bị khóa tạm thời.';el2.style.display='block';}}
+        lsSet(AUTHK,JSON.stringify({fails:fails,rounds:rounds,lockUntil:lock}));
+      }
+      return r;
+    };
+    w.__smq=true; window.unlockApp=w; return true;
+  }
+
+  /* ================= Diệt mã độc đã lọt vào dữ liệu + ghi nhật ký bảo mật ================= */
+  function cleanStr(s){
+    return s.replace(/<(\s*\/?\s*)(script|iframe|object|embed)\b/gi,'&lt;$1$2').replace(/javascript\s*:/gi,'javascript&#58;')
+            .replace(/\bon(error|load|focus|mouseover|toggle|animationstart)\s*=/gi,'on$1&#61;');
+  }
+  function sanitizeDeep(o,seen){
+    var n=0; if(!o||typeof o!=='object'||seen.has(o)) return 0; seen.add(o);
+    Object.keys(o).forEach(function(k){
+      if(k==='__proto__'||k==='constructor'||k==='prototype'){try{delete o[k];}catch(_){} n++; return;}
+      var v=o[k];
+      if(typeof v==='string'){ if(DANGER.test(v)){var c=cleanStr(v); if(c!==v){o[k]=c;n++;}} }
+      else if(v&&typeof v==='object') n+=sanitizeDeep(v,seen);
+    });
+    return n;
+  }
+  function scanState(){
+    try{
+      if(typeof state==='undefined'||!state) return;
+      var s=JSON.stringify(state);
+      if(!DANGER.test(s)&&s.indexOf('"__proto__"')<0) return;
+      var n=sanitizeDeep(state,new Set());
+      if(n>0){ logEv('danger','Đã diệt mã độc trong dữ liệu','Vô hiệu hoá '+n+' chuỗi chứa script/HTML độc hại.'); if(typeof queueSave==='function') queueSave(); }
+    }catch(e){console.error('Shield scanState',e);}
+  }
+  function flushAudit(){
+    try{
+      if(!pending.length||typeof state==='undefined'||!state) return;
+      state.audit=Array.isArray(state.audit)?state.audit:[];
+      var user=(state.settings&&state.settings.currentUser)||'Hệ thống bảo vệ';
+      pending.splice(0,pending.length).forEach(function(e){
+        state.audit.unshift({id:(typeof uid==='function'?uid('AU'):'AU'+Date.now()+Math.random().toString(36).slice(2,6)),time:e.t,user:user,action:'⚠ Cảnh báo bảo mật: '+e.title,detail:e.detail});
+      });
+      if(typeof queueSave==='function') queueSave();
+    }catch(_){}
+  }
+  var tries=0, boot=setInterval(function(){
+    tries++; wrapUnlock();
+    if(typeof state!=='undefined'&&state){scanState();}
+    if(tries>120) clearInterval(boot);
+  },500);
+  setInterval(scanState,60000);
+  setInterval(flushAudit,4000);
+
+  window.SMART_SECURITY={
+    version:'1.0',
+    log:function(){try{return JSON.parse(lsGet(LOGK)||'[]');}catch(e){return [];}},
+    scan:scanState,
+    verify:function(){verifyStored('runtime');},
+    snapshots:function(){return idbLatest('snap').then(function(a){return a.map(function(x){return {time:new Date(x.t).toISOString(),reason:x.reason,size:x.len};});});},
+    restoreLatest:function(c,a){return restoreLatest(c,a);}
+  };
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
@@ -1018,15 +1380,83 @@ async function initCloud(){
     return cloudReady;
   }catch(e){ console.error('Supabase init error',e); cloudReady=false; return false; }
 }
-async function cloudLoadState(){
-  if(!supabaseClient || !cloudUser) return null;
+/* ===================== LƯU CLOUD THEO TỪNG PHIẾU =====================
+   Mỗi phiếu / bản ghi (kết quả QC, phiếu CLS, hóa chất, LOT, nhật ký...) là MỘT dòng riêng trong bảng
+   smartqc_records. Khi lưu chỉ gửi những phiếu thật sự thay đổi, khi nhận chỉ cập nhật đúng phiếu đó,
+   nên hai người nhập cùng lúc ở hai phiếu khác nhau sẽ không còn ghi đè lên nhau.
+   Các mục cài đặt/cấu hình (không phải danh sách phiếu) được lưu mỗi mục một dòng (collection '_kv').
+   Nếu bảng smartqc_records chưa được tạo trên Supabase, ứng dụng tự quay về cách lưu một khối cũ. */
+const CLOUD_RECORDS_TABLE='smartqc_records';
+const CLOUD_ORDER_KEY='__order';
+const CLOUD_RECORD_COLLECTIONS=['results','rapidWaterResults','rapidWaterSheet','clsReports','virologyTDResults','virologyTCResults','chemicalMD','chemicalVS','externalQC','alerts','audit','lots','configs','machines','tests','rapidWaterTests','rapidWaterLots','virologyLots','virologyTDProfiles'];
+const CLOUD_FRONT_COLLECTIONS=['clsReports','alerts','audit','virologyTDResults','virologyTCResults'];
+let cloudMode='records';
+let cloudSnap=new Map();
+let cloudRecordsChannel=null;
+const pendingCloud=new Map();
+function cloudShortHash(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))|0; } return (h>>>0).toString(36); }
+function cloudIsMissingTable(e){
+  const m=String((e&&(e.message||e.details))||'')+' '+String((e&&e.code)||'');
+  return /42P01|PGRST205|PGRST200|does not exist|schema cache|Could not find the table/i.test(m);
+}
+function cloudIdsOf(arr){
+  const seen=new Set();
+  return arr.map(it=>{
+    if(it===null || typeof it!=='object') return null;
+    const base=(it.id!==undefined && it.id!==null && String(it.id)!=='')?String(it.id):('h'+cloudShortHash(cloudHash(it)));
+    let id=base, n=1; while(seen.has(id)){ n++; id=base+'~'+n; }
+    seen.add(id); return id;
+  });
+}
+function cloudExplode(st){
+  const rows=new Map(), order={};
+  CLOUD_RECORD_COLLECTIONS.forEach(c=>{
+    const arr=Array.isArray(st[c])?st[c]:[]; const ids=cloudIdsOf(arr); order[c]=[];
+    arr.forEach((it,i)=>{ if(ids[i]===null) return; order[c].push(ids[i]); rows.set(c+'|'+ids[i],{collection:c,record_id:ids[i],payload:it,hash:cloudHash(it)}); });
+  });
+  Object.keys(st).forEach(k=>{
+    if(CLOUD_RECORD_COLLECTIONS.includes(k) || k===CLOUD_ORDER_KEY || st[k]===undefined) return;
+    rows.set('_kv|'+k,{collection:'_kv',record_id:k,payload:st[k],hash:cloudHash(st[k])});
+  });
+  rows.set('_kv|'+CLOUD_ORDER_KEY,{collection:'_kv',record_id:CLOUD_ORDER_KEY,payload:order,hash:cloudHash(order)});
+  return {rows,order};
+}
+function cloudOrderRows(c,rows,ids){
+  const map=new Map(rows.map(r=>[r.record_id,r])); const out=[];
+  (Array.isArray(ids)?ids:[]).forEach(id=>{ const r=map.get(id); if(r){ out.push(r); map.delete(id); } });
+  const extra=[...map.values()].sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||'')));
+  return CLOUD_FRONT_COLLECTIONS.includes(c)?extra.reverse().concat(out):out.concat(extra);
+}
+function cloudAssemble(rows){
+  const st={}, byColl={}; let order=null;
+  cloudSnap=new Map();
+  rows.forEach(r=>{
+    if(r.deleted) return;
+    cloudSnap.set(r.collection+'|'+r.record_id,cloudHash(r.payload));
+    if(r.collection==='_kv'){ if(r.record_id===CLOUD_ORDER_KEY) order=r.payload; else st[r.record_id]=r.payload; }
+    else (byColl[r.collection]||(byColl[r.collection]=[])).push(r);
+  });
+  CLOUD_RECORD_COLLECTIONS.forEach(c=>{ st[c]=cloudOrderRows(c,byColl[c]||[],order&&order[c]).map(r=>r.payload); });
+  Object.keys(byColl).forEach(c=>{ if(!CLOUD_RECORD_COLLECTIONS.includes(c)) delete byColl[c]; });
+  return st;
+}
+async function cloudFetchAllRows(ws){
+  const out=[], PAGE=1000;
+  for(let from=0;;from+=PAGE){
+    const {data,error}=await supabaseClient.from(CLOUD_RECORDS_TABLE).select('collection,record_id,payload,deleted,created_at').eq('workspace_id',ws).order('collection').order('record_id').range(from,from+PAGE-1);
+    if(error) throw error;
+    out.push(...(data||[])); if(!data || data.length<PAGE) break;
+  }
+  return out;
+}
+/* ----- Cách lưu một khối cũ: chỉ dùng khi chưa tạo bảng smartqc_records ----- */
+async function cloudLoadLegacy(){
   const {data,error}=await supabaseClient.from('smartqc_shared_state').select('payload,updated_at').eq('workspace_id',cloudWorkspaceId()).maybeSingle();
   if(error) throw error;
   if(data?.payload){ lastCloudHash=cloudHash(data.payload); return data.payload; }
   return null;
 }
-async function cloudPersistState(){
-  if(!supabaseClient || !cloudUser || !state) return false;
+async function cloudPersistLegacy(){
   const payload=JSON.parse(JSON.stringify(state));
   const hash=cloudHash(payload);
   const {error}=await supabaseClient.from('smartqc_shared_state').upsert({workspace_id:cloudWorkspaceId(),payload,updated_at:new Date().toISOString()},{onConflict:'workspace_id'});
@@ -1034,11 +1464,193 @@ async function cloudPersistState(){
   lastCloudHash=hash; cloudPersistSeq++;
   return true;
 }
+async function cloudLoadState(){
+  if(!supabaseClient || !cloudUser) return null;
+  const ws=cloudWorkspaceId();
+  let rows;
+  try{ rows=await cloudFetchAllRows(ws); cloudMode='records'; }
+  catch(e){
+    if(cloudIsMissingTable(e)){ console.warn('Chưa có bảng smartqc_records -> dùng cách lưu một khối cũ'); cloudMode='legacy'; return cloudLoadLegacy(); }
+    throw e;
+  }
+  if(!rows.length){
+    /* Chưa có dữ liệu theo phiếu: chuyển dữ liệu một khối cũ (nếu có) sang từng phiếu. */
+    cloudSnap=new Map();
+    let legacy=null; try{ legacy=await cloudLoadLegacy(); }catch(e){}
+    if(legacy){ setTimeout(()=>{ cloudPersistState().catch(err=>console.error('Supabase migrate error',err)); },1500); return legacy; }
+    return null;
+  }
+  return cloudAssemble(rows);
+}
+/* Nếu mã phiếu mới trùng với mã do máy khác vừa tạo (cùng lúc) thì cấp mã khác, tránh ghi đè phiếu của người khác. */
+async function cloudGuardNewIds(ws){
+  if(!cloudSnap.size) return;
+  const {rows}=cloudExplode(state);
+  const byColl={};
+  rows.forEach((r,key)=>{ if(r.collection!=='_kv' && !cloudSnap.has(key)) (byColl[r.collection]||(byColl[r.collection]=[])).push(r); });
+  for(const c of Object.keys(byColl)){
+    const list=byColl[c]; if(!list.length || list.length>200) continue;
+    const {data,error}=await supabaseClient.from(CLOUD_RECORDS_TABLE).select('record_id,payload').eq('workspace_id',ws).eq('collection',c).eq('deleted',false).in('record_id',list.map(r=>r.record_id));
+    if(error || !data || !data.length) continue;
+    const theirs=new Map(data.map(d=>[d.record_id,cloudHash(d.payload)]));
+    for(const r of list){
+      if(!theirs.has(r.record_id) || theirs.get(r.record_id)===r.hash) continue;
+      const m=/^([A-Za-z_]+)(\d+)$/.exec(String(r.payload.id||'')); if(!m || r.payload.id!==r.record_id) continue;
+      let n=Math.max(Number(state.meta&&state.meta.lastId)||0,Number(m[2])), cand, guard=0;
+      while(guard++<50){
+        n++; cand=m[1]+n;
+        const q=await supabaseClient.from(CLOUD_RECORDS_TABLE).select('record_id').eq('workspace_id',ws).eq('collection',c).eq('record_id',cand).maybeSingle();
+        if(!q.error && !q.data) break;
+      }
+      if(state.meta) state.meta.lastId=n;
+      r.payload.id=cand;
+    }
+  }
+}
+async function cloudPersistState(){
+  if(!supabaseClient || !cloudUser || !state) return false;
+  if(cloudMode==='legacy') return cloudPersistLegacy();
+  const ws=cloudWorkspaceId();
+  try{ await cloudGuardNewIds(ws); }catch(e){ console.warn('cloudGuardNewIds',e); }
+  const {rows}=cloudExplode(state);
+  const up=[], del=[];
+  rows.forEach((r,key)=>{ if(cloudSnap.get(key)!==r.hash) up.push(r); });
+  cloudSnap.forEach((h,key)=>{ if(!rows.has(key)){ const i=key.indexOf('|'); del.push({collection:key.slice(0,i),record_id:key.slice(i+1)}); } });
+  if(!up.length && !del.length) return true;
+  const now=new Date().toISOString(), by=(state.settings&&state.settings.currentUser)||null;
+  const T=CLOUD_RECORDS_TABLE;
+  /* Gửi theo lô nhỏ. Ghi nhận trước để bản tin realtime của chính máy này không bị coi là thay đổi từ máy khác. */
+  let batch=[], size=0;
+  const flush=async()=>{
+    if(!batch.length) return;
+    const cur=batch; batch=[]; size=0;
+    const prev=cur.map(r=>cloudSnap.get(r.collection+'|'+r.record_id));
+    cur.forEach(r=>cloudSnap.set(r.collection+'|'+r.record_id,r.hash));
+    const {error}=await supabaseClient.from(T).upsert(cur.map(r=>({workspace_id:ws,collection:r.collection,record_id:r.record_id,payload:r.payload,deleted:false,updated_at:now,updated_by:by})),{onConflict:'workspace_id,collection,record_id'});
+    if(error){ cur.forEach((r,i)=>{ const k=r.collection+'|'+r.record_id; if(prev[i]===undefined) cloudSnap.delete(k); else cloudSnap.set(k,prev[i]); }); throw error; }
+  };
+  for(const r of up){
+    const len=JSON.stringify(r.payload===undefined?null:r.payload).length;
+    if(batch.length && (batch.length>=200 || size+len>1500000)) await flush();
+    batch.push(r); size+=len;
+  }
+  await flush();
+  const delBy={};
+  del.forEach(d=>{ (delBy[d.collection]||(delBy[d.collection]=[])).push(d.record_id); });
+  for(const c of Object.keys(delBy)){
+    const ids=delBy[c];
+    for(let i=0;i<ids.length;i+=100){
+      const part=ids.slice(i,i+100);
+      const prev=part.map(id=>cloudSnap.get(c+'|'+id));
+      part.forEach(id=>cloudSnap.delete(c+'|'+id));
+      const {error}=await supabaseClient.from(T).update({deleted:true,payload:null,updated_at:now,updated_by:by}).eq('workspace_id',ws).eq('collection',c).in('record_id',part);
+      if(error){ part.forEach((id,j)=>{ if(prev[j]!==undefined) cloudSnap.set(c+'|'+id,prev[j]); }); throw error; }
+    }
+  }
+  cloudPersistSeq++;
+  return true;
+}
+function cloudLocalHashOf(collection,recordId){
+  if(collection==='_kv') return state[recordId]===undefined?undefined:cloudHash(state[recordId]);
+  const arr=Array.isArray(state[collection])?state[collection]:[];
+  const i=cloudIdsOf(arr).indexOf(recordId);
+  return i<0?undefined:cloudHash(arr[i]);
+}
+function cloudHasLocalDiff(){
+  const {rows}=cloudExplode(state);
+  for(const [key,r] of rows){ if(cloudSnap.get(key)!==r.hash) return true; }
+  for(const key of cloudSnap.keys()){ if(!rows.has(key)) return true; }
+  return false;
+}
+function cloudReorderLocal(c,ids){
+  const arr=Array.isArray(state[c])?state[c]:[]; const own=cloudIdsOf(arr);
+  const map=new Map(); own.forEach((id,i)=>{ if(id!==null) map.set(id,arr[i]); });
+  const first=[]; (Array.isArray(ids)?ids:[]).forEach(id=>{ if(map.has(id)){ first.push(map.get(id)); map.delete(id); } });
+  const extra=[...map.values()];
+  state[c]=CLOUD_FRONT_COLLECTIONS.includes(c)?extra.concat(first):first.concat(extra);
+}
+function cloudOnRecordEvent(p){
+  if(cloudMode!=='records') return;
+  const row=p&&p.new; if(!row || !state || !row.collection) return;
+  const key=row.collection+'|'+row.record_id;
+  if(row.deleted){ if(!cloudSnap.has(key)) return; }
+  else if(row.payload!==undefined && cloudSnap.get(key)===cloudHash(row.payload)) return; /* bản của chính máy này */
+  pendingCloud.set(key,row);
+  scheduleCloudFlush();
+}
+async function cloudApplyPending(){
+  if(!pendingCloud.size || !state) return;
+  const rows=[...pendingCloud.values()]; pendingCloud.clear();
+  /* Bản tin quá lớn có thể bị cắt payload -> đọc lại đúng dòng đó. */
+  for(const r of rows){
+    if(!r.deleted && r.payload===undefined){
+      try{ const q=await supabaseClient.from(CLOUD_RECORDS_TABLE).select('payload').eq('workspace_id',cloudWorkspaceId()).eq('collection',r.collection).eq('record_id',r.record_id).maybeSingle(); if(q.data) r.payload=q.data.payload; }catch(e){}
+    }
+  }
+  /* Giữ lại nội dung phiếu CLS đang hiện trên màn hình (nếu có) để không mất dữ liệu đã gõ. */
+  let localClsDraft=null, onCls=false;
+  const clsView=document.getElementById('view-reports-cls');
+  if(typeof currentView!=='undefined' && currentView==='reports-cls' && clsView && clsView.classList.contains('active') && typeof clsRead==='function'){
+    onCls=true; try{ localClsDraft=JSON.parse(JSON.stringify(clsRead())); }catch(e){}
+  }
+  const sx=window.scrollX, sy=window.scrollY;
+  let changed=false;
+  rows.forEach(r=>{
+    if(!r.deleted && r.payload===undefined) return;
+    const key=r.collection+'|'+r.record_id;
+    const h=r.deleted?undefined:cloudHash(r.payload);
+    if(r.collection==='_kv'){
+      if(r.record_id===CLOUD_ORDER_KEY){
+        if(r.payload && typeof r.payload==='object'){ Object.keys(r.payload).forEach(c=>{ if(CLOUD_RECORD_COLLECTIONS.includes(c)) cloudReorderLocal(c,r.payload[c]); }); cloudSnap.set(key,h); changed=true; }
+        return;
+      }
+      if(r.record_id==='meta' && !r.deleted && r.payload && typeof r.payload==='object'){
+        /* Bộ đếm mã phiếu: luôn lấy số lớn nhất để không bao giờ cấp trùng mã. */
+        const mine=Number(state.meta&&state.meta.lastId)||0;
+        state.meta=Object.assign({},r.payload,{lastId:Math.max(mine,Number(r.payload.lastId)||0)});
+        cloudSnap.set(key,h); changed=true; return;
+      }
+      if(r.record_id==='clsDraft' && onCls) return;
+      const lh=cloudLocalHashOf('_kv',r.record_id);
+      if(lh!==undefined && lh!==cloudSnap.get(key)) return; /* máy này đang có thay đổi chưa lưu ở mục này -> giữ bản đang nhập */
+      if(r.deleted){ delete state[r.record_id]; cloudSnap.delete(key); } else { state[r.record_id]=r.payload; cloudSnap.set(key,h); }
+      changed=true; return;
+    }
+    const c=r.collection; if(!CLOUD_RECORD_COLLECTIONS.includes(c)) return;
+    if(!Array.isArray(state[c])) state[c]=[];
+    const ids=cloudIdsOf(state[c]); const i=ids.indexOf(r.record_id);
+    if(i>=0){
+      if(cloudHash(state[c][i])!==cloudSnap.get(key)) return; /* phiếu này đang được sửa ở máy này -> giữ bản đang nhập */
+      if(r.deleted){ state[c].splice(i,1); cloudSnap.delete(key); } else { state[c][i]=r.payload; cloudSnap.set(key,h); }
+      changed=true;
+    }else if(!r.deleted){
+      if(CLOUD_FRONT_COLLECTIONS.includes(c)) state[c].unshift(r.payload); else state[c].push(r.payload);
+      cloudSnap.set(key,h); changed=true;
+    }else{ cloudSnap.delete(key); }
+  });
+  if(!changed) return;
+  if(localClsDraft) state.clsDraft=localClsDraft;
+  migrateState();
+  await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
+  if(typeof currentView!=='undefined' && currentView){
+    renderNav();
+    renderView(currentView);
+    try{ window.scrollTo(sx,sy); }catch(e){}
+  }
+  toast('pass','Đã đồng bộ dữ liệu','Dữ liệu QC vừa được cập nhật từ thiết bị khác.');
+  try{ if(cloudHasLocalDiff()) queueSave(); }catch(e){}
+}
 async function subscribeCloudState(){
   if(!supabaseClient || !cloudUser) return;
   if(cloudSubscription){ try{ await supabaseClient.removeChannel(cloudSubscription); }catch(e){} }
+  if(cloudRecordsChannel){ try{ await supabaseClient.removeChannel(cloudRecordsChannel); }catch(e){} cloudRecordsChannel=null; }
+  /* Kênh theo từng phiếu (bảng smartqc_records). */
+  cloudRecordsChannel=supabaseClient.channel('smartqc-records-'+cloudWorkspaceId())
+    .on('postgres_changes',{event:'*',schema:'public',table:CLOUD_RECORDS_TABLE,filter:'workspace_id=eq.'+cloudWorkspaceId()},cloudOnRecordEvent).subscribe();
+  /* Kênh một khối cũ: chỉ có tác dụng khi chưa tạo bảng smartqc_records. */
   cloudSubscription=supabaseClient.channel('smartqc-state-'+cloudWorkspaceId())
     .on('postgres_changes',{event:'*',schema:'public',table:'smartqc_shared_state',filter:'workspace_id=eq.'+cloudWorkspaceId()},async payload=>{
+      if(cloudMode!=='legacy') return;
       const remote=payload?.new?.payload;
       if(!remote || !state) return;
       const h=cloudHash(remote);
@@ -1053,15 +1665,20 @@ async function subscribeCloudState(){
 function scheduleCloudFlush(){
   clearTimeout(pendingCloudTimer);
   pendingCloudTimer=setTimeout(async ()=>{
+    if(pendingCloud.size){
+      if(cloudUserIsBusy()){ scheduleCloudFlush(); return; }
+      try{ await cloudApplyPending(); }catch(e){ console.error('Supabase apply error',e); }
+      return;
+    }
     const p=pendingCloudRemote; if(!p) return;
     if(cloudUserIsBusy()){ scheduleCloudFlush(); return; }
     pendingCloudRemote=null;
     /* Nếu trong lúc chờ máy này đã ghi dữ liệu mới lên cloud thì bản chờ đã cũ -> bỏ, không ghi đè dữ liệu vừa nhập. */
     if(p.seq!==cloudPersistSeq || p.h===lastCloudHash) return;
     await applyCloudRemote(p.remote,p.h,true);
-  },1500);
+  },cloudUserIsBusy()?1500:400);
 }
-document.addEventListener('focusout',()=>{ if(pendingCloudRemote) scheduleCloudFlush(); },true);
+document.addEventListener('focusout',()=>{ if(pendingCloudRemote || pendingCloud.size) scheduleCloudFlush(); },true);
 async function applyCloudRemote(remote,h,notify){
   /* Giữ lại nội dung phiếu CLS đang hiện trên màn hình (nếu có) để không mất dữ liệu đã gõ. */
   let localClsDraft=null;
@@ -1099,6 +1716,8 @@ async function cloudSignOut(){
   if(supabaseClient) await supabaseClient.auth.signOut();
   cloudUser=null; cloudReady=false;
   if(cloudSubscription && supabaseClient){ try{await supabaseClient.removeChannel(cloudSubscription);}catch(e){} }
+  if(cloudRecordsChannel && supabaseClient){ try{await supabaseClient.removeChannel(cloudRecordsChannel);}catch(e){} }
+  cloudRecordsChannel=null; cloudSnap=new Map(); pendingCloud.clear();
   cloudSubscription=null; updateCloudIndicator();
 }
 async function saveCloudConfig(url,key,workspace){
@@ -8172,8 +8791,8 @@ const VSC=[
 ['Định danh-KSĐ tự động','AST indication Solution','Lọ'],['Định danh-KSĐ tự động','Pmic/ID Panel','Panel'],['Định danh-KSĐ tự động','Nmic/ID Panel','Panel'],['Định danh-KSĐ tự động','AST broth','Lọ'],['Định danh-KSĐ tự động','ID Broth','Lọ'],
 ['Hóa chất phụ-Môi trường pha chế','Bile Esculin Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','Mullerhilton Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','MacKonkey Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','Methyl Red - Voges Proskauer Agar (MR-VP)','Hộp']
 ];
-const IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
-const MIC=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Demodex','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
+const IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng'];
+const MIC=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Demodex','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
 const DEPT=['Hồi sức cấp cứu','Phục hồi chức năng','Y học cổ truyền','Gây mê hồi sức','Ngoại tạo hình','Ngoại tổng hợp','Nội tổng hợp','Vảy nến tự miễn','Da tổng hợp','Da lây nhiễm','Sản','Ngoại KTC','Nhi'], DEPT_ER=[...DEPT,'Phòng lưu'];
 const E=v=>escapeHtml(v??'');
 function ensure(){if(!Array.isArray(state.chemicalVS))state.chemicalVS=[];if(!Array.isArray(state.externalQC))state.externalQC=[];if(!Array.isArray(state.clsReports))state.clsReports=[];if(!state.clsSettings)state.clsSettings={departments:[]};if(!Array.isArray(state.clsSettings.departments))state.clsSettings.departments=[];if(!state.chemicalVS.length)VSC.forEach((x,i)=>state.chemicalVS.push({id:uid('CVS'),seed:i,type:x[0],name:x[1],unit:x[2],lot:'',date:'',expDate:'',daily:{},minStock:20,maxStock:50}));}
@@ -8818,8 +9437,8 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   /* ================================================================
      3. BÁO CÁO TRỰC CLS: danh mục chuẩn + nút thêm mới + xuất sạch dữ liệu.
      ================================================================ */
-  const STD_IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
-  const STD_MIC=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Demodex','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
+  const STD_IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng'];
+  const STD_MIC=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Demodex','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
   function catalog(type){
     state.clsSettings=state.clsSettings||{};
     const key=type==='imm'?'customImmunology':'customMicrobiology';
@@ -8952,8 +9571,8 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   /* ================================================================
      BÁO CÁO TRỰC CLS — luôn hiển thị đủ danh mục; lọc để nhập từng XN
      ================================================================ */
-  const IMM_STD=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs (R)','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh)','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','ASLO (ĐL)','RF (ĐL)','CRP (ĐL)','RPR (ĐL)','TPHA (ĐL)'];
-  const MIC_STD=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Demodex','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
+  const IMM_STD=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','HAV (Test nhanh)','HEV (Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng'];
+  const MIC_STD=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Demodex','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Ghẻ','Rận mu','Xét nghiệm bệnh phẩm đường sinh dục','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB','Soi tươi HC, BC trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
   /* Bảng đổi tên xét nghiệm do nút "Sửa xét nghiệm" tạo ra: {tên gốc: tên mới}. */
   function renameMap(type){const k=type==='imm'?'renameImmunology':'renameMicrobiology';const m=state.clsSettings&&state.clsSettings[k];return m&&typeof m==='object'&&!Array.isArray(m)?m:{};}
   function renamed(type,name){const m=renameMap(type);const n=trim(name);return Object.prototype.hasOwnProperty.call(m,n)&&has(m[n])?trim(m[n]):n;}
@@ -12393,20 +13012,151 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
     const t=norm(tag);
     if(/^(dt|dinh tinh)$/.test(t)) return 'dt';
     if(/^(dl|dinh luong)$/.test(t)) return 'dl';
-    if(/^r$/.test(t)||/mien dich tu dong|may mien dich/.test(t)) return 'r';
+    /* 'r' = tự động: Miễn dịch (R) = miễn dịch tự động (chạy máy); Vi sinh (TĐ) = tự động */
+    if(/^(r|td)$/.test(t)||/mien dich tu dong|may mien dich|^tu dong$|chay may/.test(t)) return 'r';
+    /* 'tt' = thông thường (Vi sinh) */
+    if(/^tt$|^thong thuong$|thuong quy|thu cong/.test(t)) return 'tt';
     if(/test nhanh/.test(t)) return 'tn';
     return '';
   }
+  /* Nhóm "khái niệm xét nghiệm": nhận diện cùng một xét nghiệm dù tên trong PDF (tên HIS) khác tên trong phiếu.
+     Chỉ cần chứa từ khoá đặc trưng (không cần giống 100%). Dùng cho cả tên trong PDF lẫn tên trong phiếu,
+     nên vẫn đúng khi người dùng đã "Sửa xét nghiệm" đổi tên nhưng còn giữ từ khoá. Thứ tự: khớp trước thắng. */
+  const CONCEPTS=[
+    /* ---- Miễn dịch ---- */
+    ['hbsag',/\bhbsag\b/],
+    ['antihbs',/\banti hbs\b|\bhbs ab\b/],
+    ['antihcv',/\banti hcv\b|\bhcv\b/],
+    ['hpylori',/helicobacter|\bh pylori\b/],
+    ['dengue',/dengue/],
+    ['sxh',/sot xuat huyet/],
+    ['hav',/\bhav\b/],
+    ['hev',/\bhev\b/],
+    ['hbeag',/\bhbeag\b/],
+    ['clamydia',/chlamydia|clamydia/],
+    ['matuy',/ma tuy/],
+    ['heroin',/heroin|morphine|opiate/],
+    ['malaria',/malaria/],
+    ['procalcitonin',/pro ?calcitonin/],
+    ['aso',/streptococcus|\baso\b/],
+    ['aslo',/\baslo\b/],
+    ['rpr',/\brpr\b/],
+    ['tpha',/\btpha\b/],
+    ['rf',/\brf\b|rheumatoid/],
+    ['crp',/\bcrp\b/],
+    ['ft4',/\bft4\b/],
+    ['t3',/\bt3\b/],
+    ['tsh',/\btsh\b/],
+    ['ca199',/\bca 19 9\b/],
+    ['ca724',/\bca 72 4\b/],
+    ['ca125',/\bca 125\b/],
+    ['ca153',/\bca 15 3\b/],
+    ['cyfra',/cyfra/],
+    ['ntprobnp',/nt ?pro ?bnp/],
+    ['cortisol',/cortisol/],
+    ['troponin',/troponin/],
+    ['psa',/\bpsa\b/],
+    ['afp',/\bafp\b/],
+    ['cea',/\bcea\b/],
+    ['hcg',/\bhcg\b/],
+    ['pappa',/\bpappa\b/],
+    ['tgab',/\btg ab\b/],
+    ['amh',/\bamh\b/],
+    ['ue3',/\bue3\b/],
+    ['giunduacho',/giun dua cho|toxocara/],
+    ['giundaugai',/giun dau gai|gnathostoma/],
+    ['giunluon_au',/au trung giun luon/],
+    ['giunluon',/giun luon|strongyloides/],
+    ['sanlagan',/san la gan|fasciola/],
+    ['sangaoheo',/san gao heo|cysticercus/],
+    ['amibe',/amib|entamoeba/],
+    ['dn53',/\b53 di nguyen\b/],
+    ['dn108',/\b108 di nguyen\b/],
+    ['ige',/\bige\b/],
+    /* ---- Vi sinh ---- */
+    ['gram',/\bgram\b|methylen/],
+    ['namda',/soi truc tiep nhuom soi nam( da)?$|\bnam da\b/],
+    ['nammieng',/\bnam mieng\b/],
+    ['nammong',/\bnam mong\b/],
+    ['namsinhduc',/nam sinh duc/],
+    ['demodex',/demodex/],
+    ['ghe',/\bghe\b/],
+    ['ranmu',/ran mu|phthirus/],
+    ['duongsinhduc',/duong sinh duc/],
+    ['trichomonas',/trichomonas/],
+    ['laucau',/lau cau|gonorrhoeae/],
+    ['khangnamdo',/khang nam do/],
+    ['khangthuoc',/vi khuan khang thuoc/],
+    ['vkcay',/vi khuan nuoi cay|nuoi cay.*dinh danh.*vi khuan|nuoi cay.*vi khuan/],
+    ['namcay',/nuoi cay.*nam\b/],
+    ['ksd',/khang sinh do/],
+    ['afb',/\bafb\b/],
+    ['hcbcphan',/hc bc trong phan/],
+    ['vinamruot',/vi nam.*duong ruot/],
+    ['kstruot',/ky sinh trung.*duong ruot|duong ruot.*ky sinh trung/],
+    ['leprae',/leprae/],
+    ['sotret',/sot ret trong mau|tim ky sinh trung sot ret/],
+    ['trunggiunsan',/trung giun san/]
+  ];
+  function conceptOf(base){
+    for(let i=0;i<CONCEPTS.length;i++){ if(CONCEPTS[i][1].test(base)) return CONCEPTS[i][0]; }
+    return '';
+  }
+  /* Từ chung chung (không giúp phân biệt xét nghiệm) — bỏ qua khi so sánh "gần giống". */
+  const GENERIC_TOKS=new Set('xet nghiem chan doan huyet thanh test nhanh ab mien dich tu dong thu benh pham soi truc tiep nhuom tuoi tim co va'.split(' '));
+  function coreToks(base){return base.split(' ').filter(t=>t&&!GENERIC_TOKS.has(t));}
+  function bigrams(s){const t=s.replace(/ /g,''), r=[]; for(let i=0;i<t.length-1;i++) r.push(t.substr(i,2)); return r;}
+  function bigramDice(a,b){
+    const x=bigrams(a), y=bigrams(b); if(!x.length||!y.length) return 0;
+    const m=new Map(); y.forEach(g=>m.set(g,(m.get(g)||0)+1)); let c=0;
+    x.forEach(g=>{const n=m.get(g); if(n>0){c++; m.set(g,n-1);}});
+    return 2*c/(x.length+y.length);
+  }
+  function fuzzy(p,c){
+    const a=coreToks(p.base), b=coreToks(c.base);
+    if(!a.length||!b.length) return 0;
+    const A=new Set(a), B=new Set(b); let inter=0; A.forEach(t=>{if(B.has(t))inter++;});
+    const jac=inter/(A.size+B.size-inter);
+    const bi=bigramDice(a.join(' '),b.join(' '));
+    const s=Math.max(jac>=0.34?0.4+0.45*jac:0, bi>=0.62?bi*0.85:0);
+    return s>=0.55?Math.min(s,0.85):0;
+  }
   function parseName(s){
     let str=String(s||'').trim(), v='';
-    const m=str.match(/^(.*?)\s*[\[(]([^\[\]()]*)[\])]\s*$/);
-    if(m){const vv=variantFromTag(m[2]); if(vv){v=vv;str=m[1];}}
+    /* Ký hiệu trong ngoặc ở bất kỳ vị trí nào: (ĐT) (ĐL) (R) (TT) (TĐ) (Test nhanh)... */
+    str=str.replace(/[\[(]([^\[\]()]*)[\])]/g,(all,inner)=>{
+      const vv=variantFromTag(inner);
+      if(vv){ if(!v) v=vv; return ' '; }
+      return all;
+    });
     let base=norm(str);
-    if(!v){
-      const m2=base.match(/^(.*?)\s+(dinh tinh|dinh luong)$/);
-      if(m2){v=m2[2]==='dinh tinh'?'dt':'dl';base=m2[1];}
+    /* Biến thể ghi ngay trong tên (không nằm trong ngoặc), ví dụ "... test nhanh", "... miễn dịch tự động" */
+    if(/\btest nhanh\b/.test(base)){ if(!v) v='tn'; base=base.replace(/\btest nhanh\b/g,' '); }
+    if(/\bmien dich tu dong\b/.test(base)){ if(!v) v='r'; base=base.replace(/\bmien dich tu dong\b/g,' '); }
+    /* tự động / chạy máy → 'r' (Miễn dịch R, Vi sinh TĐ) */
+    if(/\btu dong\b|\bchay may\b/.test(base)){
+      if(!v) v='r';
+      base=base.replace(/\b(?:bang|chay|he thong)?\s*(?:may\s+)?tu dong\b|\bchay may\b/g,' ');
     }
-    return {base,v,toks:base.split(' ').filter(Boolean)};
+    /* thông thường / thường quy / thủ công → 'tt' (Vi sinh TT) */
+    if(/\b(?:thong thuong|thuong quy|thu cong)\b/.test(base)){
+      if(!v) v='tt';
+      base=base.replace(/\b(?:phuong phap|ky thuat|quy trinh|bang|theo)?\s*(?:thong thuong|thuong quy|thu cong)\b/g,' ');
+    }
+    base=base.replace(/\bkst\b/g,'ky sinh trung').replace(/\bki sinh\b/g,'ky sinh').replace(/\s+/g,' ').trim();
+    if(!v){
+      /* "định tính và định lượng" = gồm cả hai → không gán biến thể nào */
+      const hasDT=/\bdinh tinh\b/.test(base), hasDL=/\bdinh luong\b/.test(base);
+      if(hasDT!==hasDL){
+        const m2=base.match(/^(.*?)\s+(dinh tinh|dinh luong)$/);
+        if(m2){v=m2[2]==='dinh tinh'?'dt':'dl';base=m2[1];}
+        else{
+          const m3=base.match(/^(?:xet nghiem\s+)?(dinh tinh|dinh luong)\s+(.*)$/);
+          if(m3){v=m3[1]==='dinh tinh'?'dt':'dl';base=m3[2];}
+        }
+      }
+    }
+    return {base,v,k:conceptOf(base),toks:base.split(' ').filter(Boolean)};
   }
   function dice(a,b){
     if(!a.length||!b.length) return 0;
@@ -12414,22 +13164,42 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
     return 2*c/(sa.size+sb.size);
   }
   function score(p,c){
-    if(p.v&&c.v&&p.v!==c.v) return 0;
+    /* cùng xét nghiệm nhưng khác loại (ĐT/ĐL/R, TT/TĐ): chỉ gợi ý rất thấp, luôn đánh dấu "chưa rõ loại" */
+    if(p.v&&c.v&&p.v!==c.v) return (p.k&&p.k===c.k)?0.3:0;
     if(p.base===c.base) return p.v===c.v?3:2.5;
+    /* cùng một xét nghiệm theo từ khoá đặc trưng (tên HIS khác tên trong phiếu) */
+    if(p.k&&p.k===c.k) return p.v===c.v?2.9:2.4;
+    if(p.k&&c.k&&p.k!==c.k) return 0;
     const sh=p.toks.length<=c.toks.length?p:c, lg=sh===p?c:p;
     if(sh.toks.length>=3 && (' '+lg.base+' ').indexOf(' '+sh.base+' ')>=0) return 1.5;
     const d=dice(p.toks,c.toks);
-    return d>=0.7?d:0;
+    if(d>=0.7) return d;
+    /* tên gần giống / ký tự tương đồng → chỉ gợi ý "gần đúng" để người dùng kiểm tra */
+    return fuzzy(p,c);
   }
   function autoAssign(rows,canon){
     const cps=canon.map(n=>({n,p:parseName(n)}));
     const pairs=[];
-    rows.forEach((r,i)=>{const p=parseName(r.raw);cps.forEach(c=>{const s=score(p,c.p);if(s>0)pairs.push({i,n:c.n,s});});});
+    rows.forEach((r,i)=>{
+      const p=parseName(r.raw), cand=[];
+      cps.forEach(c=>{const s=score(p,c.p);if(s>0)cand.push({n:c.n,s,v:c.p.v});});
+      /* PDF không ghi định tính/định lượng nhưng phiếu có cả hai (vd RF, TPHA): không thể chắc chắn →
+         gợi ý "gần đúng" (chưa tick). Ưu tiên định lượng nếu số tiêu bản > số ca (pha loãng nhiều ống). */
+      if(!p.v&&cand.length>1){
+        const top=Math.max(...cand.map(x=>x.s)), tops=cand.filter(x=>x.s===top);
+        if(tops.length>1&&new Set(tops.map(x=>x.v)).size>1){
+          const wantDL=(Number(r.specimen)||0)>(Number(r.cases)||0);
+          const hasDLv=tops.some(x=>x.v==='dl');
+          tops.forEach(x=>{x.s=0.85+(hasDLv&&(x.v==='dl')===wantDL?0.01:0);x.amb=true;});
+        }
+      }
+      cand.forEach(x=>pairs.push({i,n:x.n,s:x.s,amb:!!x.amb||x.s<0.5}));
+    });
     pairs.sort((a,b)=>b.s-a.s||a.i-b.i);
-    const rowT=new Set(), nameT=new Set(), res=rows.map(r=>({row:r,match:'',score:0}));
+    const rowT=new Set(), nameT=new Set(), res=rows.map(r=>({row:r,match:'',score:0,amb:false}));
     pairs.forEach(x=>{
       if(rowT.has(x.i)||nameT.has(x.n)) return;
-      rowT.add(x.i); nameT.add(x.n); res[x.i].match=x.n; res[x.i].score=x.s;
+      rowT.add(x.i); nameT.add(x.n); res[x.i].match=x.n; res[x.i].score=x.s; res[x.i].amb=!!x.amb;
     });
     return res;
   }
@@ -12627,9 +13397,9 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
       const rowsHtml=matched.map(m=>{
         const cur=m.match?curMap.get(m.match):null;
         const curTxt=cur?`${esc2(cur.cases)||'—'} / ${esc2(cur.specimen)||'—'}`:'—';
-        const badge=m.match?(m.score>=0.9?'<span style="color:#15803d;font-size:10.5px">● Khớp chắc chắn</span>':'<span style="color:#b45309;font-size:10.5px">● Gần đúng — kiểm tra</span>'):'<span style="color:#b91c1c;font-size:10.5px">● Không khớp</span>';
+        const badge=m.match?(m.amb?'<span style="color:#b45309;font-size:10.5px">● Gần đúng — chưa rõ loại, kiểm tra</span>':(m.score>=0.9?'<span style="color:#15803d;font-size:10.5px">● Khớp chắc chắn</span>':'<span style="color:#0369a1;font-size:10.5px">● Gần đúng</span>')):'<span style="color:#b91c1c;font-size:10.5px">● Không khớp</span>';
         return `<tr>
-          <td style="text-align:center"><input type="checkbox" class="smqpdf-chk" ${m.match&&m.score>=0.9?'checked':''}></td>
+          <td style="text-align:center"><input type="checkbox" class="smqpdf-chk" ${m.match&&!m.amb?'checked':''}></td>
           <td style="max-width:260px">${esc2(m.row.raw)}<br>${badge}</td>
           <td><select class="smqpdf-sel" style="width:100%"><option value="">— Bỏ qua —</option>${options(m.match)}</select></td>
           <td style="text-align:center;color:#64748b;font-size:11px">${curTxt}</td>
@@ -12640,7 +13410,8 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
       const html=`
         <div style="max-height:62vh;overflow:auto">
           ${nameWarn?`<div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:8px 10px;border-radius:8px;margin-bottom:10px;font-size:12.5px">⚠ Tên file "<b>${esc2(fn)}</b>" có vẻ không đúng loại ${type==='imm'?'MD (Miễn dịch)':'VS (Vi sinh)'}. Vẫn đọc bình thường — hãy kiểm tra kỹ phần khớp bên dưới.</div>`:''}
-          <div style="font-size:12.5px;color:#475569;margin-bottom:8px">Đọc được ${rows.length} dòng, tự khớp chắc chắn ${matched.filter(m=>m.match&&m.score>=0.9).length} dòng. Dòng "gần đúng" được gợi ý nhưng chưa tick — hãy kiểm tra rồi tick nếu đúng.</div>
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;padding:8px 10px;border-radius:8px;margin-bottom:10px;font-size:12.5px"><b>Chú thích:</b> ${type==='imm'?'(ĐT) = định tính · (ĐL) = định lượng · (R) = miễn dịch tự động (chạy máy)':'(TT) = thông thường · (TĐ) = tự động'}</div>
+          <div style="font-size:12.5px;color:#475569;margin-bottom:8px">Đọc được ${rows.length} dòng, tự khớp ${matched.filter(m=>m.match&&!m.amb).length} dòng (chỉ cần gần đúng tên). Dòng chưa rõ loại ${type==='imm'?'(ĐT/ĐL/R)':'(TT/TĐ)'} được gợi ý nhưng chưa tick — hãy kiểm tra rồi tick nếu đúng.</div>
           ${totalNote}
           <table style="width:100%;border-collapse:collapse" class="smqpdf-table">
             <thead><tr style="background:#f1f5f9">
