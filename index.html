@@ -1179,6 +1179,12 @@ input, select, textarea, button, option, table, th, td, label, span, div, p, h1,
         <option value="NV. Nguyễn Hồng Lợi (CNXN)">NV. Nguyễn Hồng Lợi (CNXN)</option>
         <option value="NV. Bùi Thị Tiến Phước (CNXN)">NV. Bùi Thị Tiến Phước (CNXN)</option>
         <option value="NV. Trần Thị Cẩm Ly (CNXN)">NV. Trần Thị Cẩm Ly (CNXN)</option>
+        <option value="NV. Nguyễn Thị Ngọc Trâm (CNXN)">NV. Nguyễn Thị Ngọc Trâm (CNXN)</option>
+        <option value="NV. Nguyễn Thị Kim Phượng (CNXN)">NV. Nguyễn Thị Kim Phượng (CNXN)</option>
+        <option value="NV. Nguyễn Thị Tú (CNXN)">NV. Nguyễn Thị Tú (CNXN)</option>
+        <option value="NV. Nguyễn Thị Bích Phượng (CNXN)">NV. Nguyễn Thị Bích Phượng (CNXN)</option>
+        <option value="NV. Lê Diệu Đan (CNXN)">NV. Lê Diệu Đan (CNXN)</option>
+        <option value="NV. Nguyễn Thị Thùy Linh (CNXN)">NV. Nguyễn Thị Thùy Linh (CNXN)</option>
       </select>
     </label>
     <label class="field">
@@ -9600,7 +9606,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   function renderTestRows(rows,type){return rows.map((x,i)=>`<tr><td class="cls-stt">${i+1}</td><td class="cls-test-name">${esc(x.name)}</td><td><input data-final-clst="${type}" data-i="${i}" value="${esc(x.cases)}" inputmode="numeric"></td><td><input data-final-clst="${type}" data-specimen data-i="${i}" value="${esc(x.specimen)}"></td></tr>`).join('');}
   function renderCaseRows(rows,type){
     const years=[];for(let y=new Date().getFullYear();y>=1900;y--)years.push(y);const deps=['Hồi sức cấp cứu','Phục hồi chức năng','Y học cổ truyền','Gây mê hồi sức','Ngoại tạo hình','Ngoại tổng hợp','Nội tổng hợp','Vảy nến tự miễn','Da tổng hợp','Da lây nhiễm','Sản','Ngoại KTC','Nhi','Phòng lưu'];
-    return rows.map((x,i)=>`<tr><td>${i+1}</td><td><input data-final-case="${type}" data-i="${i}" data-k="patient" value="${esc(x.patient)}"></td><td><select data-final-case="${type}" data-i="${i}" data-k="year"><option value="">—</option>${years.map(y=>`<option value="${y}" ${String(x.year)===String(y)?'selected':''}>${y}</option>`).join('')}</select></td><td><select data-final-case="${type}" data-i="${i}" data-k="dept"><option value="">—</option>${deps.map(d=>`<option value="${esc(d)}" ${x.dept===d?'selected':''}>${esc(d)}</option>`).join('')}</select></td><td><input data-final-case="${type}" data-i="${i}" data-k="diagnosis" value="${esc(x.diagnosis)}"></td><td><input data-final-case="${type}" data-i="${i}" data-k="test" value="${esc(x.test)}"></td></tr>`).join('');
+    return rows.map((x,i)=>`<tr><td>${i+1}</td><td><input data-final-case="${type}" data-i="${i}" data-k="patient" value="${esc(x.patient)}"></td><td><select data-final-case="${type}" data-i="${i}" data-k="year"><option value="">—</option>${years.map(y=>`<option value="${y}" ${String(x.year)===String(y)?'selected':''}>${y}</option>`).join('')}</select></td><td><select data-final-case="${type}" data-i="${i}" data-k="dept"><option value="">—</option>${deps.map(d=>`<option value="${esc(d)}" ${x.dept===d?'selected':''}>${esc(d)}</option>`).join('')}</select></td><td><input data-final-case="${type}" data-i="${i}" data-k="diagnosis" value="${esc(x.diagnosis)}"></td><td>${type==='em'?`<textarea class="cls-em-test" rows="1" data-final-case="${type}" data-i="${i}" data-k="test">\n${esc(x.test)}</textarea>`:`<input data-final-case="${type}" data-i="${i}" data-k="test" value="${esc(x.test)}">`}</td></tr>`).join('');
   }
   function renderCLSFinal(){
     const el=document.getElementById('view-reports-cls');if(!el)return;const r=normalizeCLS(state.clsDraft||{});state.clsDraft=clone(r);
@@ -10367,7 +10373,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       ${T(note)?`<div class="cls-v3-case-note">${E(T(note))}</div>`:''}
       <table class="cls-v3-grid cls-v3-case-grid" data-word-widths="7,23,11,18,22,19">
         <thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead>
-        <tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td class="left">${E(x.patient)}</td><td>${E(x.year)}</td><td class="left">${E(x.dept)}</td><td class="left">${E(x.diagnosis)}</td><td class="left">${E(x.test)}</td></tr>`).join('')}</tbody>
+        <tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td class="left">${E(x.patient)}</td><td>${E(x.year)}</td><td class="left">${E(x.dept)}</td><td class="left">${E(x.diagnosis)}</td><td class="left">${E(x.test).replace(/\r?\n/g,'<br>')}</td></tr>`).join('')}</tbody>
       </table>
     </section>`;
   }
@@ -10648,7 +10654,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       ${visibleNote?`<div class="cls-note-v3 cls-v3-case-note">${E(shortLabel)}: ${E(visibleNote)}</div>`:''}
       <table class="cls-data-v3 cls-case-v3">
         <thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead>
-        <tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td class="left">${E(x.patient)}</td><td>${E(x.year)}</td><td class="left">${E(x.dept)}</td><td class="left">${E(x.diagnosis)}</td><td class="left">${E(x.test)}</td></tr>`).join('')}</tbody>
+        <tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td class="left">${E(x.patient)}</td><td>${E(x.year)}</td><td class="left">${E(x.dept)}</td><td class="left">${E(x.diagnosis)}</td><td class="left">${E(x.test).replace(/\r?\n/g,'<br>')}</td></tr>`).join('')}</tbody>
       </table>
     </div>`;
   }
@@ -13513,3 +13519,20 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
 .smqpdf-table th:nth-child(6),.smqpdf-table td:nth-child(6){width:110px!important;min-width:110px!important}
 .smqpdf-table td:nth-child(5) input,.smqpdf-table td:nth-child(6) input{width:100%!important;min-width:0;box-sizing:border-box;padding-left:6px!important;padding-right:6px!important;text-align:center}
 </style>
+<style id="smart-cls-emergency-test-multiline">
+/* IV/ Xét nghiệm cấp cứu: ô Xét nghiệm cho phép Enter xuống dòng, tự giãn chiều cao theo nội dung. */
+textarea.cls-em-test{display:block;width:100%;min-height:0;height:auto;resize:none;overflow:hidden;line-height:1.35;box-sizing:border-box;white-space:pre-wrap;}
+</style>
+<script id="smart-cls-emergency-test-multiline-js">
+(function(){
+  'use strict';
+  if(window.__SMQ_CLS_EM_MULTI__)return; window.__SMQ_CLS_EM_MULTI__=true;
+  function fit(t){t.style.height='auto';t.style.height=(t.scrollHeight+2)+'px';}
+  function run(){document.querySelectorAll('textarea.cls-em-test').forEach(fit);}
+  document.addEventListener('input',function(e){if(e.target&&e.target.classList&&e.target.classList.contains('cls-em-test'))fit(e.target);},true);
+  let tm=null;
+  new MutationObserver(function(){clearTimeout(tm);tm=setTimeout(run,40);}).observe(document.body,{childList:true,subtree:true});
+  window.addEventListener('resize',function(){clearTimeout(tm);tm=setTimeout(run,80);});
+  setTimeout(run,300);
+})();
+</script>
