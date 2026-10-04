@@ -2230,7 +2230,7 @@ function buildInitialCatalog(){
   const m2=s.machines[s.machines.push({id:uid('M'),name:'Beckman Coulter UniCel DxI 800',brand:'Beckman Coulter',model:'UniCel DxI 800',
     serial:'A71556B',dept:'Vi sinh - Miễn dịch',status:'Hoạt động',maintDate:'',calibDate:''})-1];
 
-  const dxiTestNames=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','PAPPA + HCG','Tg','Tg-Ab','UE3'];
+  const dxiTestNames=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','bHCG','PAPP-A + hCG (Double test)','AFP + hCG + uE3 (Triple test)','Tg','Tg-Ab','UE3','AFP + hCG + uE3'];
   dxiTestNames.forEach(name=>{
     s.tests.push({id:uid('T'), name, code:name.replace(/[^A-Za-z0-9]/g,'').toUpperCase(), unit:'', method:'', TEa:0, machineId:m2.id});
     // Không tạo Lot/Mean/SD cho máy này — để trống theo yêu cầu, người dùng điền sau.
@@ -6432,7 +6432,7 @@ const CHEMICAL_IFLASH_TESTS=[
   {name:'HCV',unit:'COI'},{name:'PCT',unit:'ng/mL'},{name:'HBeAg',unit:'COI'},{name:'CP_IgM',unit:'COI'},
   {name:'CA 19-9',unit:'U/mL'},{name:'CA 72-4',unit:'U/mL'},{name:'CYFRA 21-1',unit:'ng/mL'},{name:'NT-proBNP',unit:'pg/mL'}
 ];
-const CHEMICAL_DXI_TESTS=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','PAPPA + HCG','Tg','Tg-Ab','UE3'].map(name=>({name,unit:''}));
+const CHEMICAL_DXI_TESTS=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','bHCG','PAPP-A + hCG (Double test)','Tg','Tg-Ab','UE3','AFP + hCG + uE3 (Triple test)'].map(name=>({name,unit:''}));
 const CHEMICAL_ALLERGENS=Array.from({length:108},(_,i)=>({name:`Dị nguyên ${String(i+1).padStart(3,'0')}`,code:`A${String(i+1).padStart(3,'0')}`}));
 function chemicalEnsureState(){
   if(!state.chemicalMD||!Array.isArray(state.chemicalMD))state.chemicalMD=[];
@@ -8791,7 +8791,7 @@ const VSC=[
 ['Định danh-KSĐ tự động','AST indication Solution','Lọ'],['Định danh-KSĐ tự động','Pmic/ID Panel','Panel'],['Định danh-KSĐ tự động','Nmic/ID Panel','Panel'],['Định danh-KSĐ tự động','AST broth','Lọ'],['Định danh-KSĐ tự động','ID Broth','Lọ'],
 ['Hóa chất phụ-Môi trường pha chế','Bile Esculin Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','Mullerhilton Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','MacKonkey Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','Methyl Red - Voges Proskauer Agar (MR-VP)','Hộp']
 ];
-const IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','PAPPA + HCG','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
+const IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','bHCG','PAPP-A + hCG (Double test)','AFP + hCG + uE3 (Triple test)','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
 const MIC=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Soi trực tiếp nhuộm soi (Demodex)','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Soi trực tiếp nhuộm soi (ghẻ)','Soi trực tiếp nhuộm soi (rận mu)','Xét nghiệm bệnh phẩm đường sinh dục (Có nhuộm tiêu bản)','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB trực tiếp nhuộm Ziehl-Neelsen','AFB trực tiếp nhuộm Ziehl-Neelsen (trong mủ dịch)','Soi trực tiếp tìm hồng cầu, bạch cầu trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
 const DEPT=['Khoa khám bệnh','Hồi sức cấp cứu','Phục hồi chức năng','Y học cổ truyền','Gây mê hồi sức','Ngoại tạo hình','Ngoại tổng hợp','Nội tổng hợp','Vảy nến - Tự miễn','Da tổng hợp','Da lây nhiễm','Sản','Ngoại KTC','Nhi','Mắt-RHM-TMH','Phong','Lão khoa','Bệnh nhiệt đới','Phẫu thuật - Gây mê hồi sức','PT - TH Thẩm mỹ'], DEPT_ER=[...DEPT,'Phòng lưu'];
 const E=v=>escapeHtml(v??'');
@@ -9437,7 +9437,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   /* ================================================================
      3. BÁO CÁO TRỰC CLS: danh mục chuẩn + nút thêm mới + xuất sạch dữ liệu.
      ================================================================ */
-  const STD_IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','PAPPA + HCG','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
+  const STD_IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','bHCG','PAPP-A + hCG (Double test)','AFP + hCG + uE3 (Triple test)','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
   const STD_MIC=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Soi trực tiếp nhuộm soi (Demodex)','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Soi trực tiếp nhuộm soi (ghẻ)','Soi trực tiếp nhuộm soi (rận mu)','Xét nghiệm bệnh phẩm đường sinh dục (Có nhuộm tiêu bản)','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB trực tiếp nhuộm Ziehl-Neelsen','AFB trực tiếp nhuộm Ziehl-Neelsen (trong mủ dịch)','Soi trực tiếp tìm hồng cầu, bạch cầu trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
   function catalog(type){
     state.clsSettings=state.clsSettings||{};
@@ -9571,7 +9571,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   /* ================================================================
      BÁO CÁO TRỰC CLS — luôn hiển thị đủ danh mục; lọc để nhập từng XN
      ================================================================ */
-  const IMM_STD=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','PAPPA + HCG','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
+  const IMM_STD=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','bHCG','PAPP-A + hCG (Double test)','AFP + hCG + uE3 (Triple test)','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
   const MIC_STD=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Soi trực tiếp nhuộm soi (Demodex)','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Soi trực tiếp nhuộm soi (ghẻ)','Soi trực tiếp nhuộm soi (rận mu)','Xét nghiệm bệnh phẩm đường sinh dục (Có nhuộm tiêu bản)','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB trực tiếp nhuộm Ziehl-Neelsen','AFB trực tiếp nhuộm Ziehl-Neelsen (trong mủ dịch)','Soi trực tiếp tìm hồng cầu, bạch cầu trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
   /* Bảng đổi tên xét nghiệm do nút "Sửa xét nghiệm" tạo ra: {tên gốc: tên mới}. */
   function renameMap(type){const k=type==='imm'?'renameImmunology':'renameMicrobiology';const m=state.clsSettings&&state.clsSettings[k];return m&&typeof m==='object'&&!Array.isArray(m)?m:{};}
@@ -13059,7 +13059,6 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
     ['psa',/\bpsa\b/],
     ['afp',/\bafp\b/],
     ['cea',/\bcea\b/],
-    ['hcg + pappa',/\bhcg\b/+/\bpappa\b/],
     ['tgab',/\btg ab\b/],
     ['amh',/\bamh\b/],
     ['ue3',/\bue3\b/],
@@ -13098,7 +13097,28 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
     ['sotret',/sot ret trong mau|tim ky sinh trung sot ret/],
     ['trunggiunsan',/trung giun san/]
   ];
+
+  /* Nhóm hCG: Triple test > Double test > bHCG.
+     Chạy TRƯỚC vòng lặp CONCEPTS để 'afp', 'ue3' đứng riêng không bắt nhầm Triple test.
+     Trả về id ngắn giống các concept khác. */
+  function hcgGroupOf(base){
+    const hcg  = /hcg/.test(base);
+    const triT = /triple test/.test(base);
+    const douT = /double test/.test(base);
+    if(!hcg && !triT && !douT) return '';
+
+    const papp = /papp ?a/.test(base);
+    const afp  = /\bafp\b/.test(base);
+    const ue3  = /\bu ?e3\b|estriol|oestriol/.test(base);
+
+    if(triT || (afp && hcg && ue3)) return 'tripletest';   // AFP + hCG + uE3 (Triple test)
+    if((papp && hcg) || (douT && !afp)) return 'doubletest'; // PAPP-A + hCG (Double test)
+    if(hcg && !papp && !afp && !ue3) return 'bhcg';        // bHCG
+    return '';
+  }
   function conceptOf(base){
+    const g = hcgGroupOf(base);
+    if(g) return g;
     for(let i=0;i<CONCEPTS.length;i++){ if(CONCEPTS[i][1].test(base)) return CONCEPTS[i][0]; }
     return '';
   }
