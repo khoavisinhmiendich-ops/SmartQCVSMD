@@ -2230,7 +2230,7 @@ function buildInitialCatalog(){
   const m2=s.machines[s.machines.push({id:uid('M'),name:'Beckman Coulter UniCel DxI 800',brand:'Beckman Coulter',model:'UniCel DxI 800',
     serial:'A71556B',dept:'Vi sinh - Miễn dịch',status:'Hoạt động',maintDate:'',calibDate:''})-1];
 
-  const dxiTestNames=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','HCG','PAPPA','Tg','Tg-Ab','UE3'];
+  const dxiTestNames=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','PAPPA + HCG','Tg','Tg-Ab','UE3'];
   dxiTestNames.forEach(name=>{
     s.tests.push({id:uid('T'), name, code:name.replace(/[^A-Za-z0-9]/g,'').toUpperCase(), unit:'', method:'', TEa:0, machineId:m2.id});
     // Không tạo Lot/Mean/SD cho máy này — để trống theo yêu cầu, người dùng điền sau.
@@ -6432,7 +6432,7 @@ const CHEMICAL_IFLASH_TESTS=[
   {name:'HCV',unit:'COI'},{name:'PCT',unit:'ng/mL'},{name:'HBeAg',unit:'COI'},{name:'CP_IgM',unit:'COI'},
   {name:'CA 19-9',unit:'U/mL'},{name:'CA 72-4',unit:'U/mL'},{name:'CYFRA 21-1',unit:'ng/mL'},{name:'NT-proBNP',unit:'pg/mL'}
 ];
-const CHEMICAL_DXI_TESTS=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','HCG','PAPPA','Tg','Tg-Ab','UE3'].map(name=>({name,unit:''}));
+const CHEMICAL_DXI_TESTS=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','PAPPA + HCG','Tg','Tg-Ab','UE3'].map(name=>({name,unit:''}));
 const CHEMICAL_ALLERGENS=Array.from({length:108},(_,i)=>({name:`Dị nguyên ${String(i+1).padStart(3,'0')}`,code:`A${String(i+1).padStart(3,'0')}`}));
 function chemicalEnsureState(){
   if(!state.chemicalMD||!Array.isArray(state.chemicalMD))state.chemicalMD=[];
@@ -8791,7 +8791,7 @@ const VSC=[
 ['Định danh-KSĐ tự động','AST indication Solution','Lọ'],['Định danh-KSĐ tự động','Pmic/ID Panel','Panel'],['Định danh-KSĐ tự động','Nmic/ID Panel','Panel'],['Định danh-KSĐ tự động','AST broth','Lọ'],['Định danh-KSĐ tự động','ID Broth','Lọ'],
 ['Hóa chất phụ-Môi trường pha chế','Bile Esculin Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','Mullerhilton Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','MacKonkey Agar','Hộp'],['Hóa chất phụ-Môi trường pha chế','Methyl Red - Voges Proskauer Agar (MR-VP)','Hộp']
 ];
-const IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
+const IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm  sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','PAPPA + HCG','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
 const MIC=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Soi trực tiếp nhuộm soi (Demodex)','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Soi trực tiếp nhuộm soi (ghẻ)','Soi trực tiếp nhuộm soi (rận mu)','Xét nghiệm bệnh phẩm đường sinh dục (Có nhuộm tiêu bản)','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB trực tiếp nhuộm Ziehl-Neelsen','AFB trực tiếp nhuộm Ziehl-Neelsen (trong mủ dịch)','Soi trực tiếp tìm hồng cầu, bạch cầu trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
 const DEPT=['Khoa khám bệnh','Hồi sức cấp cứu','Phục hồi chức năng','Y học cổ truyền','Gây mê hồi sức','Ngoại tạo hình','Ngoại tổng hợp','Nội tổng hợp','Vảy nến - Tự miễn','Da tổng hợp','Da lây nhiễm','Sản','Ngoại KTC','Nhi','Mắt-RHM-TMH','Phong','Lão khoa','Bệnh nhiệt đới','Phẫu thuật - Gây mê hồi sức','PT - TH Thẩm mỹ'], DEPT_ER=[...DEPT,'Phòng lưu'];
 const E=v=>escapeHtml(v??'');
@@ -9437,7 +9437,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   /* ================================================================
      3. BÁO CÁO TRỰC CLS: danh mục chuẩn + nút thêm mới + xuất sạch dữ liệu.
      ================================================================ */
-  const STD_IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
+  const STD_IMM=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','PAPPA + HCG','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
   const STD_MIC=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Soi trực tiếp nhuộm soi (Demodex)','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Soi trực tiếp nhuộm soi (ghẻ)','Soi trực tiếp nhuộm soi (rận mu)','Xét nghiệm bệnh phẩm đường sinh dục (Có nhuộm tiêu bản)','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB trực tiếp nhuộm Ziehl-Neelsen','AFB trực tiếp nhuộm Ziehl-Neelsen (trong mủ dịch)','Soi trực tiếp tìm hồng cầu, bạch cầu trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
   function catalog(type){
     state.clsSettings=state.clsSettings||{};
@@ -9571,7 +9571,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   /* ================================================================
      BÁO CÁO TRỰC CLS — luôn hiển thị đủ danh mục; lọc để nhập từng XN
      ================================================================ */
-  const IMM_STD=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','HCG','PAPPA','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
+  const IMM_STD=['HBsAg (Test nhanh)','HBsAg (R)','Anti-HBs (Test nhanh)','Anti-HBs định lượng','Anti-HCV (R)','Helicobacter pylori Ab (Test nhanh)','Dengue Ag (Test nhanh)','Test Sốt Xuất Huyết (Test nhanh)','Viêm Gan E (HEV Test Nhanh)','Viêm gan A (HAV Test nhanh)','TB (Test nhanh) Phản ứng miễn dịch','HBeAg (Test nhanh)','Clamydia Trachomatis (Test nhanh)','Xét nghiệm sàng lọc và định tính 5 loại ma tuý (Test nhanh)','Heroin-Morphine-Opiates (Test nhanh)','Malaria P.f/P.v (Test nhanh)','Procalcitonin (Test nhanh)','ASLO (ĐT)','RF (ĐT)','CRP (ĐT)','RPR (ĐT)','TPHA (ĐT)','T3','FT4','TSH','Định lượng Pro-calcitonin [Máu]','HBeAg (R)','CP_IgM','CA 19-9','CA 72-4','CYFRA 21-1','NT-proBNP','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','CEA','PAPPA + HCG','Tg','Tg-Ab','AMH','UE3','Giun đũa chó','Giun đầu gai','Giun lươn','Sán lá gan','Sán gạo heo','Amibe','53 dị nguyên','108 dị nguyên','Định lượng IgE [Máu]','Streptococcus pyogenes ASO','RF','CRP (ĐL)','RPR (ĐL)','TPHA định tính và định lượng','Plasmodium (Ký sinh trùng sốt rét) Ag test nhanh'];
   const MIC_STD=['Soi trực tiếp nhuộm soi (nấm da)','Soi trực tiếp nhuộm soi (nấm miệng)','Soi trực tiếp nhuộm soi (nấm móng)','Soi tươi tìm ký sinh trùng (nấm sinh dục)','Soi tươi tìm KST (đường ruột)','Soi trực tiếp nhuộm soi (Demodex)','Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)','Soi trực tiếp nhuộm soi (ghẻ)','Soi trực tiếp nhuộm soi (rận mu)','Xét nghiệm bệnh phẩm đường sinh dục (Có nhuộm tiêu bản)','Kháng nấm đồ + Nuôi cấy định danh nấm (TT)','Vi khuẩn kháng thuốc (TĐ)','Vi khuẩn kháng thuốc (TT)','AFB trực tiếp nhuộm Ziehl-Neelsen','AFB trực tiếp nhuộm Ziehl-Neelsen (trong mủ dịch)','Soi trực tiếp tìm hồng cầu, bạch cầu trong phân','Vi nấm soi tươi (đường ruột)','Kí sinh trùng khẳng định (đường ruột)','Vi khuẩn nuôi cấy và định danh (TĐ)','Nuôi cấy định danh vi khuẩn (TT)','Kháng sinh đồ (TĐ)','Kháng sinh đồ (TT)','Nuôi cấy định danh nấm (TT)','Mycobacterium leprae (BH)','Tìm ký sinh trùng sốt rét trong máu','Ấu trùng giun lươn soi tươi','Trứng giun sán soi tươi','Soi tươi tìm ký sinh trùng (trichomonas)','Kháng sinh đồ + Nuôi cấy vi khuẩn bằng phương pháp thông thường (Lậu cầu)'];
   /* Bảng đổi tên xét nghiệm do nút "Sửa xét nghiệm" tạo ra: {tên gốc: tên mới}. */
   function renameMap(type){const k=type==='imm'?'renameImmunology':'renameMicrobiology';const m=state.clsSettings&&state.clsSettings[k];return m&&typeof m==='object'&&!Array.isArray(m)?m:{};}
@@ -9607,7 +9607,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   function renderTestRows(rows,type){return rows.map((x,i)=>`<tr><td class="cls-stt">${i+1}</td><td class="cls-test-name">${esc(x.name)}</td><td><input data-final-clst="${type}" data-i="${i}" value="${esc(x.cases)}" inputmode="numeric"></td><td><input data-final-clst="${type}" data-specimen data-i="${i}" value="${esc(x.specimen)}"></td></tr>`).join('');}
   function renderCaseRows(rows,type){
     const years=[];for(let y=new Date().getFullYear();y>=1900;y--)years.push(y);const deps=['Khoa khám bệnh','Hồi sức cấp cứu','Phục hồi chức năng','Y học cổ truyền','Gây mê hồi sức','Ngoại tạo hình','Ngoại tổng hợp','Nội tổng hợp','Vảy nến - Tự miễn','Da tổng hợp','Da lây nhiễm','Sản','Ngoại KTC','Nhi','Mắt-RHM-TMH','Phong','Lão khoa','Bệnh nhiệt đới','Phẫu thuật - Gây mê hồi sức','PT - TH Thẩm mỹ','Phòng lưu'];
-    return rows.map((x,i)=>`<tr><td>${i+1}</td><td><input data-final-case="${type}" data-i="${i}" data-k="patient" value="${esc(x.patient)}"></td><td><select data-final-case="${type}" data-i="${i}" data-k="year"><option value="">—</option>${years.map(y=>`<option value="${y}" ${String(x.year)===String(y)?'selected':''}>${y}</option>`).join('')}</select></td><td>${(()=>{const oth=!!(x.dept&&!deps.includes(x.dept));return `<select class="cls-dept-sel" data-final-case="${type}" data-i="${i}" data-k="dept"><option value="">—</option>${deps.map(d=>`<option value="${esc(d)}" ${x.dept===d?'selected':''}>${esc(d)}</option>`).join('')}<option value="__other__" ${oth?'selected':''}>+ Nhập khoa mới…</option></select><input class="cls-dept-new" data-dept-new placeholder="Nhập tên khoa mới" value="${oth?esc(x.dept):''}" ${oth?'':'hidden'}>`;})()}</td><td><input data-final-case="${type}" data-i="${i}" data-k="diagnosis" value="${esc(x.diagnosis)}"></td><td>${type==='em'?`<textarea class="cls-em-test" rows="1" data-final-case="${type}" data-i="${i}" data-k="test">\n${esc(x.test)}</textarea>`:`<input data-final-case="${type}" data-i="${i}" data-k="test" value="${esc(x.test)}">`}</td></tr>`).join('');
+    return rows.map((x,i)=>`<tr><td>${i+1}</td><td><input data-final-case="${type}" data-i="${i}" data-k="patient" value="${esc(x.patient)}"></td><td><select data-final-case="${type}" data-i="${i}" data-k="year"><option value="">—</option>${years.map(y=>`<option value="${y}" ${String(x.year)===String(y)?'selected':''}>${y}</option>`).join('')}</select></td><td>${(()=>{const oth=!!(x.dept&&!deps.includes(x.dept));return `<select class="cls-dept-sel" data-final-case="${type}" data-i="${i}" data-k="dept"><option value="">—</option>${deps.map(d=>`<option value="${esc(d)}" ${x.dept===d?'selected':''}>${esc(d)}</option>`).join('')}<option value="__other__" ${oth?'selected':''}>+ Nhập khoa mới…</option></select><input class="cls-dept-new" data-dept-new placeholder="Nhập tên khoa mới" value="${oth?esc(x.dept):''}" ${oth?'':'hidden'}>`;})()}</td><td><input data-final-case="${type}" data-i="${i}" data-k="diagnosis" value="${esc(x.diagnosis)}"></td><td>${type==='em'?(typeof window.__smartXnCellHTML==='function'?window.__smartXnCellHTML(x,i,type):`<textarea class="cls-em-test" rows="1" data-final-case="${type}" data-i="${i}" data-k="test">\n${esc(x.test)}</textarea>`):`<input data-final-case="${type}" data-i="${i}" data-k="test" value="${esc(x.test)}">`}</td></tr>`).join('');
   }
   function renderCLSFinal(){
     const el=document.getElementById('view-reports-cls');if(!el)return;const r=normalizeCLS(state.clsDraft||{});state.clsDraft=clone(r);
@@ -10374,7 +10374,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       ${T(note)?`<div class="cls-v3-case-note">${E(T(note))}</div>`:''}
       <table class="cls-v3-grid cls-v3-case-grid" data-word-widths="7,23,11,18,22,19">
         <thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead>
-        <tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td class="left">${E(x.patient)}</td><td>${E(x.year)}</td><td class="left">${E(x.dept)}</td><td class="left">${E(x.diagnosis)}</td><td class="left">${E(x.test).replace(/\r?\n/g,'<br>')}</td></tr>`).join('')}</tbody>
+        <tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td class="left">${E(x.patient)}</td><td>${E(x.year)}</td><td class="center">${E(x.dept)}</td><td class="left">${E(x.diagnosis)}</td><td class="left">${E(x.test).replace(/\r?\n/g,'<br>')}</td></tr>`).join('')}</tbody>
       </table>
     </section>`;
   }
@@ -10655,7 +10655,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       ${visibleNote?`<div class="cls-note-v3 cls-v3-case-note">${E(shortLabel)}: ${E(visibleNote)}</div>`:''}
       <table class="cls-data-v3 cls-case-v3">
         <thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead>
-        <tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td class="left">${E(x.patient)}</td><td>${E(x.year)}</td><td class="left">${E(x.dept)}</td><td class="left">${E(x.diagnosis)}</td><td class="left">${E(x.test).replace(/\r?\n/g,'<br>')}</td></tr>`).join('')}</tbody>
+        <tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td class="left">${E(x.patient)}</td><td>${E(x.year)}</td><td class="center">${E(x.dept)}</td><td class="left">${E(x.diagnosis)}</td><td class="left">${E(x.test).replace(/\r?\n/g,'<br>')}</td></tr>`).join('')}</tbody>
       </table>
     </div>`;
   }
@@ -13059,8 +13059,7 @@ html body .cls-export-v3.cls-export-v3 table.cls-data-v3.cls-data-v3 tr{break-in
     ['psa',/\bpsa\b/],
     ['afp',/\bafp\b/],
     ['cea',/\bcea\b/],
-    ['hcg',/\bhcg\b/],
-    ['pappa',/\bpappa\b/],
+    ['hcg + pappa',/\bhcg\b/+/\bpappa\b/],
     ['tgab',/\btg ab\b/],
     ['amh',/\bamh\b/],
     ['ue3',/\bue3\b/],
@@ -13603,3 +13602,231 @@ input.cls-dept-new[hidden]{display:none!important;}
   },true);
 })();
 </script>
+
+<style id="smart-cls-print-dept-center">
+/* In/PDF/Word – Báo cáo trực CLS: cột KHOA/PHÒNG căn giữa. */
+html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-child(4){text-align:center!important}
+</style>
+<style id="smart-cls-xn-picker-css">
+/* IV/ Xét nghiệm cấp cứu – bộ lọc & chọn xét nghiệm trong ô XÉT NGHIỆM */
+.cls-xn-cell{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cls-xn-filter{width:100%;box-sizing:border-box}
+.cls-xn-items{display:flex;flex-direction:column;gap:6px}
+.cls-xn-items:empty{display:none}
+.cls-xn-item{border:1px solid var(--border);border-radius:8px;padding:5px 6px;background:var(--surface-2,transparent)}
+.cls-xn-head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:4px;font-size:12px;font-weight:600;line-height:1.3;color:var(--text)}
+.cls-xn-name{min-width:0;overflow-wrap:anywhere}
+.cls-xn-del{border:0;background:transparent;cursor:pointer;color:var(--text-faint,#94a3b8);font-size:16px;line-height:1;padding:0 2px;flex:none}
+.cls-xn-del:hover{color:var(--danger,#dc2626)}
+.cls-xn-item select,.cls-xn-item input{width:100%;box-sizing:border-box}
+.cls-xn-row{display:flex;align-items:center;gap:6px}
+.cls-xn-unit{white-space:nowrap;font-size:12px;color:var(--text-muted)}
+.cls-xn-item .cls-xn-v2{margin-top:4px}
+.cls-xn-free{display:flex;gap:4px;align-items:center}
+.cls-xn-hold{display:none!important}
+#clsXnMenu{position:fixed;z-index:100000;display:none;overflow:auto;max-height:280px;background:var(--surface,#fff);color:var(--text);border:1px solid var(--border-strong,#cbd5e1);border-radius:8px;box-shadow:var(--shadow-lg,0 8px 24px rgba(15,23,42,.18));font-size:13px}
+#clsXnMenu .cls-xn-grp{position:sticky;top:0;padding:5px 10px;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-2,#f1f5f9)}
+#clsXnMenu .cls-xn-opt{padding:6px 10px;cursor:pointer;overflow-wrap:anywhere}
+#clsXnMenu .cls-xn-opt:hover,#clsXnMenu .cls-xn-opt.on{background:var(--primary-tint,#e8f0fe)}
+#clsXnMenu .cls-xn-empty{padding:8px 10px;color:var(--text-muted)}
+</style>
+<script id="smart-cls-xn-picker-js" data-smq-ok>
+(function(){
+  'use strict';
+  if(window.__SMQ_XN_PICKER__)return; window.__SMQ_XN_PICKER__=true;
+  const T=v=>String(v==null?'':v).trim();
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const fold=v=>T(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
+
+  const RAPID_OPTS=['Âm tính','Dương tính'];
+  const DENGUE_OPTS=['Âm tính IgM+IgG','Âm tính IgM, Dương tính IgG','Dương tính IgM, Âm tính IgG'];
+  const IGM_OPTS=['Âm tính IgM','Dương tính IgM'];
+  const MALARIA_OPTS=['Âm tính','Dương tính Pf','Dương tính Pv','Dương tính Pf+Pv'];
+  const isRapid=n=>/test\s*nhanh/i.test(n);
+  /* Danh sách lựa chọn theo từng xét nghiệm (kiểu 'sel' và phần định tính của 'selnum') */
+  function optsFor(n){
+    if(/sốt\s*xuất\s*huyết/i.test(n)||/^TB\s*\(/i.test(n))return DENGUE_OPTS;
+    if(/\b(HAV|HEV)\b/i.test(n))return IGM_OPTS;
+    if(/plasmodium/i.test(n))return MALARIA_OPTS;
+    return RAPID_OPTS;
+  }
+  /* sel = chọn kết quả; selnum = chọn Âm/Dương + ô số; auto = chỉ ô số; mic = Vi sinh */
+  function kindOf(g,n){
+    if(g==='mic')return 'mic';
+    if(/^Procalcitonin\s*\(\s*test\s*nhanh/i.test(n))return 'auto';
+    if(isRapid(n))return 'sel';
+    if(/\(ĐT\)/.test(n))return 'sel';
+    if(/\(ĐL\)/.test(n))return /^CRP/i.test(n)?'auto':'selnum';
+    if(/^TPHA\s+định\s*tính\s+và\s+định\s*lượng/i.test(n))return 'selnum';
+    return 'auto';
+  }
+  function label(n){
+    return T(n).replace(/\s*\(\s*test\s*nhanh\s*\)/ig,'').replace(/(\(\s*\w+)\s+test\s*nhanh\s*\)/ig,'$1)')
+      .replace(/\s+test\s*nhanh\s*$/i,'').replace(/\s*\(R\)\s*$/,'').replace(/\s{2,}/g,' ').trim();
+  }
+
+  /* Đơn vị: lấy từ module XÉT NGHIỆM (state.tests); không có thì dùng đơn vị mặc định của máy iFlash. */
+  const UNIT_ALIAS={'HBsAg (R)':['HBsAg'],'Anti-HCV (R)':['HCV'],'HBeAg (R)':['HBeAg'],'Anti-HBs định lượng':['HBsAb'],'Định lượng Pro-calcitonin [Máu]':['PCT']};
+  const UNIT_DEFAULT={'T3':'ng/mL','FT4':'pg/mL','TSH':'µIU/mL','HBsAg':'IU/mL','HCV':'COI','PCT':'ng/mL','HBeAg':'COI','CP_IgM':'COI','CA 19-9':'U/mL','CA 72-4':'U/mL','CYFRA 21-1':'ng/mL','NT-proBNP':'pg/mL'};
+  function unitOf(name){
+    const cands=(UNIT_ALIAS[name]||[]).concat([name,name.replace(/\s*\(R\)\s*$/i,'')]);
+    const tests=(typeof state!=='undefined'&&state&&Array.isArray(state.tests))?state.tests:[];
+    for(const c of cands){const h=tests.find(t=>T(t.name).toLowerCase()===c.toLowerCase()&&T(t.unit));if(h)return T(h.unit);}
+    for(const c of cands){if(UNIT_DEFAULT[c])return UNIT_DEFAULT[c];}
+    return '';
+  }
+
+  function lineOf(it){
+    if(it.t==='free')return T(it.v);
+    const lb=label(it.n),v=T(it.v);
+    if(it.t==='mic')return v?lb+' : '+v:lb;
+    if(it.t==='auto'){const u=T(it.u);return v?lb+' : '+v+(u?' '+u:''):lb;}
+    if(it.t==='selnum'){const num=T(it.v2),u=T(it.u);const p=[v,num?num+(u?' '+u:''):''].filter(Boolean);return p.length?lb+' : '+p.join(', '):lb;}
+    return v?lb+' : '+v:lb;
+  }
+
+  function parseItems(x){
+    let a=x&&x.testItems;
+    if(typeof a==='string'){try{a=JSON.parse(a);}catch(e){a=null;}}
+    if(Array.isArray(a)&&a.length)return a.filter(o=>o&&o.t).map(o=>({t:(o.t==='free'||o.t==='mic')?o.t:kindOf('imm',o.n||''),n:o.n||'',v:o.v||'',v2:o.v2||''}));
+    return String((x&&x.test)||'').split(/\r?\n/).map(T).filter(Boolean).map(l=>({t:'free',n:'',v:l,v2:''}));
+  }
+
+  function itemHTML(it){
+    const u=(it.t==='auto'||it.t==='selnum')?unitOf(it.n):'';
+    const attrs=`class="cls-xn-item" data-t="${esc(it.t)}" data-n="${esc(it.n)}" data-u="${esc(u)}"`;
+    const del='<button type="button" class="cls-xn-del" title="Xóa xét nghiệm này" aria-label="Xóa xét nghiệm này">×</button>';
+    if(it.t==='free')return `<div ${attrs}><div class="cls-xn-free"><input class="cls-xn-v" value="${esc(it.v)}" placeholder="Nhập xét nghiệm / kết quả">${del}</div></div>`;
+    const selHTML=()=>`<select class="cls-xn-v"><option value="">— Chọn kết quả —</option>${optsFor(it.n).map(o=>`<option value="${esc(o)}"${o===it.v?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    const numRow=(cls,val)=>`<div class="cls-xn-row"><input class="${cls}" value="${esc(val)}" placeholder="Kết quả" style="margin-top:0">${u?`<span class="cls-xn-unit">${esc(u)}</span>`:''}</div>`;
+    let body='';
+    if(it.t==='sel')body=selHTML();
+    else if(it.t==='selnum')body=selHTML()+`<div style="margin-top:4px">${numRow('cls-xn-v2',it.v2)}</div>`;
+    else if(it.t==='auto')body=numRow('cls-xn-v',it.v);
+    else body=`<input class="cls-xn-v" value="${esc(it.v)}" placeholder="Kết quả">`;
+    return `<div ${attrs}><div class="cls-xn-head"><span class="cls-xn-name">${esc(label(it.n))}</span>${del}</div>${body}</div>`;
+  }
+
+  window.__smartXnCellHTML=function(x,i,type){
+    const items=parseItems(x).map(o=>Object.assign({u:(o.t==='auto'||o.t==='selnum')?unitOf(o.n):''},o));
+    const text=items.map(lineOf).filter(Boolean).join('\n');
+    return `<div class="cls-xn-cell" data-xn-cell><input type="text" class="cls-xn-filter" placeholder="Lọc xét nghiệm…" autocomplete="off"><div class="cls-xn-items">${items.map(itemHTML).join('')}</div><textarea class="cls-xn-hold" hidden data-final-case="${type}" data-i="${i}" data-k="test">\n${esc(text)}</textarea><input type="hidden" class="cls-xn-json" data-final-case="${type}" data-i="${i}" data-k="testItems" value="${esc(JSON.stringify(items.map(o=>({t:o.t,n:o.n,v:o.v,v2:o.v2}))))}"></div>`;
+  };
+
+  function sync(cell){
+    const items=[...cell.querySelectorAll('.cls-xn-item')].map(el=>({
+      t:el.dataset.t,n:el.dataset.n,u:el.dataset.u||'',
+      v:(el.querySelector('.cls-xn-v')||{}).value||'',v2:(el.querySelector('.cls-xn-v2')||{}).value||''}));
+    const hold=cell.querySelector('.cls-xn-hold'),js=cell.querySelector('.cls-xn-json');
+    if(!hold||!js)return;
+    hold.value=items.map(lineOf).filter(Boolean).join('\n');
+    js.value=JSON.stringify(items.map(o=>({t:o.t,n:o.n,v:o.v,v2:o.v2})));
+    hold.dispatchEvent(new Event('input',{bubbles:false}));   /* kích hoạt lưu nháp có sẵn của form */
+    hold.dispatchEvent(new Event('change',{bubbles:false}));
+  }
+
+  /* ---------- Danh sách xét nghiệm (Miễn dịch + Vi sinh) ---------- */
+  let CAT=null;
+  function catalog(){
+    try{
+      const r=typeof window.normalizeCLS==='function'?window.normalizeCLS(state.clsDraft||{}):{};
+      const imm=typeof window.listFor==='function'?window.listFor('imm',r):(window.IMM_STD||[]);
+      const mic=typeof window.listFor==='function'?window.listFor('mic',r):(window.MIC_STD||[]);
+      return {imm,mic};
+    }catch(e){return {imm:window.IMM_STD||[],mic:window.MIC_STD||[]};}
+  }
+
+  /* ---------- Menu nổi (không bị cắt bởi vùng cuộn của bảng) ---------- */
+  let menu=null,curFilter=null,active=-1;
+  function ensureMenu(){
+    if(menu)return menu;
+    menu=document.createElement('div');menu.id='clsXnMenu';document.body.appendChild(menu);
+    menu.addEventListener('mousedown',e=>{e.preventDefault();const o=e.target.closest('.cls-xn-opt');if(o)choose(o);});
+    return menu;
+  }
+  function place(){
+    if(!menu||!curFilter||menu.style.display==='none')return;
+    const r=curFilter.getBoundingClientRect(),w=Math.max(r.width,320);
+    menu.style.width=w+'px';
+    menu.style.left=Math.max(4,Math.min(r.left,window.innerWidth-w-4))+'px';
+    const h=Math.min(menu.scrollHeight,280),below=window.innerHeight-r.bottom-8;
+    if(below<h&&r.top>below){menu.style.top='';menu.style.bottom=(window.innerHeight-r.top+2)+'px';menu.style.maxHeight=Math.min(280,r.top-8)+'px';}
+    else{menu.style.bottom='';menu.style.top=(r.bottom+2)+'px';menu.style.maxHeight=Math.min(280,Math.max(120,below))+'px';}
+  }
+  function hide(){if(menu)menu.style.display='none';curFilter=null;active=-1;}
+  function render(){
+    ensureMenu();
+    const q=fold(curFilter.value);
+    if(!CAT)CAT=catalog();
+    const m=n=>!q||fold(n).includes(q);
+    const im=CAT.imm.filter(m),mi=CAT.mic.filter(m);
+    let h='';
+    if(im.length)h+='<div class="cls-xn-grp">1/ Miễn dịch</div>'+im.map(n=>`<div class="cls-xn-opt" data-g="imm" data-n="${esc(n)}">${esc(n)}</div>`).join('');
+    if(mi.length)h+='<div class="cls-xn-grp">2/ Vi sinh</div>'+mi.map(n=>`<div class="cls-xn-opt" data-g="mic" data-n="${esc(n)}">${esc(n)}</div>`).join('');
+    const raw=T(curFilter.value);
+    if(raw)h+=`<div class="cls-xn-grp">Khác</div><div class="cls-xn-opt" data-g="free" data-n="${esc(raw)}">+ Nhập tự do: “${esc(raw)}”</div>`;
+    if(!h)h='<div class="cls-xn-empty">Không có xét nghiệm phù hợp</div>';
+    menu.innerHTML=h;menu.style.display='block';active=-1;place();
+  }
+  function choose(opt){
+    const cell=curFilter&&curFilter.closest('[data-xn-cell]');if(!cell)return;
+    const g=opt.dataset.g,n=opt.dataset.n,box=cell.querySelector('.cls-xn-items');
+    let focusEl=null;
+    if(g!=='free'){
+      const dup=[...box.querySelectorAll('.cls-xn-item')].find(el=>el.dataset.n===n);
+      if(dup)focusEl=dup.querySelector('.cls-xn-v');
+    }
+    if(!focusEl){
+      const it=g==='free'?{t:'free',n:'',v:n,v2:''}:{t:kindOf(g,n),n,v:'',v2:''};
+      box.insertAdjacentHTML('beforeend',itemHTML(it));
+      focusEl=box.lastElementChild.querySelector('.cls-xn-v');
+      sync(cell);
+    }
+    curFilter.value='';hide();
+    if(focusEl)focusEl.focus();
+  }
+  function move(d){
+    const o=[...menu.querySelectorAll('.cls-xn-opt')];if(!o.length)return;
+    active=(active+d+o.length)%o.length;
+    o.forEach((x,i)=>x.classList.toggle('on',i===active));
+    o[active].scrollIntoView({block:'nearest'});
+  }
+
+  document.addEventListener('focusin',e=>{
+    const f=e.target;
+    if(f&&f.classList&&f.classList.contains('cls-xn-filter')){curFilter=f;CAT=catalog();render();}
+    else if(!(menu&&menu.contains(f)))hide();
+  });
+  document.addEventListener('input',e=>{
+    const t=e.target;if(!t||!t.classList)return;
+    if(t.classList.contains('cls-xn-filter')){curFilter=t;render();return;}
+    if(t.classList.contains('cls-xn-v')||t.classList.contains('cls-xn-v2')){const c=t.closest('[data-xn-cell]');if(c)sync(c);}
+  });
+  document.addEventListener('change',e=>{
+    const t=e.target;if(t&&t.classList&&(t.classList.contains('cls-xn-v')||t.classList.contains('cls-xn-v2'))){const c=t.closest('[data-xn-cell]');if(c)sync(c);}
+  });
+  document.addEventListener('click',e=>{
+    const b=e.target.closest&&e.target.closest('.cls-xn-del');
+    if(b){const c=b.closest('[data-xn-cell]'),it=b.closest('.cls-xn-item');if(it)it.remove();if(c)sync(c);return;}
+    if(menu&&menu.style.display!=='none'&&!menu.contains(e.target)&&!(e.target.classList&&e.target.classList.contains('cls-xn-filter')))hide();
+  });
+  document.addEventListener('keydown',e=>{
+    const t=e.target;if(!t||!t.classList||!t.classList.contains('cls-xn-filter'))return;
+    if(e.key==='Escape'){hide();return;}
+    if(!menu||menu.style.display==='none'){if(e.key==='ArrowDown'){curFilter=t;render();}return;}
+    if(e.key==='ArrowDown'){e.preventDefault();move(1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();move(-1);}
+    else if(e.key==='Enter'){
+      e.preventDefault();
+      const o=[...menu.querySelectorAll('.cls-xn-opt')];
+      const pick=active>=0?o[active]:o[0];if(pick)choose(pick);
+    }
+  });
+  window.addEventListener('resize',place);
+  window.addEventListener('scroll',place,true);
+})();
+</script>
+<style id="smart-cls-hide-empty-case-input">
+/* III/ và IV/: bỏ ô "Nhập Không nếu không có" (không điền thì phiếu in tự hiện "Không"). */
+#view-reports-cls .cls-request-case-holder,#view-reports-cls .cls-empty-case-field{display:none!important}
+</style>
