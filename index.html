@@ -1357,6 +1357,22 @@ function cloudUserIsBusy(){
   const recentEdit=(Date.now()-lastLocalEditTs)<2500;
   return typing || modalOpen || recentEdit || isSaving || saveQueuedWhileBusy;
 }
+/* Màn hình đang mở có dữ liệu ĐANG NHẬP / CHƯA LƯU không? (so giá trị hiện tại với giá trị lúc vừa vẽ form).
+   Nếu có -> đồng bộ cloud tuyệt đối KHÔNG vẽ lại màn hình, để không mất dữ liệu đang nhập. */
+function cloudViewHasUnsaved(){
+  try{
+    const v=document.querySelector('.view.active'); if(!v) return false;
+    const els=v.querySelectorAll('input,textarea,select');
+    for(const e of els){
+      const t=(e.type||'').toLowerCase();
+      if(t==='file'||t==='button'||t==='submit'||t==='reset'||t==='hidden') continue;
+      if(t==='checkbox'||t==='radio'){ if(e.checked!==e.defaultChecked) return true; continue; }
+      if(e.tagName==='SELECT'){ for(const o of e.options){ if(o.selected!==o.defaultSelected) return true; } continue; }
+      if(e.value!==e.defaultValue) return true;
+    }
+  }catch(err){}
+  return false;
+}
 function cloudStatusText(){
   if(!cloudConfig) return 'Chưa kết nối Supabase';
   if(cloudUser) return 'Đang đồng bộ Supabase';
@@ -1634,7 +1650,8 @@ async function cloudApplyPending(){
   await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
   if(typeof currentView!=='undefined' && currentView){
     renderNav();
-    renderView(currentView);
+    /* Đang mở phiếu CLS hoặc đang nhập chưa lưu: KHÔNG vẽ lại màn hình (tránh mất dữ liệu đang nhập). Dữ liệu đồng bộ đã được cập nhật trong bộ nhớ. */
+    if(!(currentView==='reports-cls' && document.getElementById('view-reports-cls') && document.getElementById('view-reports-cls').classList.contains('active')) && !cloudViewHasUnsaved()) renderView(currentView);
     try{ window.scrollTo(sx,sy); }catch(e){}
   }
   toast('pass','Đã đồng bộ dữ liệu','Dữ liệu QC vừa được cập nhật từ thiết bị khác.');
@@ -1694,7 +1711,8 @@ async function applyCloudRemote(remote,h,notify){
   await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
   if(typeof currentView!=='undefined' && currentView){
     renderNav();
-    renderView(currentView);
+    /* Đang mở phiếu CLS hoặc đang nhập chưa lưu: KHÔNG vẽ lại màn hình (tránh mất dữ liệu đang nhập). Dữ liệu đồng bộ đã được cập nhật trong bộ nhớ. */
+    if(!(currentView==='reports-cls' && document.getElementById('view-reports-cls') && document.getElementById('view-reports-cls').classList.contains('active')) && !cloudViewHasUnsaved()) renderView(currentView);
     try{ window.scrollTo(sx,sy); }catch(e){}
   }
   if(notify) toast('pass','Đã đồng bộ dữ liệu','Dữ liệu QC vừa được cập nhật từ thiết bị khác.');
