@@ -4917,7 +4917,7 @@ function virologyTCGridHtml(strain, values){
     {key:'kq5',label:'Kết quả QC (mm)',type:'number'}
   ];
   const metaCells=(rowKey)=>`<td rowspan="3" class="vt-side-cell vt-eval-cell"><input class="vtc-row-eval" data-row="${rowKey}" placeholder="Đánh giá"></td><td rowspan="3" class="vt-side-cell vt-date-col"><div class="vt-input-stack"><input class="vtc-row-date" data-row="${rowKey}" type="date" value="${todayISO()}" aria-label="Ngày QC"><input class="vtc-row-staff" data-row="${rowKey}" placeholder="Nhân viên" aria-label="Nhân viên"></div></td><td rowspan="3" class="vt-side-cell vt-note-col"><textarea class="vtc-row-note" data-row="${rowKey}" placeholder="Nhận xét / giám sát" aria-label="Nhận xét / giám sát"></textarea></td>`;
-  const resultRows=rows.slice(3).map((r,ri)=>{
+  const resultRows=rows.slice(3,4).map((r,ri)=>{
     const rowKey=ri+1;
     const lotCells=cols.map((c,ci)=>`<td class="vt-result-cell"><div class="vt-result-lot-wrap"><input class="vtc-result-lot" data-row="${rowKey}" data-abx="${ci}" placeholder="Nhập LOT" aria-label="LOT"></div></td>`).join('');
     const hsdCells=cols.map((c,ci)=>`<td class="vt-result-cell"><div class="vt-result-lot-wrap"><input class="vtc-result-hsd" data-row="${rowKey}" data-abx="${ci}" placeholder="Nhập HSD" autocomplete="off" aria-label="HSD"></div></td>`).join('');
@@ -4927,7 +4927,7 @@ function virologyTCGridHtml(strain, values){
   }).join('');
   return `<div class="virology-sheet">
     <div class="virology-head"><div><b>BỆNH VIỆN PHONG - DA LIỄU TW QUY HÒA</b><span>KHOA: VI SINH - MIỄN DỊCH</span></div><div class="virology-title"><b>QC ĐĨA GIẤY KHÁNG SINH - MÔI TRƯỜNG MUELLER HINTON AGAR (MHA)</b><span>Giới hạn cho phép đối với chủng ${escapeHtml(t.title)}</span></div></div>
-    <div class="virology-lotbar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div class="vt-lot-instruction">Nhập LOT cho từng kết quả QC (mm) tương ứng với kháng sinh và lần QC.</div><button class="btn primary sm" type="button" onclick="openAddVirologyTCAbx()">Thêm kháng sinh mới</button></div>
+    <div class="virology-lotbar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div class="vt-lot-instruction">Nhập LOT cho từng kết quả QC (mm) tương ứng với kháng sinh và lần QC.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary sm" type="button" onclick="openAddVirologyTCAbx()">Thêm kháng sinh mới</button><button class="btn danger sm" type="button" onclick="openDeleteVirologyTCAbx()">Xóa kháng sinh</button></div></div>
     <div class="virology-table-wrap"><table class="virology-table"><thead><tr><th rowspan="2" class="vt-left vt-media-head">Môi trường LOT:<input id="vtc_media_lot" value="${escapeHtml((virologyLotFor(strain)||{}).lot||'')}" placeholder="Nhập LOT" aria-label="Môi trường LOT"></th><th class="vt-rowlabel">Kháng sinh</th>${cols.map(c=>`<th class="vt-abx-head">${escapeHtml(c[0])}<br><span>${escapeHtml(c[1])}</span></th>`).join('')}<th rowspan="2" class="vt-side-col vt-patient-col">Đánh giá</th><th rowspan="2" class="vt-side-col vt-date-col">Ngày QC / Nhân viên</th><th rowspan="2" class="vt-side-col vt-note-col">Nhận xét / giám sát</th></tr><tr><th class="vt-rowlabel">(mm)</th>${cols.map(c=>`<th class="vt-abx-subhead">(mm)${c[2]?' <span class="vt-range">'+escapeHtml(c[2])+'</span>':''}</th>`).join('')}</tr></thead><tbody>
       ${resultRows}
     </tbody></table></div>
@@ -8176,6 +8176,52 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
         <button class="btn primary" onclick="saveNewVirologyTCAbx()">Lưu kháng sinh</button>
         <button class="btn ghost" onclick="closeModal()">Đóng</button>
       </div>`);
+  };
+  // ---------------- TC: Xóa kháng sinh (khỏi chủng đang chọn) ----------------
+  window.openDeleteVirologyTCAbx=function(){
+    const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
+    const strain=root?.dataset.strain||document.getElementById('vtc_strain')?.value||'';
+    const t=VIROLOGY_TEMPLATES[strain];
+    if(!t||!t.antibiotics.length){toast('warning','Không có kháng sinh','Chủng đang chọn chưa có kháng sinh để xóa.');return;}
+    showModal('Xóa kháng sinh',`
+      <div class="form-grid c3">
+        <label class="field" style="grid-column:1/-1"><span class="fl-label">Chọn kháng sinh cần xóa (chủng ${escapeHtml(strain)})</span>
+          <select id="del_tc_abx_idx">${t.antibiotics.map((a,i)=>`<option value="${i}">${escapeHtml(a[0])}${a[1]?' · '+escapeHtml(a[1]):''}${a[2]?' · '+escapeHtml(a[2])+' mm':''}</option>`).join('')}</select></label>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Kháng sinh sẽ bị xóa khỏi bảng phiếu điền của chủng đang chọn, kèm dữ liệu đang nhập ở cột đó. Các phiếu QC đã lưu không bị ảnh hưởng.</div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn danger" onclick="deleteVirologyTCAbx()">Xóa kháng sinh</button>
+        <button class="btn ghost" onclick="closeModal()">Đóng</button>
+      </div>`);
+  };
+  window.deleteVirologyTCAbx=function(){
+    ensureState();
+    const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
+    const strain=root?.dataset.strain||document.getElementById('vtc_strain')?.value||'';
+    const t=VIROLOGY_TEMPLATES[strain];
+    const idx=Number(document.getElementById('del_tc_abx_idx')?.value);
+    if(!t||!Number.isInteger(idx)||!t.antibiotics[idx]){toast('warning','Chưa chọn kháng sinh','Vui lòng chọn kháng sinh cần xóa.');return;}
+    const abx=t.antibiotics[idx];
+    if(!confirm('Xóa kháng sinh "'+abx[0]+'" khỏi chủng '+strain+'?'))return;
+    // Giữ lại dữ liệu đang nhập (bỏ cột bị xóa, dồn lại chỉ số cột phía sau)
+    const snap=Array.from(root?.querySelectorAll('.virology-table input,.virology-table textarea')||[]).map(e=>({c:(e.className||'').split(' ')[0],r:e.dataset.row,a:e.dataset.abx,v:e.value}));
+    const antibiotics=t.antibiotics.filter((_,i)=>i!==idx);
+    const template={title:t.title||strain,antibiotics,codes:t.codes||''};
+    VIROLOGY_TEMPLATES[strain]=template;
+    state.virologyCustomTCTemplates[strain]=template;
+    state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Xóa kháng sinh QC Vi sinh (TC)',detail:`${strain} · ${abx[0]}${abx[1]?' · '+abx[1]:''}${abx[2]?' · '+abx[2]+' mm':''}`});
+    queueSave();
+    closeModal();
+    renderVirologyHubPanel('virology-tc');
+    const nr=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
+    snap.forEach(x=>{
+      if(!x.c||x.r===undefined||x.v==='')return;
+      let a=x.a;
+      if(a!==undefined){const n=Number(a);if(n===idx)return;if(n>idx)a=String(n-1);}
+      const q=nr?.querySelector(`.${x.c}[data-row="${x.r}"]${a!==undefined?`[data-abx="${a}"]`:''}`);
+      if(q)q.value=x.v;
+    });
+    toast('pass','Đã xóa kháng sinh',`${abx[0]} đã được xóa khỏi bảng phiếu điền của chủng ${strain}.`);
   };
   window.saveNewVirologyTCAbx=function(){
     ensureState();
