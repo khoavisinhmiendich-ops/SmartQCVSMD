@@ -5054,7 +5054,7 @@ function saveVirologyLot(){
   state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Cập nhật LOT QC Vi sinh (TC)',detail:`${strain} · LOT ${x.lot} · HSD ${x.expDate||'—'}`}); queueSave(); renderVirologyHubPanel('virology-tc'); toast('pass','Đã lưu LOT + HSD','LOT/HSD của chủng đã được lưu và tự dùng cho lần nhập tiếp theo.');
 }
 function virologyResultCellValue(v){
-  if(v&&typeof v==='object') return {value:String(v.value??v.result??''),lot:String(v.lot??''),hsd:String(v.hsd??'')};
+  if(v&&typeof v==='object') return {value:String(v.value??v.result??''),lot:String(v.lot??''),hsd:String(v.hsd??''),row:String(v.row??'')};
   return {value:String(v??''),lot:'',hsd:''};
 }
 function collectVirologyTC(){
@@ -5071,7 +5071,7 @@ function collectVirologyTC(){
   const resultDate=Object.values(rowMeta).find(x=>x.qcDate)?.qcDate||todayISO();
   const resultEval=Object.values(rowMeta).find(x=>x.evaluation)?.evaluation||'';
   const resultNote=Object.values(rowMeta).find(x=>x.note)?.note||'';
-  return {strain,mediaLot:document.getElementById('vtc_media_lot')?.value.trim()||'',mediaExp:document.getElementById('vtc_media_exp')?.value||'',qcDate:resultDate,staff:resultStaff,patient:resultEval,note:resultNote,rowMeta,antibiotics:t.antibiotics.map((a,i)=>({code:a[0],concentration:a[1],lot:'',expDate:'',results:Array.from(root?.querySelectorAll(`.vtc-result[data-abx="${i}"]`)||[]).map(x=>{const lotEl=root?.querySelector(`.vtc-result-lot[data-abx="${i}"][data-row="${x.dataset.row}"]`);const hsdEl=root?.querySelector(`.vtc-result-hsd[data-abx="${i}"][data-row="${x.dataset.row}"]`);return {value:x.value,lot:lotEl?.value.trim()||'',hsd:hsdEl?.value.trim()||''};}).filter(v=>v.value!==''||v.lot!==''||v.hsd!=='')}))};
+  return {strain,mediaLot:document.getElementById('vtc_media_lot')?.value.trim()||'',mediaExp:document.getElementById('vtc_media_exp')?.value||'',qcDate:resultDate,staff:resultStaff,patient:resultEval,note:resultNote,rowMeta,antibiotics:t.antibiotics.map((a,i)=>({code:a[0],concentration:a[1],lot:'',expDate:'',results:Array.from(root?.querySelectorAll(`.vtc-result[data-abx="${i}"]`)||[]).map(x=>{const lotEl=root?.querySelector(`.vtc-result-lot[data-abx="${i}"][data-row="${x.dataset.row}"]`);const hsdEl=root?.querySelector(`.vtc-result-hsd[data-abx="${i}"][data-row="${x.dataset.row}"]`);return {value:x.value,lot:lotEl?.value.trim()||'',hsd:hsdEl?.value.trim()||'',row:x.dataset.row};}).filter(v=>v.value!==''||v.lot!==''||v.hsd!=='')}))};
 }
 function editVirologyTC(recordId){
   virologyEnsureState();
@@ -5105,10 +5105,10 @@ function editVirologyTC(recordId){
     set(`.vtc-abx-lot[data-abx="${i}"]`,a?.lot||'');
     set(`.vtc-abx-exp[data-abx="${i}"]`,a?.expDate||'');
     (a?.results||[]).forEach((v,ri)=>{
-      const q=virologyResultCellValue(v);
-      set(`.vtc-result[data-abx="${i}"][data-row="${ri+1}"]`,q.value);
-      set(`.vtc-result-lot[data-abx="${i}"][data-row="${ri+1}"]`,q.lot);
-      set(`.vtc-result-hsd[data-abx="${i}"][data-row="${ri+1}"]`,q.hsd);
+      const q=virologyResultCellValue(v);const rn=q.row||(ri+1);
+      set(`.vtc-result[data-abx="${i}"][data-row="${rn}"]`,q.value);
+      set(`.vtc-result-lot[data-abx="${i}"][data-row="${rn}"]`,q.lot);
+      set(`.vtc-result-hsd[data-abx="${i}"][data-row="${rn}"]`,q.hsd);
     });
   });
   toast('pass','Đã mở phiếu để sửa','Thông tin phiếu đã nhập được đưa trở lại biểu mẫu. Bấm Lưu QC Vi sinh (TC) để thay thế dữ liệu cũ.');
@@ -5141,7 +5141,7 @@ function previewVirologyTC(recordId){
   const data=recordId?state.virologyTCResults.find(r=>r.id===recordId):collectVirologyTC();
   if(!data?.strain){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TC).');return;}
   const esc=v=>escapeHtml(v??''); const rm=data.rowMeta||{};
-  const rows=(data.antibiotics||[]).map(a=>`<tr><td><b>${esc(a.code||'')}</b><br>${esc(a.concentration||'')}</td><td>${esc(virologyFmtDate(a.expDate))}</td><td>${(a.results||[]).map((v,i)=>{const q=virologyResultCellValue(v);return `<div><b>Lần ${i+1}:</b> ${q.lot?`LOT ${esc(q.lot)} · `:''}${q.hsd?`HSD ${esc(virologyFmtDate(q.hsd))} · `:''}${esc(q.value||'—')} mm</div>`;}).join('')||'—'}</td></tr>`).join('');
+  const rows=(data.antibiotics||[]).map(a=>`<tr><td><b>${esc(a.code||'')}</b><br>${esc(a.concentration||'')}</td><td>${esc(virologyFmtDate(a.expDate))}</td><td>${(a.results||[]).map((v,i)=>{const q=virologyResultCellValue(v);return `<div><b>Lần ${q.row||(i+1)}:</b> ${q.lot?`LOT ${esc(q.lot)} · `:''}${q.hsd?`HSD ${esc(virologyFmtDate(q.hsd))} · `:''}${esc(q.value||'—')} mm</div>`;}).join('')||'—'}</td></tr>`).join('');
   const meta=Object.keys(rm).sort((a,b)=>Number(a)-Number(b)).map(k=>{const x=rm[k]||{};return `<tr><td>${k}</td><td>${esc(virologyFmtDate(x.ngaySX))}</td><td>${esc(virologyFmtDate(x.hsd))}</td><td>${esc(x.soQC||'—')}</td><td>${esc(x.evaluation||'—')}</td><td>${esc(virologyFmtDate(x.qcDate))}</td><td>${esc(x.staff||'—')}</td><td>${esc(x.note||'—')}</td></tr>`}).join('');
   showModal('Xem trước · QC Vi sinh (TC)',`<div style="font-family:'Times New Roman',serif;font-size:12px"><div style="text-align:center"><b>BỆNH VIỆN PHONG - DA LIỄU TW QUY HÒA</b><h2 style="margin:6px 0">QC ĐĨA GIẤY KHÁNG SINH - MHA</h2></div><div style="margin:8px 0"><b>Chủng:</b> ${esc(data.strain)} &nbsp; <b>Ngày QC:</b> ${esc(virologyFmtDate(data.qcDate))} &nbsp; <b>Nhân viên:</b> ${esc(data.staff||'—')}</div><div style="margin:8px 0"><b>LOT môi trường:</b> ${esc(data.mediaLot||'—')} &nbsp; <b>HSD:</b> ${esc(virologyFmtDate(data.mediaExp))}</div><div class="table-wrap"><table><thead><tr><th>Kháng sinh</th><th>HSD</th><th>Kết quả QC (mm) · LOT theo từng lần</th></tr></thead><tbody>${rows}</tbody></table></div><div style="margin:10px 0 5px"><b>Chi tiết đã nhập</b></div><div class="table-wrap"><table><thead><tr><th>Lần</th><th>Ngày SX</th><th>HSD</th><th>SL QC</th><th>Đánh giá</th><th>Ngày QC</th><th>Nhân viên</th><th>Nhận xét / giám sát</th></tr></thead><tbody>${meta||'<tr><td colspan="8">—</td></tr>'}</tbody></table></div><div style="margin-top:8px"><b>Nhận xét:</b> ${esc(data.note||'—')}</div></div><div class="btn-row" style="margin-top:14px"><button class="btn primary" onclick="printVirologyTC('${esc(data.id||'')}');closeModal()">🖨 In PDF</button><button class="btn ghost" onclick="closeModal()">Đóng</button></div>`,'wide');
 }
@@ -5152,16 +5152,15 @@ function previewPhoenixQCReport(recordId){
   const esc=v=>escapeHtml(v??'');
   const labels={hospital:'BỆNH VIỆN',location:'ĐỊA ĐIỂM',panelLot:'Panel Lot Number',testStart:'Test Start',panelType:'Panel Type',status:'Status',idBrothLot:'ID Broth Lot Number',astBrothLot:'AST Broth Lot Number',indicatorLot:'Indicator Lot Number',panelExp:'Expiration Date',testEnd:'Test End',location2:'Location',techId:'Tech ID',idBrothExp:'Expiration Date',astBrothExp:'Expiration Date',indicatorExp:'Expiration Date',sequence:'Sequence Number',accession:'Accession Number',isolate:'Isolate Number',testStrain:'Test Strain',qcStatus:'QC Status',inoculum:'Inoculum Density',instrument:'Instrument ID(s)'};
   const meta=Object.entries(d).filter(([k])=>!['biochemical','antimicrobial','id','createdAt','user','syncStatus','source'].includes(k)&&!Array.isArray(d[k])).map(([k,v])=>`<div><b>${esc(labels[k]||k)}</b><br>${esc(v||'—')}</div>`).join('');
-  const bio=(d.biochemical||[]).map(x=>`<tr><td>${esc(x?.name)}</td><td>${esc(x?.actual)}</td><td>${esc(x?.expected)}</td></tr>`).join('');
   const ast=(d.antimicrobial||[]).map(x=>`<tr><td>${esc(x?.name)}</td><td>${esc(x?.actual)}</td><td>${esc(x?.expected)}</td><td>${esc(x?.status)}</td></tr>`).join('');
-  showModal('Xem trước · QC Vi sinh (TĐ)',`<div style="font-family:'Times New Roman',serif;font-size:12px"><div style="text-align:center"><b>BỆNH VIỆN</b><h2 style="margin:6px 0">QC Lab Report</h2></div><div class="two-col" style="gap:12px">${meta}</div><h3>Biochemical</h3><div class="table-wrap"><table><thead><tr><th>Biochemical</th><th>Actual</th><th>Expected</th></tr></thead><tbody>${bio}</tbody></table></div><h3>Antimicrobial</h3><div class="table-wrap"><table><thead><tr><th>Antimicrobial</th><th>Actual</th><th>Expected</th><th>Status</th></tr></thead><tbody>${ast}</tbody></table></div><h3>SPECIAL MESSAGES</h3><div style="white-space:pre-wrap;border:1px solid #ccc;padding:8px">${esc(d.specialMessages||'')}</div></div><div class="btn-row" style="margin-top:14px"><button class="btn primary" onclick="printPhoenixQCReport('${esc(d.id||'')}');closeModal()">🖨 In PDF</button><button class="btn ghost" onclick="closeModal()">Đóng</button></div>`,'wide');
+  showModal('Xem trước · QC Vi sinh (TĐ)',`<div style="font-family:'Times New Roman',serif;font-size:12px"><div style="text-align:center"><b>BỆNH VIỆN</b><h2 style="margin:6px 0">QC Lab Report</h2></div><div class="two-col" style="gap:12px">${meta}</div><h3>Antimicrobial</h3><div class="table-wrap"><table><thead><tr><th>Antimicrobial</th><th>Actual</th><th>Expected</th><th>Status</th></tr></thead><tbody>${ast}</tbody></table></div><h3>SPECIAL MESSAGES</h3><div style="white-space:pre-wrap;border:1px solid #ccc;padding:8px">${esc(d.specialMessages||'')}</div></div><div class="btn-row" style="margin-top:14px"><button class="btn primary" onclick="printPhoenixQCReport('${esc(d.id||'')}');closeModal()">🖨 In PDF</button><button class="btn ghost" onclick="closeModal()">Đóng</button></div>`,'wide');
 }
 
 function printVirologyTC(recordId){
   virologyEnsureState();const data=recordId?state.virologyTCResults.find(r=>r.id===recordId):collectVirologyTC();
   if(!data?.strain){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TC).');return;}
   const rm=data.rowMeta||{};
-  const rows=(data.antibiotics||[]).map(a=>`<tr><td><b>${escapeHtml(a.code||'')}</b><br>${escapeHtml(a.concentration||'')}</td><td>${escapeHtml(virologyFmtDate(a.expDate))}</td><td>${(a.results||[]).map((v,i)=>{const q=virologyResultCellValue(v);return `Lần ${i+1}: ${q.lot?`LOT ${escapeHtml(q.lot)} · `:''}${q.hsd?`HSD ${escapeHtml(virologyFmtDate(q.hsd))} · `:''}${escapeHtml(q.value||'—')} mm`;}).join('<br>')||'—'}</td></tr>`).join('');
+  const rows=(data.antibiotics||[]).map(a=>`<tr><td><b>${escapeHtml(a.code||'')}</b><br>${escapeHtml(a.concentration||'')}</td><td>${escapeHtml(virologyFmtDate(a.expDate))}</td><td>${(a.results||[]).map((v,i)=>{const q=virologyResultCellValue(v);return `Lần ${q.row||(i+1)}: ${q.lot?`LOT ${escapeHtml(q.lot)} · `:''}${q.hsd?`HSD ${escapeHtml(virologyFmtDate(q.hsd))} · `:''}${escapeHtml(q.value||'—')} mm`;}).join('<br>')||'—'}</td></tr>`).join('');
   const meta=Object.keys(rm).sort((a,b)=>Number(a)-Number(b)).map(k=>{const x=rm[k]||{};return `<tr><td>${k}</td><td>${escapeHtml(virologyFmtDate(x.ngaySX))}</td><td>${escapeHtml(virologyFmtDate(x.hsd))}</td><td>${escapeHtml(x.soQC||'—')}</td><td>${escapeHtml(x.evaluation||'—')}</td><td>${escapeHtml(virologyFmtDate(x.qcDate))}</td><td>${escapeHtml(x.staff||'—')}</td><td>${escapeHtml(x.note||'—')}</td></tr>`}).join('');
   const w=window.open('','_blank','width=1200,height=900');if(!w)return;
   w.document.write(`<!doctype html><html><head><title>QC Vi sinh (TC)</title><style>body{font-family:'Times New Roman',serif;margin:10mm;font-size:10px;color:#111}h1,h2{text-align:center}table{width:100%;border-collapse:collapse;margin:8px 0}th,td{border:1px solid #333;padding:4px;text-align:center;vertical-align:middle}th{background:#eee}@page{size:A4 landscape;margin:8mm}</style></head><body><h2>BỆNH VIỆN PHONG - DA LIỄU TW QUY HÒA</h2><h1>QC ĐĨA GIẤY KHÁNG SINH - MHA</h1><p><b>Chủng:</b> ${escapeHtml(data.strain)} &nbsp; <b>Ngày QC:</b> ${escapeHtml(virologyFmtDate(data.qcDate))} &nbsp; <b>Nhân viên:</b> ${escapeHtml(data.staff||'—')}</p><p><b>LOT môi trường:</b> ${escapeHtml(data.mediaLot||'—')} &nbsp; <b>HSD:</b> ${escapeHtml(virologyFmtDate(data.mediaExp))}</p><table><thead><tr><th>Kháng sinh</th><th>HSD</th><th>Kết quả QC (mm) · LOT theo từng lần</th></tr></thead><tbody>${rows}</tbody></table><b>Chi tiết đã nhập</b><table><thead><tr><th>Lần</th><th>Ngày SX</th><th>HSD</th><th>SL QC</th><th>Đánh giá</th><th>Ngày QC</th><th>Nhân viên</th><th>Nhận xét / giám sát</th></tr></thead><tbody>${meta||'<tr><td colspan="8">—</td></tr>'}</tbody></table><p><b>Nhận xét:</b> ${escapeHtml(data.note||'—')}</p>
@@ -5989,13 +5988,13 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
   /* ---------- QC Vi sinh TC ---------- */
   window.exportVirologyTCExcel=async function(recordId){
     virologyEnsureState();const d=recordId?state.virologyTCResults.find(r=>r.id===recordId):collectVirologyTC();if(!d?.strain){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TC).');return;}
-    const rows=(d.antibiotics||[]).map(a=>[`${a.code||''} ${a.concentration||''}`,fmtD(a.expDate),(a.results||[]).map((v,i)=>{const q=virologyResultCellValue(v);return `Lần ${i+1}: ${q.lot?`LOT ${q.lot} · `:''}${q.hsd?`HSD ${virologyFmtDate(q.hsd)} · `:''}${q.value||'—'} mm`;}).join('\n')||'']);
+    const rows=(d.antibiotics||[]).map(a=>[`${a.code||''} ${a.concentration||''}`,fmtD(a.expDate),(a.results||[]).map((v,i)=>{const q=virologyResultCellValue(v);return `Lần ${q.row||(i+1)}: ${q.lot?`LOT ${q.lot} · `:''}${q.hsd?`HSD ${virologyFmtDate(q.hsd)} · `:''}${q.value||'—'} mm`;}).join('\n')||'']);
     const headers=['Kháng sinh','HSD','Kết quả QC (mm) · LOT theo từng lần'];
     const wb=await makeWorkbook('QC Vi sinh TC','QC ĐĨA GIẤY KHÁNG SINH - MHA',`${d.strain||''} · Ngày QC: ${fmtD(d.qcDate)} · Nhân viên: ${d.staff||'—'}`,headers,rows,{orientation:'landscape',widths:[28,16,48],fitToHeight:0});if(wb)await saveWorkbook(wb,'QC_ViSinh_TC_'+(d.strain||'').replace(/[^a-zA-Z0-9_-]+/g,'_')+'_'+todayISO()+'.xlsx');
   };
   window.exportVirologyTCWord=function(recordId){
     virologyEnsureState();const d=recordId?state.virologyTCResults.find(r=>r.id===recordId):collectVirologyTC();if(!d?.strain){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TC).');return;}
-    const rows=(d.antibiotics||[]).map(a=>`<tr><td><b>${esc(a.code||'')}</b><br>${esc(a.concentration||'')}</td><td>${esc(fmtD(a.expDate))}</td><td class="center">${(a.results||[]).map((v,i)=>{const q=virologyResultCellValue(v);return `Lần ${i+1}: ${q.lot?`LOT ${esc(q.lot)} · `:''}${q.hsd?`HSD ${esc(virologyFmtDate(q.hsd))} · `:''}${esc(q.value||'—')} mm`;}).join('<br>')||'—'}</td></tr>`).join('');
+    const rows=(d.antibiotics||[]).map(a=>`<tr><td><b>${esc(a.code||'')}</b><br>${esc(a.concentration||'')}</td><td>${esc(fmtD(a.expDate))}</td><td class="center">${(a.results||[]).map((v,i)=>{const q=virologyResultCellValue(v);return `Lần ${q.row||(i+1)}: ${q.lot?`LOT ${esc(q.lot)} · `:''}${q.hsd?`HSD ${esc(virologyFmtDate(q.hsd))} · `:''}${esc(q.value||'—')} mm`;}).join('<br>')||'—'}</td></tr>`).join('');
     const rm=d.rowMeta||{};const meta=Object.keys(rm).sort((a,b)=>Number(a)-Number(b)).map(k=>{const x=rm[k]||{};return `<tr><td class="center">${esc(k)}</td><td>${esc(fmtD(x.ngaySX))}</td><td>${esc(fmtD(x.hsd))}</td><td class="center">${esc(x.soQC||'—')}</td><td>${esc(x.evaluation||'—')}</td><td>${esc(fmtD(x.qcDate))}</td><td>${esc(x.staff||'—')}</td><td>${esc(x.note||'—')}</td></tr>`}).join('');
     officeWordDownload('QC_ViSinh_TC',`<div class="office-head"><div class="org">BỆNH VIỆN PHONG - DA LIỄU TRUNG ƯƠNG QUY HÒA</div><div class="dept">KHOA VI SINH – MIỄN DỊCH</div></div><h1>QC ĐĨA GIẤY KHÁNG SINH - MHA</h1><div class="meta"><div><b>Chủng:</b> ${esc(d.strain)}</div><div><b>Ngày QC:</b> ${esc(fmtD(d.qcDate))}</div><div><b>Nhân viên:</b> ${esc(d.staff||'—')}</div><div><b>LOT môi trường:</b> ${esc(d.mediaLot||'—')}</div><div><b>HSD môi trường:</b> ${esc(fmtD(d.mediaExp))}</div></div><h3>Kết quả QC</h3><table><thead><tr><th>Kháng sinh</th><th>HSD</th><th>Kết quả QC (mm) · LOT theo từng lần</th></tr></thead><tbody>${rows||'<tr><td colspan="3">—</td></tr>'}</tbody></table><h3>Chi tiết đã nhập</h3><table><thead><tr><th>Lần</th><th>Ngày SX</th><th>HSD</th><th>SL QC</th><th>Đánh giá</th><th>Ngày QC</th><th>Nhân viên</th><th>Nhận xét / giám sát</th></tr></thead><tbody>${meta||'<tr><td colspan="8">—</td></tr>'}</tbody></table><h3>Nhận xét</h3><div class="note">${esc(d.note||'—')}</div>`,'landscape');
   };
@@ -6198,14 +6197,16 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
       (record.antibiotics||[]).forEach((a,ai)=>{
         (a.results||[]).forEach((raw,ri)=>{
           const q=virologyResultCellValue(raw);
+          if(String(q.value).trim()==='') return;
           const value=Number(q.value);
           if(!Number.isFinite(value)) return;
-          const m=meta[String(ri+1)]||{};
+          const rn=Number(q.row)||(ri+1);
+          const m=meta[String(rn)]||{};
           const date=normalizeDateISO(m.qcDate||record.qcDate||record.createdAt||'');
           const year=String(date).slice(0,4);
           if(!/^\d{4}$/.test(year)) return;
           out.push({
-            id:record.id+'|'+ai+'|'+ri,
+            id:record.id+'|'+ai+'|'+rn,
             recordId:record.id,
             year,
             date:date,
@@ -6215,7 +6216,7 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
             range:VIROLOGY_TEMPLATES[record.strain]?.antibiotics?.[ai]?.[2]||'',
             lot:q.lot||'',
             value,
-            run:ri+1,
+            run:rn,
             staff:m.staff||record.staff||'',
             evaluation:m.evaluation||''
           });
@@ -6452,14 +6453,11 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
       const staff=record.techId||record.user||phoenixFindValue(source,['Tech ID','Technician ID'])||'';
       const lot=record.panelLot||phoenixFindValue(source,['Panel Lot Number','Panel Lot','Lot Number'])||'';
       (record.antimicrobial||[]).forEach((a,i)=>{
-        const n=Number(a?.actual);
+        const rawAct=String(a?.actual??'').trim().replace(/^[<>≤≥=\s]+/,'').replace(',','.');
+        if(rawAct==='')return;
+        const n=Number(rawAct);
         if(!Number.isFinite(n))return;
         out.push({id:record.id+'|ast|'+i,recordId:record.id,year,date,strain,antibiotic:a?.name||`Antimicrobial ${i+1}`,concentration:a?.expected||'',range:'',lot,value:n,run:1,staff,evaluation:a?.status||''});
-      });
-      (record.biochemical||[]).forEach((a,i)=>{
-        const n=Number(a?.actual);
-        if(!Number.isFinite(n))return;
-        out.push({id:record.id+'|bio|'+i,recordId:record.id,year,date,strain,antibiotic:`Biochemical: ${a?.name||`Test ${i+1}`}`,concentration:a?.expected||'',range:'',lot,value:n,run:1,staff,evaluation:''});
       });
       // Một số file Phoenix có số liệu số nhưng chưa được map vào mảng trên.
       const actualKeys=['Actual','actual','Result','Value','QC Value'];
@@ -7145,23 +7143,41 @@ function renderChemicalAllergen(){
     const data=recordId?state.virologyTCResults.find(r=>r.id===recordId):(typeof collectVirologyTC==='function'?collectVirologyTC():null);
     if(!data?.strain){if(typeof toast==='function')toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TC).');return;}
     const rm=data.rowMeta||{};
-    const rows=(data.antibiotics||[]).map(a=>`<tr><td><b>${S(a.code||'')}</b><br>${S(a.concentration||'')}</td><td>${S(D(a.expDate))}</td><td>${(a.results||[]).map((v,i)=>{const q=typeof virologyResultCellValue==='function'?virologyResultCellValue(v):{value:v,lot:''};return `<div><b>Lần ${i+1}:</b> ${q.lot?`LOT ${S(q.lot)} · `:''}${q.hsd?`HSD ${S(virologyFmtDate(q.hsd))} · `:''}${S(q.value||'—')} mm</div>`;}).join('')||'—'}</td></tr>`).join('');
+    const rows=(data.antibiotics||[]).map(a=>`<tr><td><b>${S(a.code||'')}</b><br>${S(a.concentration||'')}</td><td>${S(D(a.expDate))}</td><td>${(a.results||[]).map((v,i)=>{const q=typeof virologyResultCellValue==='function'?virologyResultCellValue(v):{value:v,lot:''};return `<div><b>Lần ${q.row||(i+1)}:</b> ${q.lot?`LOT ${S(q.lot)} · `:''}${q.hsd?`HSD ${S(virologyFmtDate(q.hsd))} · `:''}${S(q.value||'—')} mm</div>`;}).join('')||'—'}</td></tr>`).join('');
     const meta=Object.keys(rm).sort((a,b)=>Number(a)-Number(b)).map(k=>{const x=rm[k]||{};return `<tr><td>${S(k)}</td><td>${S(D(x.ngaySX))}</td><td>${S(D(x.hsd))}</td><td>${S(x.soQC||'—')}</td><td>${S(x.evaluation||'—')}</td><td>${S(D(x.qcDate))}</td><td>${S(x.staff||'—')}</td><td>${S(x.note||'—')}</td></tr>`}).join('');
     openPrintDoc('QC Vi sinh (TC)',`<div class="office-head"><div class="org">BỆNH VIỆN PHONG - DA LIỄU TW QUY HÒA</div><div class="dept">KHOA VI SINH – MIỄN DỊCH</div></div><h1>QC ĐĨA GIẤY KHÁNG SINH - MHA</h1><div class="office-sub">Chủng: ${S(data.strain)} · Ngày QC: ${S(D(data.qcDate))} · Nhân viên: ${S(data.staff||'—')}</div><p><b>LOT môi trường:</b> ${S(data.mediaLot||'—')} &nbsp; <b>HSD:</b> ${S(D(data.mediaExp))}</p><h3>Kết quả QC</h3><table><thead><tr><th>Kháng sinh</th><th>HSD</th><th>Kết quả QC (mm) · LOT theo từng lần</th></tr></thead><tbody>${rows||'<tr><td colspan="3">—</td></tr>'}</tbody></table><h3>Chi tiết đã nhập</h3><table><thead><tr><th>Lần</th><th>Ngày SX</th><th>HSD</th><th>SL QC</th><th>Đánh giá</th><th>Ngày QC</th><th>Nhân viên</th><th>Nhận xét / giám sát</th></tr></thead><tbody>${meta||'<tr><td colspan="8">—</td></tr>'}</tbody></table><h3>Nhận xét</h3><div class="note">${S(data.note||'—')}</div>`,'landscape','');
   };
 
-  // QC Vi sinh (TĐ): giữ toàn bộ metadata Phoenix + Biochemical + Antimicrobial + Special Messages.
+  // QC Vi sinh (TĐ): bố cục QC Lab Report giống mẫu Phoenix (không có Biochemical).
+  window.smartTDReport=(function(){
+    const labels={panelLot:'Panel Lot Number',panelExp:'Expiration Date',testStart:'Test Start',testEnd:'Test End',panelType:'Panel Type',location2:'Location',status:'Status',techId:'Tech ID',idBrothLot:'ID Broth Lot Number',idBrothExp:'Expiration Date',astBrothLot:'AST Broth Lot Number',astBrothExp:'Expiration Date',indicatorLot:'Indicator Lot Number',indicatorExp:'Expiration Date',sequence:'Sequence Number',accession:'Accession Number',isolate:'Isolate Number',testStrain:'Test Strain',inoculum:'Inoculum Density',qcStatus:'QC Status',instrument:'Instrument ID(s)'};
+    // null = dòng trống; phần tử thứ 3 'stack' = nhãn ở trên, giá trị ở dưới (Instrument ID(s)).
+    const rows=[['panelLot','panelExp'],['testStart','testEnd'],['panelType','location2'],['status','techId'],['idBrothLot','idBrothExp'],['astBrothLot','astBrothExp'],['indicatorLot','indicatorExp'],null,['sequence',null],['accession',null],['isolate',null],null,['testStrain','inoculum'],null,['qcStatus',null],['instrument',null,'stack']];
+    const dtKeys=['testStart','testEnd','printDateTime'],dKeys=['panelExp','idBrothExp','astBrothExp','indicatorExp'];
+    function fmt(k,v){
+      v=String(v??'').trim();if(!v)return '';
+      let m;
+      if(dtKeys.includes(k)&&(m=v.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/))){let h=+m[4];const ap=h>=12?'PM':'AM';h=h%12||12;return (+m[2])+'/'+(+m[3])+'/'+m[1]+' '+h+':'+m[5]+' '+ap;}
+      if(dKeys.includes(k)&&(m=v.match(/^(\d{4})-(\d{2})-(\d{2})/)))return (+m[2])+'/'+(+m[3])+'/'+m[1];
+      return v;
+    }
+    function header(d){
+      const h=String(d.hospital||'').trim();
+      return {hospital:h?(/^b[ệe]nh\s*vi[ệe]n/i.test(h)?h:'BỆNH VIỆN '+h):'',place:String(d.location||'').trim(),dateTime:fmt('printDateTime',d.printDateTime),version:String(d.printVersion||'2.90.0.0 / V7.51A (x-US)')};
+    }
+    return {labels,rows,fmt,header};
+  })();
+
   window.printPhoenixQCReport=function(recordId){
     if(typeof virologyEnsureState==='function')virologyEnsureState();
     const d=recordId?state.virologyTDResults.find(r=>r.id===recordId):(typeof collectPhoenixQCReport==='function'?collectPhoenixQCReport():null);
     if(!d){if(typeof toast==='function')toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TĐ).');return;}
-    const labels={hospital:'BỆNH VIỆN',location:'ĐỊA ĐIỂM',panelLot:'Panel Lot Number',testStart:'Test Start',panelType:'Panel Type',status:'Status',idBrothLot:'ID Broth Lot Number',astBrothLot:'AST Broth Lot Number',indicatorLot:'Indicator Lot Number',panelExp:'Expiration Date',testEnd:'Test End',location2:'Location',techId:'Tech ID',idBrothExp:'Expiration Date',astBrothExp:'Expiration Date',indicatorExp:'Expiration Date',sequence:'Sequence Number',accession:'Accession Number',isolate:'Isolate Number',testStrain:'Test Strain',qcStatus:'QC Status',inoculum:'Inoculum Density',instrument:'Instrument ID(s)'};
-    const ex=new Set(['biochemical','antimicrobial','id','createdAt','user','syncStatus','source','specialMessages','rawData']);
-    const meta=Object.entries(d).filter(([k,v])=>!ex.has(k)&&!Array.isArray(v)&&v!==''&&v!=null).map(([k,v])=>`<div><b>${S(labels[k]||k)}</b><br>${S(v)}</div>`).join('');
-    const raw=isObjectSafe(d.rawData)?Object.entries(d.rawData).filter(([k,v])=>!Array.isArray(v)&&v!==''&&v!=null).map(([k,v])=>`<div><b>${S(k)}</b><br>${S(v)}</div>`).join(''):'';
-    const bio=(d.biochemical||[]).filter(x=>x&&Object.values(x).some(v=>String(v??'').trim()!=='')).map(x=>`<tr><td>${S(x.name)}</td><td>${S(x.actual)}</td><td>${S(x.expected)}</td></tr>`).join('');
+    const T=window.smartTDReport,hd=T.header(d);
+    const cell=(k,stack)=>k?`<div class="qc-cell${stack?' qc-stack':''}"><b>${S(T.labels[k])}</b><span>${S(T.fmt(k,d[k]))||'&nbsp;'}</span></div>`:'<div class="qc-cell"></div>';
+    const sheet=T.rows.map(r=>r?`<div class="qc-row">${cell(r[0],r[2])}${cell(r[1],r[2])}</div>`:'<div class="qc-gap"></div>').join('');
     const ast=(d.antimicrobial||[]).filter(x=>x&&Object.values(x).some(v=>String(v??'').trim()!=='')).map(x=>`<tr><td>${S(x.name)}</td><td>${S(x.actual)}</td><td>${S(x.expected)}</td><td>${S(x.status)}</td></tr>`).join('');
-    openPrintDoc('QC Lab Report',`<div class="office-head"><div class="org">BỆNH VIỆN PHONG - DA LIỄU TW QUY HÒA</div><div class="dept">KHOA VI SINH – MIỄN DỊCH</div></div><h1>QC Lab Report</h1><div class="meta">${meta||'<div>—</div>'}</div>${raw?`<h3>Dữ liệu Phoenix BD M50</h3><div class="raw-grid">${raw}</div>`:''}${bio?`<h3>Biochemical</h3><table><thead><tr><th>Biochemical</th><th>Actual</th><th>Expected</th></tr></thead><tbody>${bio}</tbody></table>`:''}${ast?`<h3>Antimicrobial</h3><table><thead><tr><th>Antimicrobial</th><th>Actual</th><th>Expected</th><th>Status</th></tr></thead><tbody>${ast}</tbody></table>`:''}${String(d.specialMessages||'').trim()?`<h3>SPECIAL MESSAGES</h3><div class="special-message">${S(d.specialMessages)}</div>`:''}`,'portrait','');
+    const extra='.qc-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:start}.qc-ver{text-align:right;font-size:9pt;line-height:1.35;padding-top:1mm}.qc-hosp{font-size:10pt;margin:0 0 1.5mm}.qc-sheet{margin:5mm 0 4mm}.qc-row{display:grid;grid-template-columns:1fr 1fr;column-gap:10mm;align-items:end;break-inside:avoid}.qc-cell{display:grid;grid-template-columns:50% 50%;align-items:end;min-height:7.5mm;overflow-wrap:anywhere}.qc-cell b{font-weight:700}.qc-cell.qc-stack{display:block;min-height:0}.qc-cell.qc-stack b,.qc-cell.qc-stack span{display:block;min-height:7.5mm}.qc-gap{height:7mm}';
+    openPrintDoc('QC Lab Report',`<div class="qc-top"><div></div><h1>QC Lab Report</h1><div class="qc-ver">${S(hd.dateTime)||'&nbsp;'}<br>${S(hd.version)}</div></div><div class="qc-hosp">${S(hd.hospital)}</div><div class="qc-hosp">${S(hd.place)}</div><div class="qc-sheet">${sheet}</div>${ast?`<h3>Antimicrobial</h3><table><thead><tr><th>Antimicrobial</th><th>Actual</th><th>Expected</th><th>Status</th></tr></thead><tbody>${ast}</tbody></table>`:''}${String(d.specialMessages||'').trim()?`<h3>SPECIAL MESSAGES</h3><div class="special-message">${S(d.specialMessages)}</div>`:''}`,'portrait',extra);
   };
   function isObjectSafe(v){return !!v&&typeof v==='object'&&!Array.isArray(v)}
 
@@ -7210,7 +7226,7 @@ function renderChemicalAllergen(){
       ws.mergeCells('A2:C2');ws.getCell('A2').value=`Chủng: ${d.strain||'—'} · Ngày QC: ${fmtDate(d.qcDate)} · Nhân viên: ${d.staff||'—'}`;ws.getCell('A2').font={name:'Times New Roman',size:10,italic:true};ws.getCell('A2').alignment={horizontal:'center',wrapText:true};
       ws.mergeCells('A3:C3');ws.getCell('A3').value=`LOT môi trường: ${d.mediaLot||'—'} · HSD: ${fmtDate(d.mediaExp)}`;ws.getCell('A3').font={name:'Times New Roman',size:9};ws.getCell('A3').alignment={horizontal:'center'};
       ws.getRow(5).values=['Kháng sinh','HSD','Kết quả QC (mm) · LOT theo từng lần'];ws.getRow(5).eachCell(head);
-      (d.antibiotics||[]).forEach((a,i)=>{const r=ws.getRow(6+i);r.values=[`${a.code||''} ${a.concentration||''}`,fmtDate(a.expDate),(a.results||[]).map((v,j)=>{const q=typeof virologyResultCellValue==='function'?virologyResultCellValue(v):{value:v,lot:''};return `Lần ${j+1}: ${q.lot?`LOT ${q.lot} · `:''}${q.hsd?`HSD ${virologyFmtDate(q.hsd)} · `:''}${q.value||'—'} mm`;}).join('\n')||'—'];r.height=28;r.eachCell(c=>cell(c,i%2===1));});
+      (d.antibiotics||[]).forEach((a,i)=>{const r=ws.getRow(6+i);r.values=[`${a.code||''} ${a.concentration||''}`,fmtDate(a.expDate),(a.results||[]).map((v,j)=>{const q=typeof virologyResultCellValue==='function'?virologyResultCellValue(v):{value:v,lot:''};return `Lần ${q.row||(j+1)}: ${q.lot?`LOT ${q.lot} · `:''}${q.hsd?`HSD ${virologyFmtDate(q.hsd)} · `:''}${q.value||'—'} mm`;}).join('\n')||'—'];r.height=28;r.eachCell(c=>cell(c,i%2===1));});
       ws.printArea=`A1:C${Math.max(6,(d.antibiotics||[]).length+5)}`;
       const meta=wb.addWorksheet('Chi tiết nhập',{views:[{showGridLines:false}]});meta.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9,margins:{left:.18,right:.18,top:.25,bottom:.3,header:.08,footer:.12}};[9,15,15,10,18,14,26,42].forEach((w,i)=>meta.getColumn(i+1).width=w);meta.getRow(1).values=['Lần','Ngày SX','HSD','SL QC','Đánh giá','Ngày QC','Nhân viên','Nhận xét / giám sát'];meta.getRow(1).eachCell(head);const rm=d.rowMeta||{};const keys=Object.keys(rm).sort((a,b)=>Number(a)-Number(b));keys.forEach((k,i)=>{const x=rm[k]||{},r=meta.getRow(2+i);r.values=[k,fmtDate(x.ngaySX),fmtDate(x.hsd),x.soQC||'—',x.evaluation||'—',fmtDate(x.qcDate),x.staff||'—',x.note||'—'];r.height=28;r.eachCell(c=>cell(c,i%2===1));});meta.autoFilter={from:{row:1,column:1},to:{row:1,column:8}};meta.views=[{state:'frozen',ySplit:1}];meta.printArea=`A1:H${Math.max(2,1+keys.length)}`;
       const info=wb.addWorksheet('Thông tin phiếu',{views:[{showGridLines:false}]});info.pageSetup={orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:1,paperSize:9};[30,65].forEach((w,i)=>info.getColumn(i+1).width=w);info.getRow(1).values=['Thông tin','Giá trị'];info.getRow(1).eachCell(head);[['Chủng',d.strain],['Ngày QC',fmtDate(d.qcDate)],['Nhân viên',d.staff],['LOT môi trường',d.mediaLot],['HSD môi trường',fmtDate(d.mediaExp)],['Nhận xét',d.note]].forEach((x,i)=>{const r=info.getRow(2+i);r.values=[x[0],x[1]||'—'];r.height=24;r.eachCell(c=>cell(c,i%2===1));});info.printArea='A1:B7';
@@ -8106,7 +8122,8 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     status:'COMPLETE',
     isolate:'1',
     inoculum:'0.5',
-    qcStatus:'Pass'
+    qcStatus:'Pass',
+    printVersion:'2.90.0.0 / V7.51A (x-US)'
   };
 
   const TD_PROFILES = {
@@ -8377,10 +8394,14 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
   };
 
   // ---------------- TĐ: profile filter + auto-fill + add new VK ----------------
-  function tdField(label,key,value='',type='text',fixed=false){
+  function tdField(label,key,value='',type='text',fixed=false,cls=''){
     const ro=fixed?' readonly':'';
     const extra=type==='datetime-local'?' step="60"':'';
-    return `<div class="td-field"><label>${label}</label><input data-td-field="${key}" type="${type}" value="${esc(value)}"${ro}${extra}></div>`;
+    return `<div class="td-field ${cls}"><label>${label}</label><input data-td-field="${key}" type="${type}" value="${esc(value)}"${ro}${extra}></div>`;
+  }
+
+  function tdPair(l,r){
+    return `<div class="td-pair-row"><div>${l||''}</div><div>${r||''}</div></div>`;
   }
 
   function tdAntimicrobialRows(names, saved){
@@ -8397,16 +8418,6 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     return `<div class="td-table-wrap"><table class="td-table"><thead><tr><th>Antimicrobial</th><th>Actual</th><th>Expected</th><th>Status</th></tr></thead><tbody>${list}</tbody></table></div>`;
   }
 
-  function tdBioGroups(){
-    const bioGroups=[
-      ['A_ARARR','A_DARGH','A_LEUH','A_LPYR','C_3MGA','C_DGUA','C_KGA','C_THY','M_BDGAL','M_BDGLU','M_PHOS','N_ALALH','P_ADGLU','R_DEX','R_DTRE','R_NGU','R_MGP'],
-      ['A_GLPRB','A_HIST','A_LPHET','A_LTHY','C_CLST','C_DMNT','C_MAA','N_PROT','P_PHOL','R_DSUC','R_MAL','S_URE'],
-      ['A_LALT','A_LISO','A_LPROB','C_DFFRU','C_IMN','C_PXB','M_BDCEL','M_BDGLU','M_PHOT','N_VAALA','R_BGEN','R_DTAG','R_MTT','T_ESC']
-    ];
-    const bioTable=(group,gi)=>`<div class="td-bio-group"><table class="td-table"><thead><tr><th>Biochemical</th><th>Actual</th><th>Expected</th></tr></thead><tbody>${group.map((r,i)=>{const idx=gi*20+i;return `<tr><td><b>${r}</b></td><td><input data-td-bio="${idx}" data-td-bio-name="${r}"></td><td><input data-td-bio-exp="${idx}"></td></tr>`}).join('')}</tbody></table></div>`;
-    return bioGroups.map(tdBioGroups=>tdBioGroups).map((g,i)=>bioTable(g,i)).join('');
-  }
-
   function renderTDWithProfile(targetEl){
     ensureState();
     const el=targetEl||document.getElementById('view-virology-td')||document.getElementById('virologyHubPanel');
@@ -8421,7 +8432,6 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     const savedFields=el.__tdLoadedRecord||{};
     const get=(key, fallback='')=>savedFields[key]!==undefined&&savedFields[key]!==null&&savedFields[key]!==''?savedFields[key]:(p[key]??fallback);
 
-    const bioGroupsHtml=tdBioGroups();
     el.innerHTML=`<div class="td-report card-body" style="padding:16px">
       <div class="td-report-toolbar no-print">
         <div>
@@ -8431,44 +8441,27 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
         </div>
         <button class="btn primary" type="button" onclick="openAddVirologyTDProfile()">Thêm tên VK mới</button>
       </div>
-      <div class="td-report-header"><div class="td-empty-title">BỆNH VIỆN</div><div class="td-report-title">QC Lab Report</div><div class="td-empty-title">REPORT</div></div>
-      <div class="td-report-meta">
-        <div>
-          ${tdField('BỆNH VIỆN','hospital',get('hospital',TD_FIXED.hospital),'text',true)}
-          ${tdField('ĐỊA ĐIỂM','location',get('location',TD_FIXED.location),'text',true)}
-          ${tdField('Panel Lot Number','panelLot',get('panelLot'))}
-          ${tdField('Test Start','testStart',get('testStart'),'datetime-local')}
-          ${tdField('Panel Type','panelType',get('panelType'))}
-          ${tdField('Status','status',get('status',TD_FIXED.status),'text',true)}
-          ${tdField('ID Broth Lot Number','idBrothLot',get('idBrothLot'))}
-          ${tdField('AST Broth Lot Number','astBrothLot',get('astBrothLot'))}
-          ${tdField('Indicator Lot Number','indicatorLot',get('indicatorLot'))}
-        </div>
-        <div>
-          ${tdField('Expiration Date','panelExp',get('panelExp'),'date')}
-          ${tdField('Test End','testEnd',get('testEnd'),'datetime-local')}
-          ${tdField('Location','location2',get('location2'))}
-          ${tdField('Tech ID','techId',get('techId'))}
-          ${tdField('Expiration Date','idBrothExp',get('idBrothExp'),'date')}
-          ${tdField('Expiration Date','astBrothExp',get('astBrothExp'),'date')}
-          ${tdField('Expiration Date','indicatorExp',get('indicatorExp'),'date')}
-        </div>
+      <div class="td-report-header"><div class="td-empty-title">BỆNH VIỆN</div><div class="td-report-title">QC Lab Report</div><div class="td-header-right"><input type="datetime-local" step="60" data-td-field="printDateTime" value="${esc(get('printDateTime'))}" aria-label="Ngày giờ báo cáo"><input data-td-field="printVersion" value="${esc(get('printVersion',TD_FIXED.printVersion))}" readonly aria-label="Phiên bản"></div></div>
+      <div class="td-rows">
+        ${tdPair(tdField('BỆNH VIỆN','hospital',get('hospital',TD_FIXED.hospital),'text',true),'')}
+        ${tdPair(tdField('ĐỊA ĐIỂM','location',get('location',TD_FIXED.location),'text',true),'')}
+        ${tdPair(tdField('Panel Lot Number','panelLot',get('panelLot')),tdField('Expiration Date','panelExp',get('panelExp'),'date'))}
+        ${tdPair(tdField('Test Start','testStart',get('testStart'),'datetime-local'),tdField('Test End','testEnd',get('testEnd'),'datetime-local'))}
+        ${tdPair(tdField('Panel Type','panelType',get('panelType')),tdField('Location','location2',get('location2')))}
+        ${tdPair(tdField('Status','status',get('status',TD_FIXED.status),'text',true),tdField('Tech ID','techId',get('techId')))}
+        ${tdPair(tdField('ID Broth Lot Number','idBrothLot',get('idBrothLot')),tdField('Expiration Date','idBrothExp',get('idBrothExp'),'date'))}
+        ${tdPair(tdField('AST Broth Lot Number','astBrothLot',get('astBrothLot')),tdField('Expiration Date','astBrothExp',get('astBrothExp'),'date'))}
+        ${tdPair(tdField('Indicator Lot Number','indicatorLot',get('indicatorLot')),tdField('Expiration Date','indicatorExp',get('indicatorExp'),'date'))}
+        <div class="td-row-gap"></div>
+        ${tdPair(tdField('Sequence Number','sequence',get('sequence')),'')}
+        ${tdPair(tdField('Accession Number','accession',get('accession')),'')}
+        ${tdPair(tdField('Isolate Number','isolate',get('isolate',TD_FIXED.isolate),'text',true),'')}
+        <div class="td-row-gap"></div>
+        ${tdPair(tdField('Test Strain','testStrain',get('testStrain')),tdField('Inoculum Density','inoculum',get('inoculum',TD_FIXED.inoculum),'text',true))}
+        <div class="td-row-gap"></div>
+        ${tdPair(tdField('QC Status','qcStatus',get('qcStatus',TD_FIXED.qcStatus),'text',true),'')}
+        ${tdPair(tdField('Instrument ID(s)','instrument',get('instrument'),'text',false,'td-stack'),'')}
       </div>
-      <div class="td-report-meta" style="margin-top:10px">
-        <div>
-          ${tdField('Sequence Number','sequence',get('sequence'))}
-          ${tdField('Accession Number','accession',get('accession'))}
-          ${tdField('Isolate Number','isolate',get('isolate',TD_FIXED.isolate),'text',true)}
-          ${tdField('Test Strain','testStrain',get('testStrain'))}
-          ${tdField('QC Status','qcStatus',get('qcStatus',TD_FIXED.qcStatus),'text',true)}
-        </div>
-        <div>
-          ${tdField('Inoculum Density','inoculum',get('inoculum',TD_FIXED.inoculum),'text',true)}
-          ${tdField('Instrument ID(s)','instrument',get('instrument'))}
-        </div>
-      </div>
-      <div class="td-section-title">Biochemical</div>
-      <div class="td-bio-grid">${bioGroupsHtml}</div>
       <div class="td-section-title">Antimicrobial</div>
       ${tdAntimicrobialRows(profileNames,saved)}
       <div class="td-section-title">SPECIAL MESSAGES</div>
@@ -8564,9 +8557,6 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
   window.collectPhoenixQCReport=function(){
     const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-td');
     const fields={}; root?.querySelectorAll('[data-td-field]').forEach(x=>fields[x.dataset.tdField]=x.value||'');
-    fields.biochemical=[];
-    root?.querySelectorAll('[data-td-bio]').forEach(x=>{const i=Number(x.dataset.tdBio);fields.biochemical[i]=fields.biochemical[i]||{name:x.dataset.tdBioName||'',actual:'',expected:''};fields.biochemical[i].actual=x.value||'';});
-    root?.querySelectorAll('[data-td-bio-exp]').forEach(x=>{const i=Number(x.dataset.tdBioExp);fields.biochemical[i]=fields.biochemical[i]||{name:'',actual:'',expected:''};fields.biochemical[i].expected=x.value||'';});
     fields.antimicrobial=[];
     for(let i=0;i<25;i++){
       const name=root?.querySelector(`[data-td-ast-name-input="${i}"]`)?.value?.trim()||'';
@@ -8615,31 +8605,44 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     queueSave();renderVirologyHistoryPanel('td');toast('pass','Đã lưu QC Vi sinh (TĐ)','Dữ liệu được lưu và đồng bộ theo cơ chế hiện tại.');
   };
 
-  // Robust TD Excel export: one .xlsx file with metadata, biochemical, antimicrobial and messages.
+  // TĐ Excel: bố cục trang đầu giống mẫu Phoenix (QC Lab Report), không có sheet Biochemical.
   window.exportPhoenixQCExcel=async function(recordId){
     try{
       ensureState();
       const d=recordId?state.virologyTDResults.find(r=>r.id===recordId):collectPhoenixQCReport();
       if(!d){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TĐ).');return;}
       if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
+      const T=window.smartTDReport, hd=T.header(d);
       const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();
       const border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
       const font={name:'Times New Roman',size:10};
+      const boldFont={name:'Times New Roman',size:10,bold:true};
       const headFont={name:'Times New Roman',size:10,bold:true};
       const ws=wb.addWorksheet('QC Lab Report',{views:[{showGridLines:false}]});
       ws.pageSetup={orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9,margins:{left:.25,right:.25,top:.35,bottom:.35,header:.1,footer:.1}};
-      ws.mergeCells('A1:B1');ws.getCell('A1').value='QC Lab Report';ws.getCell('A1').font={name:'Times New Roman',size:16,bold:true};ws.getCell('A1').alignment={horizontal:'center'};
-      ws.mergeCells('A2:B2');ws.getCell('A2').value=`Tên VK: ${d.tdVkName||d.profileName||d.testStrain||''}`;ws.getCell('A2').font={name:'Times New Roman',size:10,italic:true};ws.getCell('A2').alignment={horizontal:'center'};
-      const labels={hospital:'BỆNH VIỆN',location:'ĐỊA ĐIỂM',panelLot:'Panel Lot Number',testStart:'Test Start',panelType:'Panel Type',status:'STATUS',idBrothLot:'ID Broth Lot Number',astBrothLot:'AST Broth Lot Number',indicatorLot:'Indicator Lot Number',panelExp:'Expiration Date',testEnd:'Test End',location2:'Location',techId:'Tech ID',idBrothExp:'Expiration Date (ID Broth)',astBrothExp:'Expiration Date (AST Broth)',indicatorExp:'Expiration Date (Indicator)',sequence:'Sequence Number',accession:'Accession Number',isolate:'Isolate Number',testStrain:'Test Strain',qcStatus:'QC Status',inoculum:'Inoculum Density',instrument:'Instrument ID(s)'};
-      const metaKeys=['hospital','location','panelLot','testStart','panelType','status','idBrothLot','astBrothLot','indicatorLot','panelExp','testEnd','location2','techId','idBrothExp','astBrothExp','indicatorExp','sequence','accession','isolate','testStrain','qcStatus','inoculum','instrument'];
-      let rr=4;
-      metaKeys.forEach(k=>{ws.getCell(rr,1).value=labels[k]||k;ws.getCell(rr,2).value=d[k]??'';[ws.getCell(rr,1),ws.getCell(rr,2)].forEach(c=>{c.font=font;c.border=border;c.alignment={vertical:'middle',wrapText:true};});rr++;});
-      ws.getColumn(1).width=30;ws.getColumn(2).width=55;
-      const bio=wb.addWorksheet('Biochemical',{views:[{showGridLines:false}]});
-      bio.pageSetup={orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9};
-      bio.getRow(1).values=['Biochemical','Actual','Expected'];bio.getRow(1).eachCell(c=>{c.font=headFont;c.border=border;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};});
-      (d.biochemical||[]).filter(x=>x&&x.name).forEach((x,i)=>{const r=bio.getRow(2+i);r.values=[x.name,x.actual||'',x.expected||''];r.eachCell(c=>{c.font=font;c.border=border;c.alignment={vertical:'middle',wrapText:true};});});
-      bio.getColumn(1).width=28;bio.getColumn(2).width=24;bio.getColumn(3).width=24;
+      [26,30,26,30].forEach((w,i)=>ws.getColumn(i+1).width=w);
+      ws.mergeCells('A1:C1');ws.getCell('A1').value='QC Lab Report';ws.getCell('A1').font={name:'Times New Roman',size:16,bold:true};ws.getCell('A1').alignment={horizontal:'center'};
+      ws.getCell('D1').value=hd.dateTime;ws.getCell('D1').font=font;ws.getCell('D1').alignment={horizontal:'right'};
+      ws.getCell('D2').value=hd.version;ws.getCell('D2').font=font;ws.getCell('D2').alignment={horizontal:'right'};
+      ws.mergeCells('A2:C2');ws.getCell('A2').value=hd.hospital;ws.getCell('A2').font=font;ws.getCell('A2').alignment={horizontal:'left'};
+      ws.mergeCells('A3:C3');ws.getCell('A3').value=hd.place;ws.getCell('A3').font=font;ws.getCell('A3').alignment={horizontal:'left'};
+      let rr=5;
+      const put=(row,col,k)=>{
+        const lc=ws.getCell(row,col),vc=ws.getCell(row,col+1);
+        lc.value=T.labels[k];lc.font=boldFont;lc.alignment={vertical:'middle',horizontal:'left'};
+        vc.value=String(T.fmt(k,d[k]));vc.font=font;vc.alignment={vertical:'middle',horizontal:'left',wrapText:true};
+      };
+      T.rows.forEach(r=>{
+        if(!r){rr++;return;}
+        if(r[2]){
+          const lc=ws.getCell(rr,1);lc.value=T.labels[r[0]];lc.font=boldFont;lc.alignment={vertical:'middle',horizontal:'left'};rr++;
+          ws.mergeCells(rr,1,rr,2);const vc=ws.getCell(rr,1);vc.value=String(T.fmt(r[0],d[r[0]]));vc.font=font;vc.alignment={vertical:'middle',horizontal:'left',wrapText:true};rr++;
+          return;
+        }
+        if(r[0])put(rr,1,r[0]);
+        if(r[1])put(rr,3,r[1]);
+        rr++;
+      });
       const ast=wb.addWorksheet('Antimicrobial',{views:[{showGridLines:false}]});
       ast.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9};
       ast.getRow(1).values=['Antimicrobial','Actual','Expected','Status'];ast.getRow(1).eachCell(c=>{c.font=headFont;c.border=border;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};});
@@ -8656,29 +8659,43 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     }catch(e){console.error(e);toast('danger','Xuất Excel thất bại',e?.message||'Không thể tạo file Excel QC Vi sinh (TĐ).');}
   };
 
-  // Robust Word .docx export independent of the previous TD export implementation.
+  // TĐ Word .docx: bố cục trang đầu giống mẫu Phoenix (QC Lab Report), không có bảng Biochemical.
   window.exportPhoenixQCWord=async function(recordId){
     try{
       ensureState();
       const d=recordId?state.virologyTDResults.find(r=>r.id===recordId):collectPhoenixQCReport();
       if(!d){toast('warning','Không có dữ liệu','Không tìm thấy phiếu QC Vi sinh (TĐ).');return;}
       if(!window.JSZip){toast('warning','Chưa tải được mô-đun Word','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
+      const T=window.smartTDReport, hd=T.header(d);
       const x=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-      const run=(t,b=false,i=false)=>`<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman"/>${b?'<w:b/>':''}${i?'<w:i/>':''}<w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r>`;
-      const p=(t,b=false,align='left')=>`<w:p><w:pPr><w:jc w:val="${align}"/></w:pPr>${run(t,b)}</w:p>`;
+      const runSz=(t,b=false,sz=20)=>`<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman"/>${b?'<w:b/>':''}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r>`;
+      const run=(t,b=false,i=false)=>runSz(t,b,20);
+      const p=(t,b=false,align='left',sz=20)=>`<w:p><w:pPr><w:spacing w:before="0" w:after="60"/><w:jc w:val="${align}"/></w:pPr>${runSz(t,b,sz)}</w:p>`;
       const table=(headers,rows)=>{
         const all=[headers,...rows],cols=headers.length;
         let z=`<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="6" w:color="555555"/><w:left w:val="single" w:sz="6" w:color="555555"/><w:bottom w:val="single" w:sz="6" w:color="555555"/><w:right w:val="single" w:sz="6" w:color="555555"/><w:insideH w:val="single" w:sz="6" w:color="555555"/><w:insideV w:val="single" w:sz="6" w:color="555555"/></w:tblBorders></w:tblPr>`;
         all.forEach((row,ri)=>{z+=`<w:tr><w:trPr><w:cantSplit/>${ri===0?'<w:tblHeader/>':''}</w:trPr>`;row.forEach(v=>{z+=`<w:tc><w:tcPr>${ri===0?'<w:shd w:fill="EAF3FB"/>':''}</w:tcPr><w:p><w:pPr><w:jc w:val="${ri===0?'center':'left'}"/></w:pPr>${run(v,ri===0)}</w:p></w:tc>`});z+='</w:tr>';});
         return z+'</w:tbl>';
       };
-      const labels={hospital:'BỆNH VIỆN',location:'ĐỊA ĐIỂM',panelLot:'Panel Lot Number',testStart:'Test Start',panelType:'Panel Type',status:'STATUS',idBrothLot:'ID Broth Lot Number',astBrothLot:'AST Broth Lot Number',indicatorLot:'Indicator Lot Number',panelExp:'Expiration Date',testEnd:'Test End',location2:'Location',techId:'Tech ID',idBrothExp:'Expiration Date (ID Broth)',astBrothExp:'Expiration Date (AST Broth)',indicatorExp:'Expiration Date (Indicator)',sequence:'Sequence Number',accession:'Accession Number',isolate:'Isolate Number',testStrain:'Test Strain',qcStatus:'QC Status',inoculum:'Inoculum Density',instrument:'Instrument ID(s)'};
-      const metaKeys=['hospital','location','panelLot','testStart','panelType','status','idBrothLot','astBrothLot','indicatorLot','panelExp','testEnd','location2','techId','idBrothExp','astBrothExp','indicatorExp','sequence','accession','isolate','testStrain','qcStatus','inoculum','instrument'];
-      const metaRows=metaKeys.filter(k=>d[k]!==undefined&&d[k]!==null&&String(d[k]).trim()!=='').map(k=>[labels[k]||k,String(d[k])]);
-      let body=p('BỆNH VIỆN PHONG - DA LIỄU TW QUY HÒA',true,'center')+p('KHOA VI SINH – MIỄN DỊCH',true,'center')+p('QC Lab Report',true,'center')+p(`Tên VK: ${d.tdVkName||d.profileName||d.testStrain||''}`,false,'center');
-      body+=table(['Thông tin','Giá trị'],metaRows);
-      const bioRows=(d.biochemical||[]).filter(x=>x&&x.name).map(x=>[x.name,x.actual||'',x.expected||'']);
-      body+=p('Biochemical',true,'left')+table(['Biochemical','Actual','Expected'],bioRows);
+      // Bảng 4 cột không viền: [nhãn | giá trị | nhãn | giá trị] - cùng hàng với nhau như mẫu Phoenix.
+      const W=[2300,2916,2300,2916];
+      const tc=(w,txt,b=false,span=1)=>`<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${span>1?`<w:gridSpan w:val="${span}"/>`:''}</w:tcPr><w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr>${txt!==''?runSz(txt,b,20):''}</w:p></w:tc>`;
+      let info=`<w:tbl><w:tblPr><w:tblW w:w="${W.reduce((a,c)=>a+c,0)}" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${W.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>`;
+      T.rows.forEach(r=>{
+        if(!r){info+=`<w:tr><w:trPr><w:trHeight w:val="220"/></w:trPr>${W.map(w=>tc(w,'')).join('')}</w:tr>`;return;}
+        if(r[2]){
+          info+=`<w:tr><w:trPr><w:cantSplit/></w:trPr>${tc(W[0]+W[1],T.labels[r[0]],true,2)}${tc(W[2],'')}${tc(W[3],'')}</w:tr>`;
+          info+=`<w:tr><w:trPr><w:cantSplit/></w:trPr>${tc(W[0]+W[1],String(T.fmt(r[0],d[r[0]])),false,2)}${tc(W[2],'')}${tc(W[3],'')}</w:tr>`;
+          return;
+        }
+        const l=r[0]?tc(W[0],T.labels[r[0]],true)+tc(W[1],String(T.fmt(r[0],d[r[0]]))):tc(W[0],'')+tc(W[1],'');
+        const rt=r[1]?tc(W[2],T.labels[r[1]],true)+tc(W[3],String(T.fmt(r[1],d[r[1]]))):tc(W[2],'')+tc(W[3],'');
+        info+=`<w:tr><w:trPr><w:cantSplit/></w:trPr>${l}${rt}</w:tr>`;
+      });
+      info+='</w:tbl>';
+      const topP=(t,al,sz=18)=>`<w:p><w:pPr><w:spacing w:before="0" w:after="0"/><w:jc w:val="${al}"/></w:pPr>${t!==''?runSz(t,false,sz):''}</w:p>`;
+      const topTbl=`<w:tbl><w:tblPr><w:tblW w:w="10432" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="2600"/><w:gridCol w:w="5232"/><w:gridCol w:w="2600"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="2600" w:type="dxa"/></w:tcPr><w:p/></w:tc><w:tc><w:tcPr><w:tcW w:w="5232" w:type="dxa"/></w:tcPr>${p('QC Lab Report',true,'center',32)}</w:tc><w:tc><w:tcPr><w:tcW w:w="2600" w:type="dxa"/></w:tcPr>${topP(hd.dateTime,'right')}${topP(hd.version,'right')}</w:tc></w:tr></w:tbl>`;
+      let body=topTbl+p(hd.hospital,false,'left')+p(hd.place,false,'left')+p('',false,'left')+info+p('',false,'left');
       const astRows=(d.antimicrobial||[]).filter(x=>x&&x.name).map(x=>[x.name,x.actual||'',x.expected||'',x.status||'']);
       body+=p('Antimicrobial',true,'left')+table(['Antimicrobial','Actual','Expected','Status'],astRows);
       body+=p('SPECIAL MESSAGES',true,'left')+p(d.specialMessages||'');
@@ -8708,6 +8725,16 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     .td-report-toolbar{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:10px;align-items:end;margin-bottom:14px;padding:10px;border:1px solid var(--border);background:var(--surface-2);border-radius:9px}
     .td-report-toolbar .field{margin:0}
     .td-report-toolbar select{min-height:36px}
+    .td-header-right{display:grid;gap:6px;width:240px;flex:none}
+    .td-header-right input{width:100%;box-sizing:border-box;min-height:34px}
+    .td-header-right input[readonly]{background:var(--surface-2);text-align:right}
+    .td-rows{display:block}
+    .td-pair-row{display:grid;grid-template-columns:1fr 1fr;gap:0 28px;align-items:stretch}
+    .td-pair-row>div{min-width:0;display:flex;flex-direction:column}
+    .td-pair-row>div>.td-field{flex:1}
+    .td-row-gap{height:20px}
+    .td-report .td-field.td-stack{grid-template-columns:1fr;gap:3px}
+    @media(max-width:760px){.td-pair-row{grid-template-columns:1fr}}
     .td-new-abx-head,.td-new-abx-row{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(0,1fr);gap:7px;align-items:center}
     .td-new-abx-head{font-size:11px;font-weight:700;color:var(--text-muted);padding:0 4px 5px}
     .td-new-abx-list{display:grid;gap:6px;max-height:42vh;overflow:auto;padding-right:2px}
