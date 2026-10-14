@@ -8400,6 +8400,11 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     return `<div class="td-field ${cls}"><label>${label}</label><input data-td-field="${key}" type="${type}" value="${esc(value)}"${ro}${extra}></div>`;
   }
 
+  function tdSelect(label,key,value,options){
+    const cur=/fail/i.test(String(value||''))?'Fail':'Pass';
+    return `<div class="td-field"><label>${label}</label><select data-td-field="${key}">${options.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('')}</select></div>`;
+  }
+
   function tdPair(l,r){
     return `<div class="td-pair-row"><div>${l||''}</div><div>${r||''}</div></div>`;
   }
@@ -8459,7 +8464,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
         <div class="td-row-gap"></div>
         ${tdPair(tdField('Test Strain','testStrain',get('testStrain')),tdField('Inoculum Density','inoculum',get('inoculum',TD_FIXED.inoculum),'text',true))}
         <div class="td-row-gap"></div>
-        ${tdPair(tdField('QC Status','qcStatus',get('qcStatus',TD_FIXED.qcStatus),'text',true),'')}
+        ${tdPair(tdSelect('QC Status','qcStatus',get('qcStatus',TD_FIXED.qcStatus),['Pass','Fail']),'')}
         ${tdPair(tdField('Instrument ID(s)','instrument',get('instrument'),'text',false,'td-stack'),'')}
       </div>
       <div class="td-section-title">Antimicrobial</div>
@@ -8486,6 +8491,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
       const source=d.rawData&&typeof d.rawData==='object'?d.rawData:null;
       const find=(obj,als)=>{if(!obj)return '';for(const a of als){const k=Object.keys(obj).find(x=>typeof phoenixNormKey==='function'&&phoenixNormKey(x)===phoenixNormKey(a));if(k!=null&&String(obj[k]??'').trim()!=='')return String(obj[k]);}return '';};
       Object.entries(aliases).forEach(([key,als])=>set(`[data-td-field="${key}"]`,d[key]||find(source,als)||''));
+      {const q=el.querySelector('[data-td-field="qcStatus"]');if(q)q.value=/fail/i.test(String(d.qcStatus||find(source,['QC Status'])||''))?'Fail':'Pass';}
       set('[data-td-field="specialMessages"]',d.specialMessages||find(source,['SPECIAL MESSAGES','Special Messages','Messages','Message'])||'');
       (d.biochemical||[]).forEach((x,i)=>{set(`[data-td-bio="${i}"]`,x?.actual||'');set(`[data-td-bio-exp="${i}"]`,x?.expected||'');});
       (d.antimicrobial||[]).forEach((x,i)=>{set(`[data-td-ast-name-input="${i}"]`,x?.name||'');set(`[data-td-ast="${i}"]`,x?.actual||'');set(`[data-td-ast-exp="${i}"]`,x?.expected||'');set(`[data-td-ast-status="${i}"]`,x?.status||'');});
@@ -8750,6 +8756,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     virologyTDEditId=null;
     const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-td');
     root?.querySelectorAll('[data-td-field],[data-td-bio],[data-td-bio-exp],[data-td-ast-name-input],[data-td-ast],[data-td-ast-exp],[data-td-ast-status]').forEach(x=>x.value='');
+    const qs=root?.querySelector('select[data-td-field="qcStatus"]');if(qs)qs.value='Pass';
   };
 
   // Re-render when the user opens either requested submodule after this patch.
