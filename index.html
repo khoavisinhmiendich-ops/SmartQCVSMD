@@ -3097,6 +3097,7 @@ function submitRapidWaterQC(ev){
 }
 
 function renderEntry(){
+  window.__editResultId=null;
   const el=document.getElementById('view-entry');
   el.innerHTML=`
     <div class="two-col">
@@ -3195,6 +3196,7 @@ function updateLivePreview(){
 }
 function resetEntryForm(){ renderEntry(); }
 function submitEntry(ev){
+  if(window.__editResultId) return submitEditEntry(ev);
   ev.preventDefault();
   const date=document.getElementById('f_date').value, time=document.getElementById('f_time').value;
   const machineId=document.getElementById('f_machine').value, testId=document.getElementById('f_test').value;
@@ -3277,6 +3279,108 @@ function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[i
 /* =====================================================================
    BIỂU ĐỒ QC (browse view with filters)
    ===================================================================== */
+
+/* ===== Sửa / Xóa kết quả QC từ Biểu đồ QC ===== */
+function qcSyncAlert(r){
+  const idx=state.alerts.findIndex(a=>a.resultId===r.id), a=idx>=0?state.alerts[idx]:null;
+  if(r.status==='pass'){ if(a && !a.handling) state.alerts.splice(idx,1); return; }
+  const test=byId(state.tests,r.testId), machine=byId(state.machines,r.machineId), lot=byId(state.lots,r.lotId);
+  if(!a){
+    state.alerts.unshift({id:uid('AL'),resultId:r.id,severity:r.status,rule:r.violations.join(', '),
+      testName:test?test.name:'?',machineName:machine?machine.name:'?',lotName:lot?lot.lot:'?',level:r.level,
+      value:r.value,mean:r.mean,sd:r.sd,time:r.date+' '+r.time,resolved:r.status==='warning',handling:null});
+    return;
+  }
+  const prev=a.severity;
+  a.severity=r.status; a.rule=r.violations.join(', ');
+  a.testName=test?test.name:a.testName; a.machineName=machine?machine.name:a.machineName; a.lotName=lot?lot.lot:a.lotName;
+  a.level=r.level; a.value=r.value; a.mean=r.mean; a.sd=r.sd; a.time=r.date+' '+r.time;
+  if(prev!==r.status && !a.handling) a.resolved=(r.status==='warning');
+}
+function qcRecomputeSeries(testId,machineId,lotId,level){
+  const hist=[];
+  seriesFor(testId,machineId,lotId,level).forEach(r=>{
+    hist.push({z:r.z});
+    const ev=evalWestgard(hist.slice(),state.settings.rules);
+    if(r.status!==ev.status) r.resolvedRequired=(ev.status==='reject');
+    r.status=ev.status; r.violations=ev.violations;
+    qcSyncAlert(r);
+  });
+}
+function editQCResult(resultId){
+  const r=state.results.find(x=>x.id===resultId); if(!r) return;
+  go('entry');
+  const set=(id,v)=>{const e=document.getElementById(id); if(e) e.value=v;};
+  set('f_date',r.date); set('f_time',r.time); set('f_machine',r.machineId);
+  onEntryMachineChange(); set('f_test',r.testId); onEntryTestChange();
+  const lotSel=document.getElementById('f_lot');
+  if(lotSel && ![...lotSel.options].some(o=>o.value===r.lotId)){
+    const lot=byId(state.lots,r.lotId), o=document.createElement('option');
+    o.value=r.lotId; o.textContent=(lot?lot.lot:'?')+' (Level '+r.level+')'; lotSel.appendChild(o);
+  }
+  set('f_lot',r.lotId);
+  const lv=document.getElementById('f_level'); if(lv){ lv.innerHTML='<option value="'+r.level+'">Level '+r.level+'</option>'; lv.value=String(r.level); }
+  set('f_mean',r.mean); set('f_sd',r.sd); set('f_value',r.value);
+  const us=document.getElementById('f_user');
+  if(us){ if(r.user && ![...us.options].some(o=>o.value===r.user)){const o=document.createElement('option'); o.textContent=r.user; us.appendChild(o);} if(r.user) us.value=r.user; }
+  window.__editResultId=r.id;
+  updateLivePreview();
+  const form=document.getElementById('entryForm');
+  if(form){
+    const note=document.createElement('div'); note.className='hint'; note.id='editEntryNote';
+    note.style.cssText='margin-bottom:10px;color:var(--warning);font-weight:600;';
+    note.textContent='Đang sửa kết quả QC ngày '+fmtDMY(r.date)+' '+r.time+' — sau khi lưu, biểu đồ và Westgard sẽ được tính lại.';
+    form.insertBefore(note,form.firstChild);
+    const sub=form.querySelector('button[type="submit"]'); if(sub) sub.textContent='✓ Cập nhật QC';
+    const cancel=form.querySelector('button.ghost'); if(cancel) cancel.textContent='Hủy sửa';
+  }
+}
+function submitEditEntry(ev){
+  ev.preventDefault();
+  const r=state.results.find(x=>x.id===window.__editResultId);
+  if(!r){ window.__editResultId=null; toast('reject','Không tìm thấy kết quả','Kết quả cần sửa không còn tồn tại.'); renderEntry(); return false; }
+  const date=document.getElementById('f_date').value, time=document.getElementById('f_time').value;
+  const machineId=document.getElementById('f_machine').value, testId=document.getElementById('f_test').value;
+  const lotId=document.getElementById('f_lot').value, level=parseInt(document.getElementById('f_level').value);
+  const value=parseFloat(document.getElementById('f_value').value);
+  const user=document.getElementById('f_user').value;
+  if(!date||!time||!machineId||!testId||!lotId||!level||isNaN(value)){ toast('reject','Thiếu dữ liệu','Vui lòng điền đầy đủ thông tin bắt buộc.'); return false; }
+  const old={testId:r.testId,machineId:r.machineId,lotId:r.lotId,level:r.level};
+  const same=(testId===r.testId&&machineId===r.machineId&&level===r.level);
+  let mean=r.mean, sd=r.sd, reagentLot=r.reagentLot||'', reagentConfigId=r.reagentConfigId||'';
+  if(!same){
+    const cfg=getConfig(testId,machineId,level);
+    if(!cfg){ toast('reject','Không thể lưu','Chưa thiết lập Mean/SD (theo Lot hóa chất) cho Xét nghiệm + Máy + Level này.'); return false; }
+    mean=cfg.mean; sd=cfg.sd; reagentLot=cfg.reagentLot||''; reagentConfigId=cfg.id||'';
+  }
+  const z=round((value-mean)/sd,2);
+  Object.assign(r,{date,time,machineId,testId,lotId,level,value:round(value,4),mean,sd,z,sdBand:sdBandLabel(z),reagentLot,reagentConfigId,user,updatedAt:new Date().toISOString()});
+  qcRecomputeSeries(testId,machineId,lotId,level);
+  if(old.testId!==testId||old.machineId!==machineId||old.lotId!==lotId||old.level!==level) qcRecomputeSeries(old.testId,old.machineId,old.lotId,old.level);
+  state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser||user,action:'Sửa kết quả QC',
+    detail:`${byId(state.tests,testId)?.name||''} · ${byId(state.machines,machineId)?.name||''} · Level ${level} · ${date} ${time} · KQ=${r.value} · Z=${z} · ${STATUS_LABEL[r.status]}`});
+  queueSave();
+  window.__editResultId=null;
+  renderNav();
+  toast(r.status,'Đã cập nhật kết quả QC',`${byId(state.tests,testId)?.name||''} · Level ${level} · Z=${z>0?'+':''}${z}`);
+  go('chart');
+  const ms=document.getElementById('cf_machine'); if(ms){ ms.value=machineId; chartFilterMachineChange(testId); }
+  return false;
+}
+function deleteQCResult(resultId){
+  const r=state.results.find(x=>x.id===resultId); if(!r) return;
+  const test=byId(state.tests,r.testId);
+  if(!confirm('Xóa kết quả QC '+(test?test.name:'')+' · Level '+r.level+' ngày '+fmtDMY(r.date)+' '+r.time+' (KQ '+r.value+')?\nBiểu đồ và Westgard của các kết quả sau đó sẽ được tính lại.')) return;
+  state.results=state.results.filter(x=>x.id!==resultId);
+  state.alerts=state.alerts.filter(a=>a.resultId!==resultId);
+  qcRecomputeSeries(r.testId,r.machineId,r.lotId,r.level);
+  state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser||r.user,action:'Xóa kết quả QC',
+    detail:`${test?.name||''} · ${byId(state.machines,r.machineId)?.name||''} · Level ${r.level} · ${r.date} ${r.time} · KQ=${r.value}`});
+  queueSave();
+  renderNav();
+  renderLJPanel();
+  toast('pass','Đã xóa kết quả QC','Biểu đồ và Westgard đã được cập nhật.');
+}
 
 function openResultDetail(resultId){
   const r=state.results.find(x=>x.id===resultId); if(!r) return;
@@ -4627,7 +4731,7 @@ function renderLJPanel(){
   if(!panel)return;if(!tid){panel.innerHTML='<div class="card"><div class="qc-chart-empty"><div>Chưa có xét nghiệm để hiển thị</div></div></div>';return;}
   const test=byId(state.tests,tid),machineId=mid||test?.machineId,machine=byId(state.machines,machineId),all=qcFixSeries(tid,machineId,0),shown=qcFixSeries(tid,machineId,range);
   const levels=[...new Set(all.map(r=>r.level))].sort((a,b)=>a-b),cfg=levels.map(l=>{const x=getConfig(tid,machineId,l);return x?'L'+l+': Mean '+x.mean+' / SD '+x.sd:'L'+l+': chưa thiết lập';}).join(' · ');
-  panel.innerHTML=`<div class="card"><div class="card-head"><div><h3>${escapeHtml(test?.name||'Biểu đồ QC')}</h3><span class="hint">${escapeHtml(machine?.name||'—')}${cfg?' · '+cfg:''}</span></div><span class="tag">${shown.length}/${all.length} điểm dữ liệu</span></div><div class="card-body"><div id="mainLJChart"></div><div class="qc-series-key">${levels.map((l,i)=>`<span class="item"><span class="line" style="background:${['var(--primary)','var(--accent)','#7C5CC4','var(--warning)'][i%4]}"></span>Level ${l}</span>`).join('')}<span class="item">• ±2SD: cảnh báo</span><span class="item">• ±3SD: không đạt</span><span class="item">• Chạm điểm để xem chi tiết</span></div></div></div><div class="card" style="margin-top:14px;"><div class="card-head"><h3>Lịch sử kết quả</h3><span class="hint">${shown.length} dòng hiển thị</span></div><div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Giờ</th><th>Level</th><th>Kết quả</th><th>Z</th><th>Trạng thái</th><th>Westgard</th><th>Người thực hiện</th></tr></thead><tbody>${shown.map(r=>`<tr style="cursor:pointer" onclick="openResultDetail('${r.id}')"><td>${fmtDMY(r.date)}</td><td class="mono">${r.time}</td><td>L${r.level}</td><td class="mono">${r.value}</td><td class="mono">${r.z>0?'+':''}${r.z}</td><td>${pillHtml(r.status)}</td><td>${r.violations?.join(', ')||'—'}</td><td>${escapeHtml(r.user||'—')}</td></tr>`).join('')||'<tr><td colspan="8" class="tbl-empty">Không có dữ liệu</td></tr>'}</tbody></table></div></div>`;
+  panel.innerHTML=`<div class="card"><div class="card-head"><div><h3>${escapeHtml(test?.name||'Biểu đồ QC')}</h3><span class="hint">${escapeHtml(machine?.name||'—')}${cfg?' · '+cfg:''}</span></div><span class="tag">${shown.length}/${all.length} điểm dữ liệu</span></div><div class="card-body"><div id="mainLJChart"></div><div class="qc-series-key">${levels.map((l,i)=>`<span class="item"><span class="line" style="background:${['var(--primary)','var(--accent)','#7C5CC4','var(--warning)'][i%4]}"></span>Level ${l}</span>`).join('')}<span class="item">• ±2SD: cảnh báo</span><span class="item">• ±3SD: không đạt</span><span class="item">• Chạm điểm để xem chi tiết</span></div></div></div><div class="card" style="margin-top:14px;"><div class="card-head"><h3>Lịch sử kết quả</h3><span class="hint">${shown.length} dòng hiển thị</span></div><div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Giờ</th><th>Level</th><th>Kết quả</th><th>Z</th><th>Trạng thái</th><th>Westgard</th><th>Người thực hiện</th><th>Thao tác</th></tr></thead><tbody>${shown.map(r=>`<tr style="cursor:pointer" onclick="openResultDetail('${r.id}')"><td>${fmtDMY(r.date)}</td><td class="mono">${r.time}</td><td>L${r.level}</td><td class="mono">${r.value}</td><td class="mono">${r.z>0?'+':''}${r.z}</td><td>${pillHtml(r.status)}</td><td>${r.violations?.join(', ')||'—'}</td><td>${escapeHtml(r.user||'—')}</td><td style="white-space:nowrap"><button class="btn ghost sm" type="button" onclick="event.stopPropagation();editQCResult('${r.id}')">Sửa</button> <button class="btn danger sm" type="button" onclick="event.stopPropagation();deleteQCResult('${r.id}')">Xóa</button></td></tr>`).join('')||'<tr><td colspan="9" class="tbl-empty">Không có dữ liệu</td></tr>'}</tbody></table></div></div>`;
   drawLJChart('mainLJChart',tid,machineId,range);
 }
 
