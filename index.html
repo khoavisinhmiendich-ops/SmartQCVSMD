@@ -192,7 +192,11 @@
   try{var meta=document.createElement('meta');meta.httpEquiv='Content-Security-Policy';meta.content="object-src 'none'; base-uri 'self'; form-action 'self'";(document.head||document.documentElement).appendChild(meta);}catch(_){}
 
   /* ================= Giám sát DOM: gỡ phần tử độc hại bị chèn vào ================= */
-  document.addEventListener('DOMContentLoaded',function(){domReady=true;},{once:true});
+  document.addEventListener('DOMContentLoaded',function(){
+    /* Mọi <script> nội tuyến đã có sẵn trong trang lúc tải xong là mã của chính ứng dụng: đánh dấu tin cậy để không ghi nhầm cảnh báo vào nhật ký. Script chèn thêm SAU thời điểm này vẫn bị gỡ và cảnh báo như cũ. */
+    try{var st=document.getElementsByTagName('script');for(var q=0;q<st.length;q++){if(!st[q].getAttribute('src')&&!st[q].hasAttribute('data-smq-ok'))st[q].dataset.smqOk='';}}catch(_){}
+    domReady=true;
+  },{once:true});
   var SEL='script,iframe,frame,object,embed,applet,base,meta[http-equiv],link[rel],form[action],[onerror],[onload],[onfocus],[onmouseover],[onanimationstart],[ontoggle],[href^="javascript:" i],[src^="javascript:" i],[formaction^="javascript:" i],[srcdoc]';
   var EXFIL=/document\.cookie|localStorage|sessionStorage|\beval\s*\(|\batob\s*\(|sendBeacon|XMLHttpRequest|\bfetch\s*\(|\bimport\s*\(|\.src\s*=|location\s*=|location\.href/i;
   function fixEl(n){
@@ -3072,7 +3076,8 @@ function submitRapidWaterQC(ev){
     corrective:document.getElementById('rw_corrective').value.trim(),
     preventive:document.getElementById('rw_preventive').value.trim(),
     performer:document.getElementById('rw_performer').value.trim(),
-    reviewer:document.getElementById('rw_reviewer').value.trim()
+    reviewer:document.getElementById('rw_reviewer').value.trim(),
+    user:(state.settings&&state.settings.currentUser)||''
   };
   const editingId=window.rapidWaterEditingId||'';
   const editingIndex=editingId ? state.rapidWaterResults.findIndex(r=>r.id===editingId) : -1;
@@ -4063,13 +4068,23 @@ function getSelectedReportMachine(){
 /* =====================================================================
    AUDIT TRAIL
    ===================================================================== */
+function auditIsScriptNoise(a){
+  /* Cảnh báo "gỡ mã script chèn trái phép" ghi nhầm cho chính các script của ứng dụng mỗi lần mở trang (hàng loạt cùng phút, nội dung là hàm IIFE). */
+  return /Đã gỡ mã script chèn trái phép/.test(String(a&&a.action||'')) && /^\s*\(\s*function\s*\(/.test(String(a&&a.detail||''));
+}
+function auditVisibleRows(){
+  const rows=Array.isArray(state.audit)?state.audit:[];
+  const burst={}, key=a=>String(a.user||'')+'|'+String(a.time||'').slice(0,16);
+  rows.forEach(a=>{ if(auditIsScriptNoise(a)) burst[key(a)]=(burst[key(a)]||0)+1; });
+  return rows.filter(a=>!(auditIsScriptNoise(a)&&burst[key(a)]>=5));
+}
 function renderAudit(){
   const el=document.getElementById('view-audit');
   el.innerHTML=`
     <div class="card">
       <div class="card-head"><h3>Audit Trail</h3><span class="hint">Ghi nhận toàn bộ thao tác — không thể chỉnh sửa hoặc xoá</span></div>
       <div class="table-wrap"><table><thead><tr><th>Thời gian</th><th>Người dùng</th><th>Hành động</th><th>Chi tiết</th></tr></thead><tbody>
-      ${state.audit.slice(0,300).map(a=>`<tr><td class="mono">${new Date(a.time).toLocaleString('vi-VN')}</td><td>${escapeHtml(a.user||'—')}</td><td><span class="tag">${escapeHtml(a.action)}</span></td><td style="color:var(--text-muted)">${escapeHtml(a.detail||'')}</td></tr>`).join('') || `<tr><td colspan="4" class="tbl-empty">Chưa có lịch sử</td></tr>`}
+      ${auditVisibleRows().slice(0,1000).map(a=>`<tr><td class="mono">${new Date(a.time).toLocaleString('vi-VN')}</td><td>${escapeHtml(a.user||'—')}</td><td><span class="tag">${escapeHtml(a.action)}</span></td><td style="color:var(--text-muted)">${escapeHtml(a.detail||'')}</td></tr>`).join('') || `<tr><td colspan="4" class="tbl-empty">Chưa có lịch sử</td></tr>`}
       </tbody></table></div>
     </div>
   `;
@@ -4078,8 +4093,42 @@ function renderAudit(){
 /* =====================================================================
    USERS
    ===================================================================== */
+/* Số QC mỗi người đã nhập — lấy từ tất cả các module nhập QC hiển thị ở Dashboard:
+   QC xét nghiệm (máy miễn dịch), QC Vi sinh (TC), QC Vi sinh (TĐ), QC Test nhanh & Test nước. */
+function qcCountsByUser(){
+  const users=(state.settings&&state.settings.users)||[];
+  const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/\b(tk|ktvtk|ktv|nv|ths|bs|bsck\w*|ckixn|ckxn|cnxn|ks|ts|pgs)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+  const nu=users.map(u=>({u,n:norm(u)}));
+  const owner=r=>{
+    const direct=String(r&&r.user||'').trim();
+    if(direct){ const hit=nu.find(x=>x.u===direct)||nu.find(x=>x.n&&x.n===norm(direct)); if(hit) return hit.u; }
+    const p=norm((r&&(r.performer||r.staff))||'');
+    if(p.length>=4){ const m=nu.filter(x=>x.n&&(x.n===p||x.n.includes(p)||p.includes(x.n))); if(m.length===1) return m[0].u; }
+    return null;
+  };
+  const out={}; users.forEach(u=>{ out[u]={base:0,tc:0,td:0,rw:0,dye:0,media:0}; });
+  const other={base:0,tc:0,td:0,rw:0,dye:0,media:0};
+  [['base',state.results],['tc',state.virologyTCResults],['td',state.virologyTDResults],['rw',state.rapidWaterResults],['dye',state.qcDyeMedia&&state.qcDyeMedia.dyeRows],['media',state.qcDyeMedia&&state.qcDyeMedia.mediaRows]].forEach(([k,arr])=>{
+    (Array.isArray(arr)?arr:[]).forEach(r=>{ const u=owner(r); if(u&&out[u]) out[u][k]++; else other[k]++; });
+  });
+  return {byUser:out,other};
+}
 function renderUsers(){
   const el=document.getElementById('view-users');
+  const qc=qcCountsByUser();
+  const sum=c=>c.base+c.tc+c.td+c.rw+c.dye+c.media;
+  const otherTotal=sum(qc.other);
+  const handledOf=u=>state.alerts.filter(a=>a.handling && a.handling.performedBy===u).length;
+  const totals={base:0,tc:0,td:0,rw:0,dye:0,media:0,all:0,handled:0};
+  const rows=state.settings.users.map(u=>{
+    const c=qc.byUser[u]||{base:0,tc:0,td:0,rw:0,dye:0,media:0}, handled=handledOf(u);
+    totals.base+=c.base; totals.tc+=c.tc; totals.td+=c.td; totals.rw+=c.rw; totals.dye+=c.dye; totals.media+=c.media; totals.all+=sum(c); totals.handled+=handled;
+    return `<tr><td><div class="user-chip" style="padding:0;"><div class="av" style="width:26px;height:26px;font-size:11px;">${u.slice(-2).toUpperCase().replace(/[^A-ZÀ-Ỹ]/g,'')||'?'}</div><b>${escapeHtml(u)}</b>${u===state.settings.currentUser?' <span class="tag" style="margin-left:6px;">Đang đăng nhập</span>':''}</div></td>
+          <td class="mono num total">${sum(c)}</td><td class="mono num">${c.base}</td><td class="mono num">${c.tc}</td><td class="mono num">${c.td}</td><td class="mono num">${c.rw}</td><td class="mono num">${c.dye}</td><td class="mono num">${c.media}</td><td class="mono num">${handled}</td>
+          <td class="act"><button class="btn ghost sm" onclick="removeUser('${escapeHtml(u).replace(/'/g,"\\'")}')" ${state.settings.users.length<=1?'disabled':''}>Xoá</button></td></tr>`;
+  }).join('');
+  const otherRow=otherTotal>0?`<tr><td><span style="color:var(--text-muted)">Chưa xác định người nhập</span></td><td class="mono num total">${otherTotal}</td><td class="mono num">${qc.other.base}</td><td class="mono num">${qc.other.tc}</td><td class="mono num">${qc.other.td}</td><td class="mono num">${qc.other.rw}</td><td class="mono num">${qc.other.dye}</td><td class="mono num">${qc.other.media}</td><td class="mono num">—</td><td class="act"></td></tr>`:'';
+  const grand={base:totals.base+qc.other.base,tc:totals.tc+qc.other.tc,td:totals.td+qc.other.td,rw:totals.rw+qc.other.rw,dye:totals.dye+qc.other.dye,media:totals.media+qc.other.media};
   el.innerHTML=`
     <div class="card">
       <div class="card-head"><h3>Người dùng hệ thống</h3></div>
@@ -4088,15 +4137,9 @@ function renderUsers(){
           <input id="newUserName" placeholder="Tên người dùng mới…" style="max-width:260px;">
           <button class="btn primary sm" onclick="addUser()">+ Thêm người dùng</button>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Tên</th><th>Số QC đã nhập</th><th>Số lần xử lý QC</th><th></th></tr></thead><tbody>
-        ${state.settings.users.map(u=>{
-          const cnt=state.results.filter(r=>r.user===u).length;
-          const handled=state.alerts.filter(a=>a.handling && a.handling.performedBy===u).length;
-          return `<tr><td><div class="user-chip" style="padding:0;"><div class="av" style="width:26px;height:26px;font-size:11px;">${u.slice(-2).toUpperCase().replace(/[^A-ZÀ-Ỹ]/g,'')||'?'}</div><b>${escapeHtml(u)}</b>${u===state.settings.currentUser?' <span class="tag" style="margin-left:6px;">Đang đăng nhập</span>':''}</div></td>
-          <td class="mono">${cnt}</td><td class="mono">${handled}</td>
-          <td><button class="btn ghost sm" onclick="removeUser('${escapeHtml(u).replace(/'/g,"\\'")}')" ${state.settings.users.length<=1?'disabled':''}>Xoá</button></td></tr>`;
-        }).join('')}
-        </tbody></table></div>
+        <div class="table-wrap"><table class="users-table"><thead><tr><th>Tên</th><th class="num">Số QC đã nhập</th><th class="num">QC xét nghiệm</th><th class="num">Vi sinh (TC)</th><th class="num">Vi sinh (TĐ)</th><th class="num">Test nhanh &amp; nước</th><th class="num">Thuốc nhuộm</th><th class="num">Môi trường</th><th class="num">Số lần xử lý QC</th><th class="act"></th></tr></thead><tbody>
+        ${rows}${otherRow}
+        </tbody><tfoot><tr><td>Tổng cộng</td><td class="mono num total">${grand.base+grand.tc+grand.td+grand.rw+grand.dye+grand.media}</td><td class="mono num">${grand.base}</td><td class="mono num">${grand.tc}</td><td class="mono num">${grand.td}</td><td class="mono num">${grand.rw}</td><td class="mono num">${grand.dye}</td><td class="mono num">${grand.media}</td><td class="mono num">${totals.handled}</td><td class="act"></td></tr></tfoot></table></div>
       </div>
     </div>
   `;
@@ -4409,6 +4452,7 @@ async function doLogin(){
   state.settings=state.settings||{};
   state.settings.currentUser=user;
   state.settings.currentRole=role;
+  try{ state.audit=Array.isArray(state.audit)?state.audit:[]; state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:user,action:'Đăng nhập',detail:'Vai trò: '+(role||'—')}); }catch(e){ console.warn('[SMART VSMD] Audit login:',e); }
   const loginScreen=document.getElementById('loginScreen');
   const app=document.getElementById('app');
   const userAv=document.getElementById('userAv');
@@ -4424,6 +4468,7 @@ async function doLogin(){
   catch(e){ console.warn('[SMART VSMD] Login state save deferred:',e); }
 }
 function doLogout(){
+  try{ if(state&&state.settings&&state.settings.currentUser){ state.audit=Array.isArray(state.audit)?state.audit:[]; state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Đăng xuất',detail:'Vai trò: '+(state.settings.currentRole||'—')}); queueSave(); } }catch(e){ console.warn('[SMART VSMD] Audit logout:',e); }
   document.getElementById('app').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   resetPassKeyGate();
@@ -11894,7 +11939,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       const results={};DYE_STRAINS.forEach(s=>{const el=document.querySelector(`[data-smq-comp="${CSS.escape(c.name)}"][data-smq-strain="${CSS.escape(s)}"]`);results[s]=el?.value||'';});
       return {stt:i+1,name:c.name,color:c.color,results};
     });
-    return {...base,rows,stt:safe(document.getElementById('smq_dye_stt')?.value)||String(state.qcDyeMedia.dyeRows.length+1),createdAt:new Date().toISOString()};
+    return {...base,rows,stt:safe(document.getElementById('smq_dye_stt')?.value)||String(state.qcDyeMedia.dyeRows.length+1),createdAt:new Date().toISOString(),user:(state.settings&&state.settings.currentUser)||''};
   }
   window.saveDye=function(){
     ensure();const row=collectDye();
@@ -11953,7 +11998,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   window.exportDyeWord=function(){exportWord('QC_Thuoc_Nhuom',dyePrintHtml(selectedDye()))};
   function mediaFormValues(){
     const type=document.getElementById('smq_media_type')?.value||'';const preset=mediaPreset(type);const landscapeBase=document.getElementById('smq_media_landscape')?.value||preset.landscape||'';const sterilityBase=document.getElementById('smq_media_sterility')?.value||preset.sterility||'';
-    return {mediaType:type,qcDate:document.getElementById('smq_media_date')?.value||'',phaDate:document.getElementById('smq_media_pha_date')?.value||'',landscape:landscapeBase,landscapeCount:document.getElementById('smq_media_landscape_count')?.value||'',landscapeUnit:document.getElementById('smq_media_landscape_unit')?.value||extractUnit(landscapeBase),micro:(()=>{const _b=document.getElementById('smq_media_micro')?.value||preset.micro||'';const _x=(document.getElementById('smq_media_micro_extra')?.value||'').trim();return _x?(_b?_b+'\n'+_x:_x):_b;})(),sterility:sterilityBase,sterilityCount:document.getElementById('smq_media_sterility_count')?.value||'',sterilityUnit:document.getElementById('smq_media_sterility_unit')?.value||extractUnit(sterilityBase),result:document.getElementById('smq_media_result')?.value||'',staff:document.getElementById('smq_media_staff')?.value||'',note:document.getElementById('smq_media_note')?.value||'',chief:document.getElementById('smq_media_chief')?.value||'',createdAt:new Date().toISOString()};
+    return {mediaType:type,qcDate:document.getElementById('smq_media_date')?.value||'',phaDate:document.getElementById('smq_media_pha_date')?.value||'',landscape:landscapeBase,landscapeCount:document.getElementById('smq_media_landscape_count')?.value||'',landscapeUnit:document.getElementById('smq_media_landscape_unit')?.value||extractUnit(landscapeBase),micro:(()=>{const _b=document.getElementById('smq_media_micro')?.value||preset.micro||'';const _x=(document.getElementById('smq_media_micro_extra')?.value||'').trim();return _x?(_b?_b+'\n'+_x:_x):_b;})(),sterility:sterilityBase,sterilityCount:document.getElementById('smq_media_sterility_count')?.value||'',sterilityUnit:document.getElementById('smq_media_sterility_unit')?.value||extractUnit(sterilityBase),result:document.getElementById('smq_media_result')?.value||'',staff:document.getElementById('smq_media_staff')?.value||'',note:document.getElementById('smq_media_note')?.value||'',chief:document.getElementById('smq_media_chief')?.value||'',createdAt:new Date().toISOString(),user:(state.settings&&state.settings.currentUser)||''};
   }
   function renderMediaFormOnly(){const type=document.getElementById('smq_media_type')?.value||mediaTypes()[0]||Object.keys(MEDIA_DEFAULTS)[0];const name=document.getElementById('smq_media_type');if(name&&name.value!==type)name.value=type;const preset=mediaPreset(type);const landscape=document.getElementById('smq_media_landscape'),micro=document.getElementById('smq_media_micro'),sterility=document.getElementById('smq_media_sterility'),lu=document.getElementById('smq_media_landscape_unit'),su=document.getElementById('smq_media_sterility_unit');if(landscape)landscape.value=preset.landscape||'';if(micro)micro.value=preset.micro||'';if(sterility)sterility.value=preset.sterility||'';if(lu)lu.value=extractUnit(preset.landscape||'');if(su)su.value=extractUnit(preset.sterility||'');const _mx=document.getElementById('smq_media_micro_extra');if(_mx)_mx.value='';const lc=document.getElementById('smq_media_landscape_count');if(lc)lc.value='';const sc=document.getElementById('smq_media_sterility_count');if(sc)sc.value='';updateMediaCountPreview();}
   function updateMediaCountPreview(){const type=document.getElementById('smq_media_type')?.value||'';const preset=mediaPreset(type);const l=document.getElementById('smq_media_landscape'),s=document.getElementById('smq_media_sterility');if(l)l.value=replaceCountText(preset.landscape||'',document.getElementById('smq_media_landscape_count')?.value||'',document.getElementById('smq_media_landscape_unit')?.value||extractUnit(preset.landscape||''),false);if(s)s.value=replaceCountText(preset.sterility||'',document.getElementById('smq_media_sterility_count')?.value||'',document.getElementById('smq_media_sterility_unit')?.value||extractUnit(preset.sterility||''),true);}
@@ -14290,3 +14335,76 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
 /* III/ và IV/: bỏ ô "Nhập Không nếu không có" (không điền thì phiếu in tự hiện "Không"). */
 #view-reports-cls .cls-request-case-holder,#view-reports-cls .cls-empty-case-field{display:none!important}
 </style>
+
+<style id="smart-users-audit-combo-fix-style">
+/* Người dùng hệ thống: căn thẳng hàng tiêu đề và giá trị các cột số */
+table.users-table th.num,table.users-table td.num{text-align:center!important;white-space:nowrap}
+table.users-table th.act,table.users-table td.act{text-align:center!important;width:76px}
+table.users-table th:first-child,table.users-table td:first-child{text-align:left!important}
+table.users-table td.total{font-weight:700}
+table.users-table tfoot td{font-weight:700;background:var(--surface-2);border-top:1px solid var(--border)}
+/* Cột Pass/Fail (TĐ): danh sách chọn bung đúng chiều rộng và đúng vị trí ô nhập */
+html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;pointer-events:none}
+</style>
+<script id="smart-users-audit-combo-fix-js" data-smq-ok>
+(function(){
+  'use strict';
+  if(window.__SMQ_USERS_AUDIT_COMBO__)return; window.__SMQ_USERS_AUDIT_COMBO__=true;
+
+  /* ---- Pass/Fail: bấm vào mũi tên ở cuối ô để mở danh sách ngay dưới ô (không lệch sang phải) ---- */
+  if(typeof HTMLSelectElement!=='undefined'&&typeof HTMLSelectElement.prototype.showPicker==='function'){
+    document.documentElement.classList.add('td-combo-full');
+    document.addEventListener('mousedown',function(e){
+      var inp=e.target;
+      if(!inp||inp.tagName!=='INPUT')return;
+      var c=inp.closest&&inp.closest('.td-combo'); if(!c)return;
+      var sel=c.querySelector('select.td-combo-pick'); if(!sel)return;
+      var r=inp.getBoundingClientRect();
+      if(e.clientX<r.right-34)return;
+      e.preventDefault();
+      try{ sel.showPicker(); }catch(_){}
+    },true);
+  }
+
+  /* ---- Nhật ký: ghi thao tác ở các module chưa tự ghi nhật ký (Hóa chất, Thuốc nhuộm/Môi trường, Ngoại kiểm, CLS) ---- */
+  var MODS=[
+    ['Quản lý Hóa chất MD',['chemicalMD','chemicalCustomTests','chemicalCustomAux']],
+    ['Quản lý Hóa chất Vi sinh',['chemicalVS','chemicalVSMonthlyAux']],
+    ['Nhập QC Thuốc nhuộm / Môi trường nuôi cấy',['qcDyeMedia']],
+    ['Ngoại kiểm',['externalQC']],
+    ['Báo cáo trực CLS',['clsReports','clsDraft']]
+  ];
+  var base=null, baseState=null, dirtyAt=0, lastSweep=0, lastLog={};
+  function hashStr(t){var h=5381;for(var i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return t.length+':'+h;}
+  function sigOf(st,keys){return keys.map(function(k){var j='';try{j=JSON.stringify(st[k]===undefined?null:st[k]);}catch(e){}return hashStr(j||'');}).join('|');}
+  function countOf(st,keys){return keys.reduce(function(n,k){var v=st[k];if(Array.isArray(v))return n+v.length;if(v&&typeof v==='object'){return n+Object.keys(v).reduce(function(m,x){return m+(Array.isArray(v[x])?v[x].length:0);},0);}return n;},0);}
+  function snapshot(st){var o={};MODS.forEach(function(m){o[m[0]]={sig:sigOf(st,m[1]),n:countOf(st,m[1])};});return o;}
+  ['click','input','change','keydown','paste'].forEach(function(ev){document.addEventListener(ev,function(){dirtyAt=Date.now();},true);});
+  function sweep(){
+    try{
+      var st=(typeof state!=='undefined')?state:null;
+      var app=document.getElementById('app');
+      if(!st||!st.settings||!st.settings.currentUser||!app||app.style.display==='none'){base=null;baseState=null;return;}
+      var touched=dirtyAt>lastSweep; lastSweep=Date.now();
+      var cur=snapshot(st);
+      /* Thay đổi không do thao tác trên máy này (đồng bộ cloud...) chỉ cập nhật mốc, không ghi nhật ký. */
+      if(!base||baseState!==st||!touched){base=cur;baseState=st;return;}
+      var wrote=false;
+      MODS.forEach(function(m){
+        var label=m[0], a=base[label], b=cur[label];
+        if(!a||a.sig===b.sig)return;
+        var d=b.n-a.n, now=Date.now();
+        if(d===0&&lastLog[label]&&now-lastLog[label]<300000)return;
+        lastLog[label]=now;
+        var detail=d>0?('Thêm '+d+' bản ghi mới (tổng '+b.n+')'):(d<0?('Xóa '+(-d)+' bản ghi (còn '+b.n+')'):('Nhập/chỉnh sửa dữ liệu'+(b.n?(' ('+b.n+' bản ghi)'):'')));
+        st.audit=Array.isArray(st.audit)?st.audit:[];
+        st.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:st.settings.currentUser,action:'Cập nhật dữ liệu: '+label,detail:detail});
+        wrote=true;
+      });
+      base=cur;
+      if(wrote&&typeof queueSave==='function')queueSave();
+    }catch(e){ try{console.warn('[SMART VSMD] audit sweep',e);}catch(_){} }
+  }
+  setInterval(sweep,5000);
+})();
+</script>
