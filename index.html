@@ -5047,10 +5047,10 @@ function renderVirologyTC(){
   const lot=virologyLotFor(selected); const t=VIROLOGY_TEMPLATES[selected];
   t.antibiotics.forEach((_,i)=>{const x=state.virologyLots.find(v=>v.strain===selected);});
 }
-function changeVirologyStrain(strain){const el=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');if(el)el.dataset.strain=strain;renderVirologyHubPanel('virology-tc');}
+function changeVirologyStrain(strain){const el=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');if(virologyTCEditId){const rec=state.virologyTCResults.find(r=>r.id===virologyTCEditId);if(!rec||rec.strain!==strain){virologyTCEditId=null;toast('warning','Đã thoát chế độ sửa phiếu','Bạn đã đổi chủng nên dữ liệu nhập sẽ được lưu thành phiếu MỚI, phiếu cũ không bị ghi đè.');}}if(el)el.dataset.strain=strain;renderVirologyHubPanel('virology-tc');}
 function saveVirologyLot(){
   const el=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc'), strain=el?.dataset.strain||document.getElementById('vtc_strain')?.value; if(!strain)return;
-  const x=virologyLotFor(strain); x.lot=document.getElementById('vtc_media_lot')?.value.trim()||''; x.expDate=document.getElementById('vtc_media_exp')?.value||''; x.updatedAt=new Date().toISOString();
+  const x=virologyLotFor(strain); x.lot=document.getElementById('vtc_media_lot')?.value.trim()||''; if(document.getElementById('vtc_media_exp')) x.expDate=document.getElementById('vtc_media_exp').value||''; x.updatedAt=new Date().toISOString();
   state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Cập nhật LOT QC Vi sinh (TC)',detail:`${strain} · LOT ${x.lot} · HSD ${x.expDate||'—'}`}); queueSave(); renderVirologyHubPanel('virology-tc'); toast('pass','Đã lưu LOT + HSD','LOT/HSD của chủng đã được lưu và tự dùng cho lần nhập tiếp theo.');
 }
 function virologyResultCellValue(v){
@@ -5058,7 +5058,7 @@ function virologyResultCellValue(v){
   return {value:String(v??''),lot:'',hsd:''};
 }
 function collectVirologyTC(){
-  const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc'),strain=root?.dataset.strain||document.getElementById('vtc_strain')?.value||''; const t=VIROLOGY_TEMPLATES[strain];
+  const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc'),strain=root?.dataset.strain||document.getElementById('vtc_strain')?.value||''; const t=VIROLOGY_TEMPLATES[strain]||{antibiotics:[]};
   const rowMeta={};
   root?.querySelectorAll('.vtc-row-eval').forEach(x=>{const k=x.dataset.row;rowMeta[k]=rowMeta[k]||{};rowMeta[k].evaluation=x.value.trim();});
   root?.querySelectorAll('.vtc-row-date').forEach(x=>{const k=x.dataset.row;rowMeta[k]=rowMeta[k]||{};rowMeta[k].qcDate=x.value||'';});
@@ -5071,7 +5071,7 @@ function collectVirologyTC(){
   const resultDate=Object.values(rowMeta).find(x=>x.qcDate)?.qcDate||todayISO();
   const resultEval=Object.values(rowMeta).find(x=>x.evaluation)?.evaluation||'';
   const resultNote=Object.values(rowMeta).find(x=>x.note)?.note||'';
-  return {strain,mediaLot:document.getElementById('vtc_media_lot')?.value.trim()||'',mediaExp:document.getElementById('vtc_media_exp')?.value||'',qcDate:resultDate,staff:resultStaff,patient:resultEval,note:resultNote,rowMeta,antibiotics:t.antibiotics.map((a,i)=>({code:a[0],concentration:a[1],lot:'',expDate:'',results:Array.from(root?.querySelectorAll(`.vtc-result[data-abx="${i}"]`)||[]).map(x=>{const lotEl=root?.querySelector(`.vtc-result-lot[data-abx="${i}"][data-row="${x.dataset.row}"]`);const hsdEl=root?.querySelector(`.vtc-result-hsd[data-abx="${i}"][data-row="${x.dataset.row}"]`);return {value:x.value,lot:lotEl?.value.trim()||'',hsd:hsdEl?.value.trim()||'',row:x.dataset.row};}).filter(v=>v.value!==''||v.lot!==''||v.hsd!=='')}))};
+  return {strain,mediaLot:document.getElementById('vtc_media_lot')?.value.trim()||'',mediaExp:(document.getElementById('vtc_media_exp')?document.getElementById('vtc_media_exp').value:(state.virologyLots.find(v=>v.strain===strain)?.expDate||'')),qcDate:resultDate,staff:resultStaff,patient:resultEval,note:resultNote,rowMeta,antibiotics:t.antibiotics.map((a,i)=>({code:a[0],concentration:a[1],lot:'',expDate:'',results:Array.from(root?.querySelectorAll(`.vtc-result[data-abx="${i}"]`)||[]).map(x=>{const lotEl=root?.querySelector(`.vtc-result-lot[data-abx="${i}"][data-row="${x.dataset.row}"]`);const hsdEl=root?.querySelector(`.vtc-result-hsd[data-abx="${i}"][data-row="${x.dataset.row}"]`);return {value:x.value,lot:lotEl?.value.trim()||'',hsd:hsdEl?.value.trim()||'',row:x.dataset.row};}).filter(v=>v.value!==''||v.lot!==''||v.hsd!=='')}))};
 }
 function editVirologyTC(recordId){
   virologyEnsureState();
@@ -5101,14 +5101,23 @@ function editVirologyTC(recordId){
     set(`.vtc-meta-hsd[data-row="${k}"]`,x?.hsd||'');
     set(`.vtc-meta-qty[data-row="${k}"]`,x?.soQC||'');
   });
+  // Khớp kháng sinh theo MÃ + hàm lượng (không theo vị trí cột) để dữ liệu cũ không bị lệch khi danh sách kháng sinh của chủng đã thêm/xóa.
+  const tplAbx=(VIROLOGY_TEMPLATES[record.strain]||{}).antibiotics||[];const usedCol=new Set();
   (record.antibiotics||[]).forEach((a,i)=>{
-    set(`.vtc-abx-lot[data-abx="${i}"]`,a?.lot||'');
-    set(`.vtc-abx-exp[data-abx="${i}"]`,a?.expDate||'');
+    let ci=-1;
+    if(a&&a.code){
+      ci=tplAbx.findIndex((c,k)=>!usedCol.has(k)&&c[0]===a.code&&(c[1]||'')===(a.concentration||''));
+      if(ci<0)ci=tplAbx.findIndex((c,k)=>!usedCol.has(k)&&c[0]===a.code);
+    }else ci=i<tplAbx.length?i:-1;
+    if(ci<0)return; // kháng sinh đã bị xóa khỏi chủng: không đưa lên biểu mẫu (dữ liệu gốc vẫn giữ trong phiếu)
+    usedCol.add(ci);
+    set(`.vtc-abx-lot[data-abx="${ci}"]`,a?.lot||'');
+    set(`.vtc-abx-exp[data-abx="${ci}"]`,a?.expDate||'');
     (a?.results||[]).forEach((v,ri)=>{
       const q=virologyResultCellValue(v);const rn=q.row||(ri+1);
-      set(`.vtc-result[data-abx="${i}"][data-row="${rn}"]`,q.value);
-      set(`.vtc-result-lot[data-abx="${i}"][data-row="${rn}"]`,q.lot);
-      set(`.vtc-result-hsd[data-abx="${i}"][data-row="${rn}"]`,q.hsd);
+      set(`.vtc-result[data-abx="${ci}"][data-row="${rn}"]`,q.value);
+      set(`.vtc-result-lot[data-abx="${ci}"][data-row="${rn}"]`,q.lot);
+      set(`.vtc-result-hsd[data-abx="${ci}"][data-row="${rn}"]`,q.hsd);
     });
   });
   toast('pass','Đã mở phiếu để sửa','Thông tin phiếu đã nhập được đưa trở lại biểu mẫu. Bấm Lưu QC Vi sinh (TC) để thay thế dữ liệu cũ.');
@@ -5120,6 +5129,22 @@ function saveVirologyTC(){
     const idx=state.virologyTCResults.findIndex(r=>r.id===virologyTCEditId);
     if(idx>=0){
       const old=state.virologyTCResults[idx];
+      // Giữ lại dữ liệu cũ mà biểu mẫu hiện tại không hiển thị (các lần QC 2–5 của phiếu cũ, kháng sinh đã bị xóa khỏi chủng).
+      try{
+        const rootEl=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
+        const shown=new Set(Array.from(rootEl?.querySelectorAll('.vtc-result')||[]).map(x=>String(x.dataset.row)));
+        const keyOf=a=>(a?.code||'')+'|'+(a?.concentration||'');
+        const oldAbx=(old.antibiotics||[]).slice();
+        data.antibiotics=data.antibiotics.map(a=>{
+          let k=oldAbx.findIndex(o=>keyOf(o)===keyOf(a)); if(k<0)k=oldAbx.findIndex(o=>o?.code&&o.code===a.code);
+          if(k<0)return a; const o=oldAbx.splice(k,1)[0];
+          const keep=(o.results||[]).map((v,ri)=>{const q=virologyResultCellValue(v);return {value:q.value,lot:q.lot,hsd:q.hsd,row:String(q.row||(ri+1))};}).filter(v=>!shown.has(v.row)&&(v.value!==''||v.lot!==''||v.hsd!==''));
+          return keep.length?{...a,results:[...a.results,...keep]}:a;
+        });
+        oldAbx.forEach(o=>{if(o&&(o.results||[]).length)data.antibiotics.push(o);});
+        const keepMeta={};Object.keys(old.rowMeta||{}).forEach(k=>{if(!shown.has(String(k)))keepMeta[k]=old.rowMeta[k];});
+        data.rowMeta={...keepMeta,...data.rowMeta};
+      }catch(e){console.warn('Giữ dữ liệu cũ khi sửa phiếu TC:',e);}
       state.virologyTCResults[idx]={...old,...data,id:old.id,createdAt:old.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),user:state.settings.currentUser};
       state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Sửa QC Vi sinh (TC)',detail:`${data.strain} · LOT ${data.mediaLot||'—'} · ${data.qcDate}`});
       virologyTCEditId=null; queueSave(); renderVirologyHistoryPanel('tc'); toast('pass','Đã cập nhật phiếu QC (TC)','Dữ liệu mới đã thay thế dữ liệu cũ trong danh sách và các chức năng in/xuất.'); return;
@@ -5411,6 +5436,7 @@ function renderWhonetConnection(){
 
 function renderVirologyHub(){
   const el=document.getElementById('view-virology'); if(!el)return;
+  virologyTCEditId=null; virologyTDEditId=null; // mở lại module = nhập phiếu mới, không còn ở chế độ sửa phiếu trước đó
   if(currentView==='virology-tc' || currentView==='virology-td'){
     el.innerHTML=`<div id="virologyHubPanel" class="virology-panel"></div>`;
     renderVirologyHubPanel(currentView);
@@ -8524,9 +8550,11 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
   window.changeVirologyTDProfile=function(name){
     const el=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-td');
     if(!el)return;
+    if(virologyTDEditId){const rec=state.virologyTDResults.find(r=>r.id===virologyTDEditId);const recProfile=rec&&(rec.profileName||rec.tdVkName||rec.testStrain||'');if(!rec||recProfile!==name){virologyTDEditId=null;toast('warning','Đã thoát chế độ sửa phiếu','Bạn đã đổi chủng nên dữ liệu nhập sẽ được lưu thành phiếu MỚI, phiếu cũ không bị ghi đè.');}}
     el.dataset.tdVk=name;
     el.__tdLoadedRecord=null;
     renderTDWithProfile(el);
+    smartEnsureTDHistory();renderVirologyHistoryPanel('td');
   };
 
   window.openAddVirologyTDProfile=function(){
@@ -8783,7 +8811,11 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
   window.resetPhoenixQCReport=function(){
     virologyTDEditId=null;
     const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-td');
-    root?.querySelectorAll('[data-td-field],[data-td-bio],[data-td-bio-exp],[data-td-ast-name-input],[data-td-ast],[data-td-ast-exp],[data-td-ast-status]').forEach(x=>x.value='');
+    if(!root)return;
+    // Dựng lại biểu mẫu để khôi phục đúng các giá trị cố định (BỆNH VIỆN, ĐỊA ĐIỂM, Status, Inoculum...) thay vì xóa trắng chúng.
+    root.__tdLoadedRecord=null;
+    renderTDWithProfile(root);
+    smartEnsureTDHistory();renderVirologyHistoryPanel('td');
   };
 
   // Re-render when the user opens either requested submodule after this patch.
