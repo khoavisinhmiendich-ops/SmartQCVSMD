@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "SMART QC — Quản lý chất lượng nội kiểm",
-  "short_name": "SMART QC",
-  "description": "Quản lý chất lượng nội kiểm Khoa Vi sinh - Miễn dịch",
+  "name": "SMART VSMD — Quản lý chất lượng Khoa Vi sinh - Miễn dịch",
+  "short_name": "SMART VSMD",
+  "description": "Quản lý chất lượng Khoa Vi sinh - Miễn dịch",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
