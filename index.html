@@ -1852,8 +1852,8 @@ const STATUS_ICON={pass:statusIcon('pass'), warning:statusIcon('warning'), rejec
 const RULE_META={
   '1-2s':{name:'1-2s',desc:'1 kết quả vượt ±2SD — dấu hiệu cảnh báo, chưa chắc chắn loại bỏ.',severity:'warning'},
   '1-3s':{name:'1-3s',desc:'1 kết quả vượt ±3SD — vi phạm ngẫu nhiên nghiêm trọng.',severity:'reject'},
-  '2-2s':{name:'2-2s',desc:'2 kết quả liên tiếp cùng phía vượt ±2SD — lỗi hệ thống.',severity:'reject'},
-  'R-4s':{name:'R-4s',desc:'Biên độ giữa 2 kết quả liên tiếp trái dấu vượt 4SD — lỗi ngẫu nhiên.',severity:'reject'},
+  '2-2s':{name:'2-2s',desc:'2 kết quả cùng phía vượt ±2SD (2 mức QC trong cùng lần chạy, hoặc cùng 1 mức ở 2 lần chạy liên tiếp) — lỗi hệ thống.',severity:'reject'},
+  'R-4s':{name:'R-4s',desc:'Trong cùng 1 lần chạy: 1 mức QC vượt +2SD và 1 mức khác vượt −2SD (khoảng cách > 4SD) — lỗi ngẫu nhiên.',severity:'reject'},
   '4-1s':{name:'4-1s',desc:'4 kết quả liên tiếp cùng phía vượt ±1SD — lỗi hệ thống (độ chệch).',severity:'reject'},
   '10x':{name:'10x',desc:'10 kết quả liên tiếp cùng phía so với Mean — lỗi hệ thống (xu hướng).',severity:'reject'}
 };
@@ -2047,19 +2047,35 @@ function migrateState(){
 }
 
 /* ---------- Westgard engine ---------- */
-function evalWestgard(history, rules){
+/* Máy iFlash 9000: nhận diện theo tên/model máy */
+function isIflash9000Machine(machineId){
+  const m=(typeof byId==='function'&&state&&state.machines)?byId(state.machines,machineId):null;
+  return !!(m && /iflash/i.test(String((m.name||'')+' '+(m.model||''))));
+}
+function evalWestgard(history, rules, mates, machineId){
+  // history: các kết quả của CÙNG 1 mức QC (Máy+XN+Lot+Level) theo thời gian, phần tử cuối là kết quả hiện tại.
+  // mates  : kết quả của CÁC MỨC QC KHÁC trong CÙNG lần chạy (nếu có) — dùng cho 2-2s và R-4s theo Westgard/CLSI C24.
   const n=history.length;
   const cur=history[n-1];
   const sign=z=>z>0?1:(z<0?-1:0);
+  const mt=Array.isArray(mates)?mates:[];
   const violations=[];
+  // iFlash 9000: kết quả nằm trong ±1SD, ±2SD là ĐẠT, không vi phạm bất kỳ quy tắc nào (kể cả 4-1s, 10x)
+  if(machineId && isIflash9000Machine(machineId) && Math.abs(cur.z)<=2) return {status:'pass', violations:[]};
   if(rules.r13s && Math.abs(cur.z)>3) violations.push('1-3s');
-  if(rules.r22s && n>=2){
-    const a=history[n-1], b=history[n-2];
-    if(Math.abs(a.z)>2 && Math.abs(b.z)>2 && sign(a.z)===sign(b.z)) violations.push('2-2s');
+  if(rules.r22s){
+    let v=false;
+    if(n>=2){ // cùng 1 mức QC, 2 lần chạy liên tiếp
+      const a=history[n-1], b=history[n-2];
+      if(Math.abs(a.z)>2 && Math.abs(b.z)>2 && sign(a.z)===sign(b.z)) v=true;
+    }
+    // 2 mức QC trong cùng 1 lần chạy
+    if(!v && Math.abs(cur.z)>2 && mt.some(m=>Math.abs(m.z)>2 && sign(m.z)===sign(cur.z))) v=true;
+    if(v) violations.push('2-2s');
   }
-  if(rules.r4s && n>=2){
-    const a=history[n-1], b=history[n-2];
-    if(sign(a.z)!==sign(b.z) && Math.abs(a.z-b.z)>4) violations.push('R-4s');
+  if(rules.r4s){
+    // R-4s chỉ áp dụng trong cùng 1 lần chạy giữa 2 mức QC: một kết quả > +2SD và kết quả kia < −2SD
+    if(mt.some(m=>(cur.z>2 && m.z<-2)||(cur.z<-2 && m.z>2))) violations.push('R-4s');
   }
   if(rules.r41s && n>=4){
     const last4=history.slice(n-4);
@@ -2074,6 +2090,39 @@ function evalWestgard(history, rules){
   if(violations.some(v=>RULE_META[v].severity==='reject')) status='reject';
   else if(violations.length) status='warning';
   return {status, violations};
+}
+/* Các mức QC khác của cùng Máy + Xét nghiệm trong cùng lần chạy (cùng ngày, lệch tối đa 120 phút) */
+function qcRunMates(testId,machineId,level,date,time,excludeId){
+  const t0=new Date(date+'T'+(time||'00:00')).getTime();
+  const best={};
+  state.results.forEach(r=>{
+    if(r.id===excludeId||r.testId!==testId||r.machineId!==machineId||r.level===level||r.date!==date) return;
+    const dt=Math.abs(new Date(r.date+'T'+(r.time||'00:00')).getTime()-t0);
+    if(isNaN(dt)||dt>120*60000) return;
+    if(!best[r.level]||dt<best[r.level].dt) best[r.level]={dt,r};
+  });
+  return Object.values(best).map(x=>x.r);
+}
+/* Khi có thêm 1 mức QC trong lần chạy, đánh giá lại các mức đã nhập cùng lần chạy (chỉ nâng mức nghiêm trọng, không hạ mức đã ghi nhận) */
+function qcReevalRunMates(result,full){
+  const rank={pass:0,warning:1,reject:2};
+  qcRunMates(result.testId,result.machineId,result.level,result.date,result.time,result.id).forEach(m=>{
+    const hist=seriesFor(m.testId,m.machineId,m.lotId,m.level).filter(x=>(x.date+x.time)<=(m.date+m.time)).map(x=>({z:x.z}));
+    if(!hist.length) return;
+    const mates=qcRunMates(m.testId,m.machineId,m.level,m.date,m.time,m.id).map(x=>({z:x.z}));
+    const ev=evalWestgard(hist,state.settings.rules,mates,m.machineId);
+    if(full){
+      if(ev.status!==m.status||(ev.violations||[]).join()!==(m.violations||[]).join()){
+        if(m.status!==ev.status) m.resolvedRequired=(ev.status==='reject');
+        m.status=ev.status; m.violations=ev.violations; qcSyncAlert(m);
+      }
+    }else if(rank[ev.status]>rank[m.status]){
+      const u=[...new Set([...(m.violations||[]),...ev.violations])];
+      m.status=ev.status; m.violations=u.length>1?u.filter(v=>v!=='1-2s'):u; // 1-2s chỉ hiển thị khi không có vi phạm nào khác
+      if(ev.status==='reject') m.resolvedRequired=true;
+      qcSyncAlert(m);
+    }
+  });
 }
 function sdBandLabel(z){
   const a=Math.abs(z);
@@ -2179,7 +2228,8 @@ function addResult({date,time,machineId,testId,lotId,level,value,user}, opts={})
   const z=round((value-cfg.mean)/cfg.sd,2);
   const priorHistory=seriesFor(testId,machineId,lotId,level).map(r=>({z:r.z}));
   const history=[...priorHistory,{z}];
-  const {status,violations}=evalWestgard(history, state.settings.rules);
+  const runMates=qcRunMates(testId,machineId,level,date,time,null).map(m=>({z:m.z}));
+  const {status,violations}=evalWestgard(history, state.settings.rules, runMates, machineId);
   const result={
     id:uid('R'), date, time, machineId, testId, lotId, level,
     value: round(value,4), mean:cfg.mean, sd:cfg.sd, z, sdBand: sdBandLabel(z),
@@ -2201,6 +2251,7 @@ function addResult({date,time,machineId,testId,lotId,level,value,user}, opts={})
     };
     state.alerts.unshift(alert);
   }
+  qcReevalRunMates(result);
   if(!opts.silentAudit){
     state.audit.unshift({id:uid('AU'), time:new Date().toISOString(), user, action:'Nhập kết quả QC',
       detail:`${byId(state.tests,testId)?.name||''} · ${byId(state.machines,machineId)?.name||''} · Level ${level} · KQ=${result.value} · Z=${z} · ${STATUS_LABEL[status]}`});
@@ -3302,11 +3353,13 @@ function qcSyncAlert(r){
   a.level=r.level; a.value=r.value; a.mean=r.mean; a.sd=r.sd; a.time=r.date+' '+r.time;
   if(prev!==r.status && !a.handling) a.resolved=(r.status==='warning');
 }
-function qcRecomputeSeries(testId,machineId,lotId,level){
+function qcRecomputeSeries(testId,machineId,lotId,level,since){
   const hist=[];
   seriesFor(testId,machineId,lotId,level).forEach(r=>{
     hist.push({z:r.z});
-    const ev=evalWestgard(hist.slice(),state.settings.rules);
+    if(since && (r.date+' '+r.time)<since) return; // giữ nguyên trạng thái các kết quả trước thời điểm thay đổi
+    const mates=qcRunMates(r.testId,r.machineId,r.level,r.date,r.time,r.id).map(x=>({z:x.z}));
+    const ev=evalWestgard(hist.slice(),state.settings.rules,mates,r.machineId);
     if(r.status!==ev.status) r.resolvedRequired=(ev.status==='reject');
     r.status=ev.status; r.violations=ev.violations;
     qcSyncAlert(r);
@@ -3351,6 +3404,7 @@ function submitEditEntry(ev){
   const user=document.getElementById('f_user').value;
   if(!date||!time||!machineId||!testId||!lotId||!level||isNaN(value)){ toast('reject','Thiếu dữ liệu','Vui lòng điền đầy đủ thông tin bắt buộc.'); return false; }
   const old={testId:r.testId,machineId:r.machineId,lotId:r.lotId,level:r.level};
+  const oldDT=r.date+' '+r.time;
   const same=(testId===r.testId&&machineId===r.machineId&&level===r.level);
   let mean=r.mean, sd=r.sd, reagentLot=r.reagentLot||'', reagentConfigId=r.reagentConfigId||'';
   if(!same){
@@ -3360,8 +3414,11 @@ function submitEditEntry(ev){
   }
   const z=round((value-mean)/sd,2);
   Object.assign(r,{date,time,machineId,testId,lotId,level,value:round(value,4),mean,sd,z,sdBand:sdBandLabel(z),reagentLot,reagentConfigId,user,updatedAt:new Date().toISOString()});
-  qcRecomputeSeries(testId,machineId,lotId,level);
-  if(old.testId!==testId||old.machineId!==machineId||old.lotId!==lotId||old.level!==level) qcRecomputeSeries(old.testId,old.machineId,old.lotId,old.level);
+  const sinceDT=(oldDT<(date+' '+time)?oldDT:(date+' '+time));
+  qcRecomputeSeries(testId,machineId,lotId,level,sinceDT);
+  if(old.testId!==testId||old.machineId!==machineId||old.lotId!==lotId||old.level!==level) qcRecomputeSeries(old.testId,old.machineId,old.lotId,old.level,sinceDT);
+  qcReevalRunMates({id:r.id,testId:old.testId,machineId:old.machineId,level:old.level,date:oldDT.split(' ')[0],time:oldDT.split(' ')[1]},true);
+  qcReevalRunMates(r,true);
   state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser||user,action:'Sửa kết quả QC',
     detail:`${byId(state.tests,testId)?.name||''} · ${byId(state.machines,machineId)?.name||''} · Level ${level} · ${date} ${time} · KQ=${r.value} · Z=${z} · ${STATUS_LABEL[r.status]}`});
   queueSave();
@@ -3378,7 +3435,8 @@ function deleteQCResult(resultId){
   if(!confirm('Xóa kết quả QC '+(test?test.name:'')+' · Level '+r.level+' ngày '+fmtDMY(r.date)+' '+r.time+' (KQ '+r.value+')?\nBiểu đồ và Westgard của các kết quả sau đó sẽ được tính lại.')) return;
   state.results=state.results.filter(x=>x.id!==resultId);
   state.alerts=state.alerts.filter(a=>a.resultId!==resultId);
-  qcRecomputeSeries(r.testId,r.machineId,r.lotId,r.level);
+  qcRecomputeSeries(r.testId,r.machineId,r.lotId,r.level,r.date+' '+r.time);
+  qcReevalRunMates(r,true);
   state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser||r.user,action:'Xóa kết quả QC',
     detail:`${test?.name||''} · ${byId(state.machines,r.machineId)?.name||''} · Level ${r.level} · ${r.date} ${r.time} · KQ=${r.value}`});
   queueSave();
@@ -3439,7 +3497,8 @@ function renderWestgard(){
       <div class="card">
         <div class="card-head"><h3>Cách hoạt động</h3></div>
         <div class="card-body" style="font-size:13px;color:var(--text-muted);line-height:1.7;">
-          <p>Mỗi khi có kết quả QC mới, hệ thống tính Z-score và so khớp với lịch sử gần nhất của <b style="color:var(--text)">cùng tổ hợp Máy + Xét nghiệm + Lot + Level</b>, theo đúng thứ tự thời gian.</p>
+          <p>Mỗi khi có kết quả QC mới, hệ thống tính Z-score và so khớp với lịch sử gần nhất của <b style="color:var(--text)">cùng tổ hợp Máy + Xét nghiệm + Lot + Level</b> theo đúng thứ tự thời gian, đồng thời đối chiếu với <b style="color:var(--text)">các mức QC khác của cùng Máy + Xét nghiệm trong cùng lần chạy</b> (cùng ngày, cách nhau tối đa 120 phút).</p>
+          <p><b style="color:var(--text)">Phạm vi áp dụng:</b> 1-3s xét từng kết quả; <b style="color:var(--text)">2-2s</b> áp dụng giữa 2 mức QC trong cùng lần chạy hoặc cùng 1 mức ở 2 lần chạy liên tiếp; <b style="color:var(--text)">R-4s chỉ áp dụng trong cùng 1 lần chạy</b> giữa 2 mức QC (1 mức &gt; +2SD, 1 mức &lt; −2SD); 4-1s và 10x theo dõi qua các lần chạy liên tiếp của cùng 1 mức. Bộ quy tắc theo hướng dẫn Westgard / CLSI C24 và quy trình nội kiểm trong bộ tài liệu 2429 (XN-QTQL 5.8.2).</p>
           <p>Nếu vi phạm nhiều quy tắc cùng lúc, mức độ nghiêm trọng nhất được ưu tiên hiển thị. Quy tắc <b style="color:var(--text)">1-2s</b> chỉ đưa ra cảnh báo (${statusIcon('warning',12)}) khi không có vi phạm nào khác nghiêm trọng hơn; các quy tắc còn lại xác định <b style="color:var(--text)">KHÔNG ĐẠT</b> (${statusIcon('reject',12)}) và yêu cầu xử lý.</p>
           <p>Toàn bộ quá trình diễn ra tự động ngay khi xác nhận kết quả tại màn hình "Nhập QC" — không cần thao tác thủ công nào thêm.</p>
         </div>
