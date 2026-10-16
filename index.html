@@ -1816,6 +1816,22 @@ function formatVisibleDates(root){
     });
   });
 }
+/* Chuẩn hóa ngày YYYY-MM-DD -> DD/MM/YYYY trong phần chữ hiển thị của HTML dùng để In PDF / xuất Word.
+   Chỉ xử lý text giữa các thẻ; bỏ qua thuộc tính, <style>, <script>. */
+function vnDatesInHtml(html){
+  try{
+    var s=String(html==null?'':html); if(!s) return s;
+    return s.split(/(<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>)/i).map(function(part,i){
+      if(i%2===1) return part;
+      return part.replace(/>([^<>]+)</g,function(m,txt){
+        return '>'+txt.replace(/(^|[^0-9])(\d{4})-(\d{2})-(\d{2})(?:(T)(?=\d{1,2}:\d{2})|(?![0-9]))/g,function(x,pre,y,mo,d,tt){
+          return (+mo>=1&&+mo<=12&&+d>=1&&+d<=31)?pre+d+'/'+mo+'/'+y+(tt?' ':''):x;
+        })+'<';
+      });
+    }).join('');
+  }catch(e){ return html; }
+}
+window.__smartVnDatesInHtml=vnDatesInHtml;
 function todayISO(){ return fmtDate(new Date()); }
 function round(n,dp){ const f=Math.pow(10,dp); return Math.round(n*f)/f; }
 function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -5973,6 +5989,7 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
   }
   async function officeWordDownload(title,bodyHtml,orientation='portrait'){
     try{
+      if(typeof window.__smartVnDatesInHtml==='function') bodyHtml=window.__smartVnDatesInHtml(bodyHtml);
       if(window.JSZip){
         SMART_QC_DOCX_IMAGES.length=0;
         const zip=new JSZip();
@@ -6517,7 +6534,7 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
     clone.querySelectorAll('.vr-controls,.vr-no-print,.no-print').forEach(x=>x.remove());
     clone.style.display='block';
     w.document.open();
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Báo cáo QC Vi sinh (TC)</title>${styles}<style>html,body{margin:0!important;padding:0!important;background:#fff!important;color:#111!important;font-family:'Times New Roman',Times,serif!important}body{padding:8mm!important}.sidebar,.header,.app-copyright,.no-print,.vr-no-print{display:none!important}.card{break-inside:auto!important;page-break-inside:auto!important;box-shadow:none!important;border:1px solid #555!important;margin:0 0 6px!important}.vr-table-wrap{overflow:visible!important}.vr-table{min-width:0!important;width:100%!important;font-size:8.5px!important;table-layout:fixed!important}.vr-table th,.vr-table td{padding:3px!important;height:auto!important;line-height:1.15!important;overflow-wrap:anywhere!important;word-break:break-word!important}.vr-chart-card{break-inside:avoid!important;page-break-inside:avoid!important}.vr-chart-box{height:235px!important;overflow:visible!important}.vr-chart-box img{max-width:100%!important;width:100%!important;height:225px!important;object-fit:contain!important;display:block!important;margin:auto!important}.vr-table thead{display:table-header-group!important}.vr-table tr{break-inside:avoid!important;page-break-inside:avoid!important}@page{size:A4 landscape;margin:7mm}</style></head><body>${clone.outerHTML}<script>window.addEventListener('load',()=>{setTimeout(()=>window.print(),500)});<\/script>
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Báo cáo QC Vi sinh (TC)</title>${styles}<style>html,body{margin:0!important;padding:0!important;background:#fff!important;color:#111!important;font-family:'Times New Roman',Times,serif!important}body{padding:8mm!important}.sidebar,.header,.app-copyright,.no-print,.vr-no-print{display:none!important}.card{break-inside:auto!important;page-break-inside:auto!important;box-shadow:none!important;border:1px solid #555!important;margin:0 0 6px!important}.vr-table-wrap{overflow:visible!important}.vr-table{min-width:0!important;width:100%!important;font-size:8.5px!important;table-layout:fixed!important}.vr-table th,.vr-table td{padding:3px!important;height:auto!important;line-height:1.15!important;overflow-wrap:anywhere!important;word-break:break-word!important}.vr-chart-card{break-inside:avoid!important;page-break-inside:avoid!important}.vr-chart-box{height:235px!important;overflow:visible!important}.vr-chart-box img{max-width:100%!important;width:100%!important;height:225px!important;object-fit:contain!important;display:block!important;margin:auto!important}.vr-table thead{display:table-header-group!important}.vr-table tr{break-inside:avoid!important;page-break-inside:avoid!important}@page{size:A4 landscape;margin:7mm}</style></head><body>${(typeof window.__smartVnDatesInHtml==='function'?window.__smartVnDatesInHtml(clone.outerHTML):clone.outerHTML)}<script>window.addEventListener('load',()=>{setTimeout(()=>window.print(),500)});<\/script>
 
 </body></html>`);
     w.document.close();
@@ -6651,7 +6668,7 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
     const source=document.getElementById('view-virology-reports-td');if(!source){toast('danger','Không thể in báo cáo','Không tìm thấy vùng báo cáo QC Vi sinh (TĐ).');return;}
     const w=window.open('','_blank');if(!w){toast('warning','Trình duyệt chặn cửa sổ in','Hãy cho phép cửa sổ bật lên rồi thử lại.');return;}
     const styles=[...document.querySelectorAll('style')].map(x=>x.outerHTML).join('');const clone=source.cloneNode(true);clone.querySelectorAll('.vr-controls,.vr-no-print,.no-print').forEach(x=>x.remove());clone.style.display='block';
-    w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Báo cáo QC Vi sinh (TĐ)</title>${styles}<style>html,body{margin:0!important;padding:0!important;background:#fff!important;color:#111!important;font-family:'Times New Roman',Times,serif!important}body{padding:8mm!important}.sidebar,.header,.app-copyright,.no-print,.vr-no-print{display:none!important}.card{break-inside:auto!important;page-break-inside:auto!important;box-shadow:none!important;border:1px solid #555!important;margin:0 0 6px!important}.vr-table-wrap{overflow:visible!important}.vr-table{min-width:0!important;width:100%!important;font-size:8.5px!important;table-layout:fixed!important}.vr-table th,.vr-table td{padding:3px!important;height:auto!important;line-height:1.15!important;overflow-wrap:anywhere!important;word-break:break-word!important}.vr-chart-card{break-inside:avoid!important;page-break-inside:avoid!important}.vr-chart-box{height:235px!important;overflow:visible!important}.vr-chart-box img{max-width:100%!important;width:100%!important;height:225px!important;object-fit:contain!important;display:block!important;margin:auto!important}.vr-table thead{display:table-header-group!important}.vr-table tr{break-inside:avoid!important;page-break-inside:avoid!important}@page{size:A4 landscape;margin:7mm}</style></head><body>${clone.outerHTML}<script>window.addEventListener('load',()=>{setTimeout(()=>window.print(),500)});<\/script>
+    w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Báo cáo QC Vi sinh (TĐ)</title>${styles}<style>html,body{margin:0!important;padding:0!important;background:#fff!important;color:#111!important;font-family:'Times New Roman',Times,serif!important}body{padding:8mm!important}.sidebar,.header,.app-copyright,.no-print,.vr-no-print{display:none!important}.card{break-inside:auto!important;page-break-inside:auto!important;box-shadow:none!important;border:1px solid #555!important;margin:0 0 6px!important}.vr-table-wrap{overflow:visible!important}.vr-table{min-width:0!important;width:100%!important;font-size:8.5px!important;table-layout:fixed!important}.vr-table th,.vr-table td{padding:3px!important;height:auto!important;line-height:1.15!important;overflow-wrap:anywhere!important;word-break:break-word!important}.vr-chart-card{break-inside:avoid!important;page-break-inside:avoid!important}.vr-chart-box{height:235px!important;overflow:visible!important}.vr-chart-box img{max-width:100%!important;width:100%!important;height:225px!important;object-fit:contain!important;display:block!important;margin:auto!important}.vr-table thead{display:table-header-group!important}.vr-table tr{break-inside:avoid!important;page-break-inside:avoid!important}@page{size:A4 landscape;margin:7mm}</style></head><body>${(typeof window.__smartVnDatesInHtml==='function'?window.__smartVnDatesInHtml(clone.outerHTML):clone.outerHTML)}<script>window.addEventListener('load',()=>{setTimeout(()=>window.print(),500)});<\/script>
 
 </body></html>`);w.document.close();
   };
@@ -7250,7 +7267,7 @@ function renderChemicalAllergen(){
       @page{size:A4 ${orientation};margin:7mm}
       @media print{body{padding:0;font-size:9pt}table{margin:2mm 0 3mm}th,td{padding:2.5px 3px}.no-print{display:none!important}}
       ${extra||''}`;
-    w.document.open();w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${S(title)}</title><style>${css}</style></head><body>${bodyHtml}
+    w.document.open();w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${S(title)}</title><style>${css}</style></head><body>${(typeof window.__smartVnDatesInHtml==='function'?window.__smartVnDatesInHtml(bodyHtml):bodyHtml)}
 
 </body></html>`);w.document.close();
     setTimeout(()=>{try{w.focus();w.print();}catch(e){}},500);
@@ -7287,8 +7304,8 @@ function renderChemicalAllergen(){
     function fmt(k,v){
       v=String(v??'').trim();if(!v)return '';
       let m;
-      if(dtKeys.includes(k)&&(m=v.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/))){let h=+m[4];const ap=h>=12?'PM':'AM';h=h%12||12;return (+m[2])+'/'+(+m[3])+'/'+m[1]+' '+h+':'+m[5]+' '+ap;}
-      if(dKeys.includes(k)&&(m=v.match(/^(\d{4})-(\d{2})-(\d{2})/)))return (+m[2])+'/'+(+m[3])+'/'+m[1];
+      if(dtKeys.includes(k)&&(m=v.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/))){let h=+m[4];const ap=h>=12?'PM':'AM';h=h%12||12;return m[3]+'/'+m[2]+'/'+m[1]+' '+h+':'+m[5]+' '+ap;}
+      if(dKeys.includes(k)&&(m=v.match(/^(\d{4})-(\d{2})-(\d{2})/)))return m[3]+'/'+m[2]+'/'+m[1];
       return v;
     }
     function header(d){
@@ -7671,7 +7688,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
       @page{size:A4 ${orientation};margin:6mm}
       ${extraCss||''}`;
     w.document.open();
-    w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${String(title||'SMART VSMD').replace(/[&<>]/g,'')}</title><style>${base}</style></head><body>${clone.outerHTML}
+    w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${String(title||'SMART VSMD').replace(/[&<>]/g,'')}</title><style>${base}</style></head><body>${(typeof window.__smartVnDatesInHtml==='function'?window.__smartVnDatesInHtml(clone.outerHTML):clone.outerHTML)}
 
 
 
@@ -8530,13 +8547,25 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     return `<div class="td-field ${cls}"><label>${label}</label><input data-td-field="${key}" type="${type}" value="${esc(value)}"${ro}${extra}></div>`;
   }
 
-  function tdCombo(attr,v){
-    return `<span class="td-combo"><input ${attr} value="${esc(v)}" autocomplete="off" size="17"><select class="td-combo-pick" tabindex="-1" aria-label="Chọn nhanh" onchange="tdComboPick(this)"><option value="" hidden selected></option><option value="Pass">Pass</option><option value="Fail">Fail</option><option value="__blank">&nbsp;</option></select></span>`;
+  function tdCombo(attr,v,withAll){
+    return `<span class="td-combo"><input ${attr} value="${esc(v)}" autocomplete="off" size="17"><select class="td-combo-pick" tabindex="-1" aria-label="Chọn nhanh" onchange="tdComboPick(this)"><option value="" hidden selected></option>${withAll?'<option value="__allPass">Chọn Pass cho tất cả</option><option value="__allFail">Chọn Fail cho tất cả</option>':''}<option value="Pass">Pass</option><option value="Fail">Fail</option><option value="__blank">&nbsp;</option></select></span>`;
   }
   window.tdComboPick=function(sel){
     const inp=sel.parentNode.querySelector('input'),v=sel.value;
     sel.selectedIndex=0;
     if(!inp)return;
+    if(v==='__allPass'||v==='__allFail'){
+      /* Chỉ điền Status cho các dòng ĐÃ có dữ liệu ở cột Actual hoặc Expected; dòng trống giữ nguyên. */
+      const val=v==='__allPass'?'Pass':'Fail',root=sel.closest('.td-report')||document;let n=0;
+      for(let i=0;i<25;i++){
+        const a=root.querySelector(`[data-td-ast="${i}"]`),e=root.querySelector(`[data-td-ast-exp="${i}"]`),st=root.querySelector(`[data-td-ast-status="${i}"]`);
+        if(!st)continue;
+        if(String(a?.value??'').trim()===''&&String(e?.value??'').trim()==='')continue;
+        st.value=val;st.dispatchEvent(new Event('input',{bubbles:true}));n++;
+      }
+      if(typeof toast==='function'){if(n)toast('pass','Đã điền Status: '+val,n+' dòng có dữ liệu Actual/Expected.');else toast('warning','Chưa có dữ liệu','Chưa có dòng nào được điền ở cột Actual / Expected.');}
+      return;
+    }
     if(v==='__blank'){inp.value='';inp.focus();}else{inp.value=v;}
     inp.dispatchEvent(new Event('input',{bubbles:true}));
   };
@@ -8548,7 +8577,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
   function tdStatusSelect(i,value){
     const v0=String(value??'').trim();
     const v=/^pass$/i.test(v0)?'Pass':(/^fail$/i.test(v0)?'Fail':v0);
-    return tdCombo(`data-td-ast-status="${i}"`,v);
+    return tdCombo(`data-td-ast-status="${i}"`,v,true);
   }
 
   // Vẽ lại form (khi Sửa phiếu) sẽ xoá khung danh sách nhập gần đây; tạo lại khung này để danh sách luôn hiển thị.
@@ -10264,6 +10293,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   }
   async function adminWord(title,html){
     if(!window.JSZip)throw new Error('Chưa tải được thư viện tạo Word.');
+    if(typeof window.__smartVnDatesInHtml==='function') html=window.__smartVnDatesInHtml(html);
     const bodyContent=bodyXml(html),footerXml=__wordFooterXml,footerRef=footerXml?'<w:footerReference w:type="default" r:id="rIdSmartFooter1"/>':'';
     const z=new JSZip(),now=new Date().toISOString(),doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${bodyContent}<w:sectPr>${footerRef}<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="794" w:right="737" w:bottom="794" w:left="737" w:header="360" w:footer="360"/></w:sectPr></w:body></w:document>`;
     z.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+(footerXml?'<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>':'')+'<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>');
@@ -11896,7 +11926,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
 `;
   function openPrint(title,html,landscape){
     const w=window.open('','_blank','width=1200,height=900');if(!w){toast('warning','Không thể mở cửa sổ in','Hãy cho phép cửa sổ bật lên.');return;}
-    w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${EXACT_EXPORT_CSS.replace('A4 landscape', 'A4 '+(landscape?'landscape':'portrait'))}</style></head><body>${typeof window.SMART_QC_APPLY_SIGNATURES==='function'?window.SMART_QC_APPLY_SIGNATURES(html):html}</body></html>`);
+    w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${EXACT_EXPORT_CSS.replace('A4 landscape', 'A4 '+(landscape?'landscape':'portrait'))}</style></head><body>${(()=>{const hh=typeof window.SMART_QC_APPLY_SIGNATURES==='function'?window.SMART_QC_APPLY_SIGNATURES(html):html;return typeof window.__smartVnDatesInHtml==='function'?window.__smartVnDatesInHtml(hh):hh;})()}</body></html>`);
     w.document.close();setTimeout(()=>w.print(),600);
   }
   function exportExcel(title,headers,rows){
@@ -11930,7 +11960,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   .smq-media-auto-field{min-width:0}.smq-media-field-title{font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px}.smq-media-count-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 90px;gap:8px}.smq-media-count-row textarea{min-height:86px}.smq-media-count-row input,.smq-media-count-row select{height:40px}
   .smq-exact-dye-form,.smq-exact-media-form{font-family:'Times New Roman',serif;color:#111;background:#fff}.exact-dye-head{text-align:center;line-height:1.25;margin-bottom:8px}.exact-dye-head .org,.exact-dye-head .dept{font-weight:700}.exact-dye-head .title{font-weight:700;font-size:14pt;margin-top:8px}.exact-dye-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10pt}.exact-dye-table th,.exact-dye-table td{border:1px solid #000;padding:3px 2px;text-align:center;vertical-align:middle;line-height:1.15;word-break:break-word}.exact-dye-table th{font-weight:700}.exact-dye-table th:nth-child(1){width:4%}.exact-dye-table th:nth-child(2){width:9%}.exact-dye-table th:nth-child(3){width:9%}.exact-dye-table th:nth-child(4){width:13%}.exact-dye-table th:nth-child(5){width:7%}.exact-dye-table th:nth-child(n+6):nth-child(-n+11){width:7%}.exact-dye-table th:nth-child(12){width:9%}.exact-dye-table th:nth-child(13){width:7%}.exact-dye-sign{display:grid;grid-template-columns:1fr 1fr;margin-top:18px;min-height:85px;font-size:11pt}.exact-dye-sign>div:nth-child(2){text-align:center}.exact-dye-footer,.exact-media-footer{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #1681b7;margin-top:20px;padding-top:6px;font-size:9pt}.exact-dye-footer span:nth-child(2),.exact-media-footer span:nth-child(2){text-align:center}.exact-dye-footer span:nth-child(3),.exact-media-footer span:nth-child(3){text-align:right}.exact-media-head{line-height:1.2;margin-bottom:8px}.exact-media-head>div{text-align:left}.exact-media-head .title{text-align:center;font-weight:700;font-size:14pt;margin-top:8px}.exact-media-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9pt}.exact-media-table th,.exact-media-table td{border:1px solid #000;padding:4px 3px;text-align:center;vertical-align:middle;line-height:1.15;word-break:break-word}.exact-media-table th{font-weight:700}.exact-media-table th:nth-child(1){width:9%}.exact-media-table th:nth-child(2){width:12%}.exact-media-table th:nth-child(3){width:10%}.exact-media-table th:nth-child(4){width:12%}.exact-media-table th:nth-child(5){width:14%}.exact-media-table th:nth-child(6){width:16%}.exact-media-table th:nth-child(7){width:15%}.exact-media-table th:nth-child(8){width:7%}.exact-media-table th:nth-child(9){width:8%}.exact-media-table th:nth-child(10){width:8%}.exact-media-sign{text-align:right;margin-top:22px;min-height:95px;font-size:11pt}.exact-media-sign>div{display:inline-block;min-width:35%;text-align:center}@media(max-width:760px){.smq-new-dye-row{grid-template-columns:1fr}.smq-media-count-row{grid-template-columns:1fr}.exact-dye-table,.exact-media-table{font-size:7pt}}
     `;
-    const doc=`<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}</style></head><body>${html}</body></html>`;
+    const doc=`<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}</style></head><body>${(typeof window.__smartVnDatesInHtml==='function'?window.__smartVnDatesInHtml(html):html)}</body></html>`;
     const blob=new Blob(['\ufeff',doc],{type:'application/msword'});
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
@@ -12089,12 +12119,12 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   window.exportDyeExcel=async function(){
     const r=selectedDye();if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('XN-BM 5.8.4.08',{views:[{showGridLines:false}]});ws.pageSetup={orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.25,right:.25,top:.35,bottom:.35,header:.1,footer:.1}};[7,14,14,22,13,11,11,11,11,11,11,17,17].forEach((w,i)=>ws.getColumn(i+1).width=w);ws.mergeCells('A1:M1');ws.getCell('A1').value='BỆNH VIỆN PHONG –DA LIỄU TW QUY HÒA';ws.mergeCells('A2:M2');ws.getCell('A2').value='KHOA VI SINH – MIỄN DỊCH';const month=qcMonthYear(r.qcDate);ws.mergeCells('A3:M3');ws.getCell('A3').value=`NỘI KIỂM TRA CHẤT LƯỢNG THUỐC NHUỘM THÁNG ${month}`;['A1','A2','A3'].forEach((a,i)=>{ws.getCell(a).font={name:'Times New Roman',size:i===2?14:12,bold:true};ws.getCell(a).alignment={horizontal:'center',vertical:'middle'};});
     const border={top:{style:'thin',color:{argb:'FF000000'}},left:{style:'thin',color:{argb:'FF000000'}},bottom:{style:'thin',color:{argb:'FF000000'}},right:{style:'thin',color:{argb:'FF000000'}}};const h=(cell,text)=>{ws.getCell(cell).value=text;ws.getCell(cell).font={name:'Times New Roman',size:9,bold:true};ws.getCell(cell).alignment={horizontal:'center',vertical:'middle',wrapText:true};ws.getCell(cell).border=border;};['A','B','C','D','E','L','M'].forEach(c=>ws.mergeCells(`${c}5:${c}7`));h('A5','STT');h('B5','Ngày pha/Lot');h('C5','Ngày nội kiểm');h('D5','Tên thuốc nhuộm');h('E5','Màu sắc');h('L5','Người thực hiện');h('M5','Ghi chú');ws.mergeCells('F5:K5');h('F5','Kết quả kiểm tra chất lượng');ws.mergeCells('F6:G6');ws.mergeCells('H6:I6');ws.mergeCells('J6:K6');h('F6','S.aureus 29213');h('H6','E.coli 25922');h('J6','M.leprae');[['F7','ĐẠT'],['G7','KHÔNG ĐẠT'],['H7','ĐẠT'],['I7','KHÔNG ĐẠT'],['J7','ĐẠT'],['K7','KHÔNG ĐẠT']].forEach(([a,t])=>h(a,t));for(let rr=5;rr<=7;rr++)for(let c=1;c<=13;c++)ws.getCell(rr,c).border=border;
-    const data=(r.rows||[]).filter(x=>safe(x.name)||safe(x.color));data.forEach((x,i)=>{const rr=8+i;const vals=[x.stt,r.phaLot||'',r.qcDate||'',x.name||'',x.color||'',x.results?.[DYE_STRAINS[0]]==='Đạt'?'✓':'',x.results?.[DYE_STRAINS[0]]==='Không đạt'?'✓':'',x.results?.[DYE_STRAINS[1]]==='Đạt'?'✓':'',x.results?.[DYE_STRAINS[1]]==='Không đạt'?'✓':'',x.results?.[DYE_STRAINS[2]]==='Đạt'?'✓':'',x.results?.[DYE_STRAINS[2]]==='Không đạt'?'✓':'',r.staff||'',r.note||''];ws.getRow(rr).values=vals;ws.getRow(rr).height=20;ws.getRow(rr).eachCell(c=>{c.font={name:'Times New Roman',size:9};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;});});
+    const data=(r.rows||[]).filter(x=>safe(x.name)||safe(x.color));data.forEach((x,i)=>{const rr=8+i;const vals=[x.stt,r.phaLot||'',(r.qcDate?fmtDMY(r.qcDate):''),x.name||'',x.color||'',x.results?.[DYE_STRAINS[0]]==='Đạt'?'✓':'',x.results?.[DYE_STRAINS[0]]==='Không đạt'?'✓':'',x.results?.[DYE_STRAINS[1]]==='Đạt'?'✓':'',x.results?.[DYE_STRAINS[1]]==='Không đạt'?'✓':'',x.results?.[DYE_STRAINS[2]]==='Đạt'?'✓':'',x.results?.[DYE_STRAINS[2]]==='Không đạt'?'✓':'',r.staff||'',r.note||''];ws.getRow(rr).values=vals;ws.getRow(rr).height=20;ws.getRow(rr).eachCell(c=>{c.font={name:'Times New Roman',size:9};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;});});
     const foot=9+Math.max(0,data.length);ws.mergeCells(`J${foot}:L${foot}`);ws.getCell(`J${foot}`).value='KHOA VI SINH – MIỄN DỊCH';ws.getCell(`J${foot}`).font={name:'Times New Roman',size:11,bold:true};ws.getCell(`J${foot}`).alignment={horizontal:'center'};[foot,foot+1,foot+2,foot+3].forEach(rr=>{for(let cc=10;cc<=12;cc++)ws.getCell(rr,cc).border=border;});ws.mergeCells(`J${foot+1}:L${foot+1}`);ws.getCell(`J${foot+1}`).value='TRƯỞNG KHOA';ws.getCell(`J${foot+1}`).font={name:'Times New Roman',size:11,bold:true};ws.getCell(`J${foot+1}`).alignment={horizontal:'center'};ws.mergeCells(`J${foot+2}:L${foot+2}`);ws.getCell(`J${foot+2}`).value='(Đã ký)';ws.getCell(`J${foot+2}`).alignment={horizontal:'center'};if(r.chief){ws.mergeCells(`J${foot+3}:L${foot+3}`);ws.getCell(`J${foot+3}`).value=r.chief;ws.getCell(`J${foot+3}`).alignment={horizontal:'center'};}const fy=foot+(r.chief?4:3);ws.mergeCells(`A${fy}:M${fy}`);ws.getCell(`A${fy}`).value='XN-BM 5.8.4.08    Lần ban hành: 01.01/01/2026    Trang: 1/1';ws.getCell(`A${fy}`).font={name:'Times New Roman',size:9,bold:true};ws.getCell(`A${fy}`).alignment={horizontal:'center'};ws.printArea=`A1:M${fy}`;await saveWorkbook(wb,'XN-BM_5.8.4.08_Thuoc_Nhuom_'+todayISO()+'.xlsx');
   };
   window.exportDyeWord=function(){officeWordDownload('XN-BM_5.8.4.08_Thuoc_Nhuom',dyePrintHtml(selectedDye()),'landscape');};
   window.exportMediaExcel=async function(){
-    const r=selectedMedia(),clean=cleanMediaText(r);if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('XN-BM 5.8.4.07',{views:[{showGridLines:false}]});ws.pageSetup={orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.25,right:.25,top:.35,bottom:.35,header:.1,footer:.1}};[15,20,16,22,30,30,14,17,18].forEach((w,i)=>ws.getColumn(i+1).width=w);ws.mergeCells('A1:I1');ws.getCell('A1').value='BỆNH VIỆN PHONG-DA LIỄU TW QUY HÒA';ws.mergeCells('A2:I2');ws.getCell('A2').value='KHOA VI SINH-MIỄN DỊCH';const month=qcMonthYear(r.qcDate);ws.mergeCells('A3:I3');ws.getCell('A3').value=`SỔ NỘI KIỂM MÔI TRƯỜNG NUÔI CẤY VI SINH THÁNG ${month}`;['A1','A2','A3'].forEach((a,i)=>{ws.getCell(a).font={name:'Times New Roman',size:i===2?14:12,bold:true};ws.getCell(a).alignment={horizontal:'center',vertical:'middle'};});const border={top:{style:'thin',color:{argb:'FF000000'}},left:{style:'thin',color:{argb:'FF000000'}},bottom:{style:'thin',color:{argb:'FF000000'}},right:{style:'thin',color:{argb:'FF000000'}}};const headers=['Ngày thực hiện nội kiểm','Tên môi trường','Ngày pha chế','Đánh giá cảm quan','Kiểm tra Vi sinh','Kiểm tra vô khuẩn','Kết quả','Người thực hiện','Ghi chú'];headers.forEach((t,i)=>{const c=ws.getCell(5,i+1);c.value=t;c.font={name:'Times New Roman',size:9,bold:true};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;});ws.getRow(5).height=45;const has=[r.qcDate,r.mediaType,r.phaDate,clean.landscape,r.micro,clean.sterility,r.result,r.staff,r.note].some(v=>safe(v));if(has){ws.getRow(6).values=[r.qcDate||'',r.mediaType||'',r.phaDate||'',clean.landscape||'',r.micro||'',clean.sterility||'',r.result||'',r.staff||'',r.note||''];ws.getRow(6).height=55;ws.getRow(6).eachCell(c=>{c.font={name:'Times New Roman',size:9};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;});}const foot=8;ws.mergeCells(`F${foot}:G${foot}`);ws.getCell(`F${foot}`).value='KHOA VI SINH – MIỄN DỊCH';ws.getCell(`F${foot}`).font={name:'Times New Roman',size:11,bold:true};ws.getCell(`F${foot}`).alignment={horizontal:'center'};[foot,foot+1,foot+2,foot+3].forEach(rr=>{for(let cc=6;cc<=7;cc++)ws.getCell(rr,cc).border=border;});ws.mergeCells(`F${foot+1}:G${foot+1}`);ws.getCell(`F${foot+1}`).value='TRƯỞNG KHOA';ws.getCell(`F${foot+1}`).font={name:'Times New Roman',size:11,bold:true};ws.getCell(`F${foot+1}`).alignment={horizontal:'center'};ws.mergeCells(`F${foot+2}:G${foot+2}`);ws.getCell(`F${foot+2}`).value='(Đã ký)';ws.getCell(`F${foot+2}`).alignment={horizontal:'center'};if(r.chief){ws.mergeCells(`F${foot+3}:G${foot+3}`);ws.getCell(`F${foot+3}`).value=r.chief;ws.getCell(`F${foot+3}`).alignment={horizontal:'center'};}const fy=foot+(r.chief?4:3);ws.mergeCells(`A${fy}:I${fy}`);ws.getCell(`A${fy}`).value='XN-BM 5.8.4/07    Lần ban hành 01.01/01/2026    Trang 1/1';ws.getCell(`A${fy}`).font={name:'Times New Roman',size:9,bold:true};ws.getCell(`A${fy}`).alignment={horizontal:'center'};ws.printArea=`A1:I${fy}`;await saveWorkbook(wb,'XN-BM_5.8.4.07_Moi_Truong_Nuoi_Cay_'+todayISO()+'.xlsx');
+    const r=selectedMedia(),clean=cleanMediaText(r);if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('XN-BM 5.8.4.07',{views:[{showGridLines:false}]});ws.pageSetup={orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.25,right:.25,top:.35,bottom:.35,header:.1,footer:.1}};[15,20,16,22,30,30,14,17,18].forEach((w,i)=>ws.getColumn(i+1).width=w);ws.mergeCells('A1:I1');ws.getCell('A1').value='BỆNH VIỆN PHONG-DA LIỄU TW QUY HÒA';ws.mergeCells('A2:I2');ws.getCell('A2').value='KHOA VI SINH-MIỄN DỊCH';const month=qcMonthYear(r.qcDate);ws.mergeCells('A3:I3');ws.getCell('A3').value=`SỔ NỘI KIỂM MÔI TRƯỜNG NUÔI CẤY VI SINH THÁNG ${month}`;['A1','A2','A3'].forEach((a,i)=>{ws.getCell(a).font={name:'Times New Roman',size:i===2?14:12,bold:true};ws.getCell(a).alignment={horizontal:'center',vertical:'middle'};});const border={top:{style:'thin',color:{argb:'FF000000'}},left:{style:'thin',color:{argb:'FF000000'}},bottom:{style:'thin',color:{argb:'FF000000'}},right:{style:'thin',color:{argb:'FF000000'}}};const headers=['Ngày thực hiện nội kiểm','Tên môi trường','Ngày pha chế','Đánh giá cảm quan','Kiểm tra Vi sinh','Kiểm tra vô khuẩn','Kết quả','Người thực hiện','Ghi chú'];headers.forEach((t,i)=>{const c=ws.getCell(5,i+1);c.value=t;c.font={name:'Times New Roman',size:9,bold:true};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;});ws.getRow(5).height=45;const has=[r.qcDate,r.mediaType,r.phaDate,clean.landscape,r.micro,clean.sterility,r.result,r.staff,r.note].some(v=>safe(v));if(has){ws.getRow(6).values=[(r.qcDate?fmtDMY(r.qcDate):''),r.mediaType||'',(r.phaDate?fmtDMY(r.phaDate):''),clean.landscape||'',r.micro||'',clean.sterility||'',r.result||'',r.staff||'',r.note||''];ws.getRow(6).height=55;ws.getRow(6).eachCell(c=>{c.font={name:'Times New Roman',size:9};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;});}const foot=8;ws.mergeCells(`F${foot}:G${foot}`);ws.getCell(`F${foot}`).value='KHOA VI SINH – MIỄN DỊCH';ws.getCell(`F${foot}`).font={name:'Times New Roman',size:11,bold:true};ws.getCell(`F${foot}`).alignment={horizontal:'center'};[foot,foot+1,foot+2,foot+3].forEach(rr=>{for(let cc=6;cc<=7;cc++)ws.getCell(rr,cc).border=border;});ws.mergeCells(`F${foot+1}:G${foot+1}`);ws.getCell(`F${foot+1}`).value='TRƯỞNG KHOA';ws.getCell(`F${foot+1}`).font={name:'Times New Roman',size:11,bold:true};ws.getCell(`F${foot+1}`).alignment={horizontal:'center'};ws.mergeCells(`F${foot+2}:G${foot+2}`);ws.getCell(`F${foot+2}`).value='(Đã ký)';ws.getCell(`F${foot+2}`).alignment={horizontal:'center'};if(r.chief){ws.mergeCells(`F${foot+3}:G${foot+3}`);ws.getCell(`F${foot+3}`).value=r.chief;ws.getCell(`F${foot+3}`).alignment={horizontal:'center'};}const fy=foot+(r.chief?4:3);ws.mergeCells(`A${fy}:I${fy}`);ws.getCell(`A${fy}`).value='XN-BM 5.8.4/07    Lần ban hành 01.01/01/2026    Trang 1/1';ws.getCell(`A${fy}`).font={name:'Times New Roman',size:9,bold:true};ws.getCell(`A${fy}`).alignment={horizontal:'center'};ws.printArea=`A1:I${fy}`;await saveWorkbook(wb,'XN-BM_5.8.4.07_Moi_Truong_Nuoi_Cay_'+todayISO()+'.xlsx');
   };
   window.exportMediaWord=function(){officeWordDownload('XN-BM_5.8.4.07_Moi_Truong_Nuoi_Cay',mediaPrintHtml(selectedMedia()),'landscape');};
 })();
@@ -12580,6 +12610,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   function prepare(html){
     let out=String(html??'');
     if(!out)return out;
+    try{ if(typeof window.__smartVnDatesInHtml==='function') out=window.__smartVnDatesInHtml(out); }catch(e){}
     try{
       if(typeof window.SMART_QC_APPLY_SIGNATURES==='function')out=window.SMART_QC_APPLY_SIGNATURES(out);
     }catch(e){console.warn('SMART VSMD signature prepare:',e)}
@@ -14465,5 +14496,223 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     }catch(e){ try{console.warn('[SMART VSMD] audit sweep',e);}catch(_){} }
   }
   setInterval(sweep,5000);
+})();
+</script>
+
+<script id="smart-vn-date-fields-20261016">
+/* Ô nhập ngày/tháng/năm: hiển thị và nhập theo dd/mm/yyyy (datetime: dd/mm/yyyy hh:mm; tháng: mm/yyyy)
+   cho MỌI phiếu, không phụ thuộc ngôn ngữ trình duyệt (trước đây hiện mm/dd/yyyy).
+   - Giá trị mà code đọc/ghi (.value) vẫn là ISO (YYYY-MM-DD / YYYY-MM-DDTHH:mm / YYYY-MM) => lưu trữ, lọc, in, xuất KHÔNG đổi.
+   - Không thêm phần tử input nào vào form (tránh ảnh hưởng các hàm gom dữ liệu theo class/thẻ). */
+(function(){
+  'use strict';
+  if(window.__SMART_VN_DATE_FIELDS__) return;
+  window.__SMART_VN_DATE_FIELDS__=true;
+  var pad=function(n){return (n<10?'0':'')+n;};
+  var desc=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+  if(!desc||!desc.get||!desc.set) return;
+  var SEL='input[type="date"],input[type="datetime-local"],input[type="month"],input[data-vn]';
+  var KIND={'date':'d','datetime-local':'dt','month':'m'};
+  var SKIP_IDS={cls_date:1}; /* Sổ trực CLS đã có ô dd/mm/yyyy riêng + ô ngày ẩn dùng showPicker */
+
+  function validDate(y,m,d){var dt=new Date(y,m-1,d);return y>=1000&&y<=9999&&dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d;}
+  function toDisp(kind,v){
+    v=String(v==null?'':v).trim(); if(!v) return '';
+    var m;
+    if(kind==='m'){ m=v.match(/^(\d{4})-(\d{1,2})/); return m?pad(+m[2])+'/'+m[1]:v; }
+    m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{2}))?/);
+    if(!m) return v;
+    var s=pad(+m[3])+'/'+pad(+m[2])+'/'+m[1];
+    if(kind==='dt'&&m[4]!=null) s+=' '+pad(+m[4])+':'+m[5];
+    return s;
+  }
+  function toISO(kind,s){
+    s=String(s==null?'':s).trim(); if(!s) return '';
+    var m;
+    if(kind==='m'){ m=s.match(/^(\d{1,2})[\/.\-](\d{4})$/); return (m&&+m[1]>=1&&+m[1]<=12)?m[2]+'-'+pad(+m[1]):''; }
+    m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+    if(!m) return '';
+    var d=+m[1],mo=+m[2],y=+m[3]; if(!validDate(y,mo,d)) return '';
+    var iso=y+'-'+pad(mo)+'-'+pad(d);
+    if(kind==='dt'){ var h=m[4]==null?0:+m[4], mi=m[5]==null?0:+m[5]; if(h>23||mi>59) return ''; iso+='T'+pad(h)+':'+pad(mi); }
+    return iso;
+  }
+  function warn(msg){ try{ if(typeof window.toast==='function') window.toast('warning','Ngày không hợp lệ',msg); }catch(e){} }
+
+  function commitISO(n,iso){
+    var kind=n.__vn;
+    desc.set.call(n,toDisp(kind,iso)); n.__vnLast=desc.get.call(n);
+    n.dispatchEvent(new Event('input',{bubbles:true}));
+    n.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+
+  function enhance(n){
+    if(!n||n.tagName!=='INPUT'||n.__vn) return;
+    if(SKIP_IDS[n.id]||n.hasAttribute('data-vn-skip')) return;
+    if(n.closest&&n.closest('template')) return;
+    var kind=KIND[n.type]||n.getAttribute('data-vn'); if(kind!=='d'&&kind!=='dt'&&kind!=='m') return;
+    var init=desc.get.call(n);
+    if(KIND[n.type]){ try{ n.type='text'; }catch(e){ return; } }
+    n.__vn=kind;
+    n.setAttribute('data-vn',kind);
+    n.setAttribute('autocomplete','off');
+    n.setAttribute('inputmode','numeric');
+    if(!n.getAttribute('placeholder')) n.setAttribute('placeholder',kind==='dt'?'dd/mm/yyyy hh:mm':(kind==='m'?'mm/yyyy':'dd/mm/yyyy'));
+    n.setAttribute('maxlength',kind==='dt'?'16':(kind==='m'?'7':'10'));
+    Object.defineProperty(n,'value',{configurable:true,
+      get:function(){ return toISO(kind,desc.get.call(n)); },
+      set:function(v){ desc.set.call(n,toDisp(kind,v)); n.__vnLast=desc.get.call(n); }});
+    desc.set.call(n,toDisp(kind,init)); n.__vnLast=desc.get.call(n);
+
+    n.addEventListener('input',function(e){
+      var raw=desc.get.call(n);
+      if(e&&e.inputType&&/delete/.test(e.inputType)) return;
+      if(n.selectionStart!=null&&n.selectionStart!==raw.length) return;
+      if(e&&e.data&&/^[\/.\-]$/.test(e.data)&&kind!=='m'){
+        var segs=raw.split(/[\/.\-]/); segs.pop();
+        if(segs.length&&segs.length<3){ var li=segs.length-1; if(/^\d$/.test(segs[li])) segs[li]='0'+segs[li]; desc.set.call(n,segs.join('/')+'/'); return; }
+      }
+      var dg=raw.replace(/\D/g,''),out;
+      if(kind==='m'){ dg=dg.slice(0,6); out=dg.length>2?dg.slice(0,2)+'/'+dg.slice(2):dg; }
+      else{
+        dg=dg.slice(0,kind==='dt'?12:8); out=dg.slice(0,2);
+        if(dg.length>2) out+='/'+dg.slice(2,4);
+        if(dg.length>4) out+='/'+dg.slice(4,8);
+        if(kind==='dt'&&dg.length>8) out+=' '+dg.slice(8,10)+(dg.length>10?':'+dg.slice(10,12):'');
+      }
+      if(out!==raw) desc.set.call(n,out);
+    });
+    /* capture: chạy TRƯỚC các onchange gắn sẵn để chúng luôn nhận giá trị ISO hợp lệ */
+    n.addEventListener('change',function(){
+      var raw=desc.get.call(n).trim();
+      if(!raw){ n.__vnLast=''; return; }
+      var iso=toISO(kind,raw);
+      if(iso){ desc.set.call(n,toDisp(kind,iso)); n.__vnLast=desc.get.call(n); }
+      else{ warn(kind==='m'?'Vui lòng nhập tháng theo dạng mm/yyyy.':(kind==='dt'?'Vui lòng nhập theo dạng dd/mm/yyyy hh:mm.':'Vui lòng nhập ngày theo dạng dd/mm/yyyy.')); desc.set.call(n,n.__vnLast||''); }
+    },true);
+    n.addEventListener('click',function(){ openPop(n); });
+    n.addEventListener('keydown',function(e){
+      if(e.key==='ArrowDown'||e.key==='F4'){ openPop(n); }
+      else if(e.key==='Escape'||e.key==='Tab'){ closePop(); }
+    });
+  }
+
+  /* ---------- Lịch chọn ngày dùng chung (tiếng Việt, tuần bắt đầu từ Thứ 2) ---------- */
+  var pop=null,cur=null,vy=0,vm=0;
+  function ensurePop(){
+    if(pop) return pop;
+    pop=document.createElement('div'); pop.id='vnDatePop'; pop.className='no-print'; pop.style.display='none';
+    pop.addEventListener('mousedown',function(e){ if(e.target.tagName!=='INPUT'&&e.target.tagName!=='SELECT'&&e.target.tagName!=='OPTION') e.preventDefault(); });
+    pop.addEventListener('click',onPopClick);
+    pop.addEventListener('change',onPopChange);
+    document.body.appendChild(pop); return pop;
+  }
+  function curISO(){ var kind=cur.__vn; return toISO(kind==='m'?'m':kind,desc.get.call(cur)); }
+  function timePart(){ var iso=toISO('dt',desc.get.call(cur)); return iso&&iso.length>10?iso.slice(11,16):'00:00'; }
+  function openPop(n){
+    if(n.readOnly||n.disabled) return;
+    ensurePop(); cur=n;
+    var iso=curISO(), now=new Date();
+    if(iso){ var p=iso.split(/[-T]/); vy=+p[0]; vm=+p[1]-1; } else { vy=now.getFullYear(); vm=now.getMonth(); }
+    renderPop(); pop.style.display='block'; place();
+  }
+  function closePop(){ if(pop) pop.style.display='none'; cur=null; }
+  function place(){
+    if(!pop||!cur) return;
+    var r=cur.getBoundingClientRect(), pw=pop.offsetWidth, ph=pop.offsetHeight, vw=window.innerWidth, vh=window.innerHeight;
+    var left=Math.max(6,Math.min(r.left,vw-pw-6)), top=r.bottom+4;
+    if(top+ph>vh-6&&r.top-ph-4>6) top=r.top-ph-4;
+    pop.style.left=left+'px'; pop.style.top=Math.max(6,top)+'px';
+  }
+  var MONTHS=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  function renderPop(){
+    var kind=cur.__vn, iso=curISO(), now=new Date(), todayIso=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate()), h='';
+    if(kind==='m'){
+      var selM=iso?iso.slice(0,7):'';
+      h+='<div class="vnc-head"><button type="button" data-a="prev">&#8249;</button><b>'+vy+'</b><button type="button" data-a="next">&#8250;</button></div><div class="vnc-months">';
+      for(var i=0;i<12;i++){ var key=vy+'-'+pad(i+1); h+='<button type="button" data-a="mon" data-m="'+(i+1)+'" class="'+(key===selM?'sel':'')+'">'+MONTHS[i]+'</button>'; }
+      h+='</div><div class="vnc-foot"><button type="button" data-a="today">Tháng này</button><button type="button" data-a="clear">Xóa</button></div>';
+    }else{
+      var first=new Date(vy,vm,1), off=(first.getDay()+6)%7, days=new Date(vy,vm+1,0).getDate(), sel=iso?iso.slice(0,10):'';
+      h+='<div class="vnc-head"><button type="button" data-a="prev">&#8249;</button><b>'+MONTHS[vm]+' / '+vy+'</b><button type="button" data-a="next">&#8250;</button></div>';
+      h+='<div class="vnc-grid">'+['T2','T3','T4','T5','T6','T7','CN'].map(function(x){return '<span class="vnc-wd">'+x+'</span>';}).join('');
+      for(var b=0;b<off;b++) h+='<span></span>';
+      for(var d=1;d<=days;d++){ var di=vy+'-'+pad(vm+1)+'-'+pad(d); h+='<button type="button" data-a="day" data-iso="'+di+'" class="'+(di===sel?'sel ':'')+(di===todayIso?'today':'')+'">'+d+'</button>'; }
+      h+='</div>';
+      if(kind==='dt'){
+        var tp=timePart().split(':'), ho='', mo='';
+        for(var hh=0;hh<24;hh++) ho+='<option value="'+pad(hh)+'"'+(pad(hh)===tp[0]?' selected':'')+'>'+pad(hh)+'</option>';
+        for(var mm=0;mm<60;mm++) mo+='<option value="'+pad(mm)+'"'+(pad(mm)===tp[1]?' selected':'')+'>'+pad(mm)+'</option>';
+        h+='<div class="vnc-time"><span>Giờ</span><select class="vnc-h" aria-label="Giờ">'+ho+'</select><b>:</b><select class="vnc-m" aria-label="Phút">'+mo+'</select></div>';
+      }
+      h+='<div class="vnc-foot"><button type="button" data-a="today">'+(kind==='dt'?'Bây giờ':'Hôm nay')+'</button><button type="button" data-a="clear">Xóa</button></div>';
+    }
+    pop.innerHTML=h;
+  }
+  function onPopClick(e){
+    var b=e.target.closest&&e.target.closest('button[data-a]'); if(!b||!cur) return;
+    var a=b.getAttribute('data-a'), kind=cur.__vn, now=new Date();
+    if(a==='prev'||a==='next'){
+      var s=a==='next'?1:-1;
+      if(kind==='m') vy+=s; else { vm+=s; if(vm<0){vm=11;vy--;} if(vm>11){vm=0;vy++;} }
+      renderPop(); place(); return;
+    }
+    if(a==='clear'){ var n0=cur; desc.set.call(n0,''); n0.__vnLast=''; n0.dispatchEvent(new Event('input',{bubbles:true})); n0.dispatchEvent(new Event('change',{bubbles:true})); closePop(); return; }
+    var n=cur;
+    if(a==='mon'){ commitISO(n,vy+'-'+pad(+b.getAttribute('data-m'))); closePop(); return; }
+    if(a==='today'){
+      if(kind==='m') commitISO(n,now.getFullYear()+'-'+pad(now.getMonth()+1));
+      else commitISO(n,now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+(kind==='dt'?'T'+pad(now.getHours())+':'+pad(now.getMinutes()):''));
+      closePop(); return;
+    }
+    if(a==='day'){
+      var day=b.getAttribute('data-iso'), tm='00:00';
+      if(kind==='dt'){ var sh=pop.querySelector('.vnc-h'), sm=pop.querySelector('.vnc-m'); tm=(sh&&sm)?(sh.value+':'+sm.value):timePart(); }
+      commitISO(n,day+(kind==='dt'?'T'+tm:'')); closePop();
+    }
+  }
+  function onPopChange(e){
+    if(!cur||!e.target.classList||!(e.target.classList.contains('vnc-h')||e.target.classList.contains('vnc-m'))) return;
+    var sh=pop.querySelector('.vnc-h'), sm=pop.querySelector('.vnc-m'), now=new Date();
+    var d=toISO('dt',desc.get.call(cur)).slice(0,10);
+    if(!d) d=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+    commitISO(cur,d+'T'+sh.value+':'+sm.value);
+  }
+  document.addEventListener('mousedown',function(e){ if(pop&&pop.style.display!=='none'&&!pop.contains(e.target)&&e.target!==cur) closePop(); },true);
+  window.addEventListener('resize',function(){ if(pop&&pop.style.display!=='none') place(); });
+  window.addEventListener('scroll',function(e){ if(pop&&pop.style.display!=='none'&&!pop.contains(e.target)) closePop(); },true);
+
+  /* ---------- CSS ---------- */
+  var st=document.createElement('style'); st.id='smart-vn-date-fields-css';
+  st.textContent=
+    'input[data-vn]{padding-right:26px;background-image:url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%236b7280\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'3\' y=\'4\' width=\'18\' height=\'18\' rx=\'2\'/><path d=\'M16 2v4M8 2v4M3 10h18\'/></svg>");background-repeat:no-repeat;background-position:right 8px center;background-size:14px 14px}'+
+    '.smqcls-dates input[data-vn]{height:34px}.virology-table td input[data-vn]{width:100%;min-width:0}.vt-result-meta input[data-vn]{height:30px}'+
+    '#vnDatePop{position:fixed;z-index:2147483000;width:264px;box-sizing:border-box;padding:10px;border:1px solid var(--border,#d6dde6);border-radius:10px;background:var(--surface,#fff);color:var(--text,#1f2937);box-shadow:0 10px 30px rgba(15,23,42,.22);font-size:13px;line-height:1.3;font-family:inherit}'+
+    '#vnDatePop button{font:inherit;cursor:pointer;border:1px solid transparent;background:transparent;color:inherit;border-radius:6px;padding:0}'+
+    '#vnDatePop .vnc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}#vnDatePop .vnc-head button{width:28px;height:28px;font-size:18px;border-color:var(--border,#d6dde6)}'+
+    '#vnDatePop .vnc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}#vnDatePop .vnc-wd{font-size:11px;font-weight:700;color:var(--text-muted,#6b7280);padding:3px 0}'+
+    '#vnDatePop .vnc-grid button{height:30px}#vnDatePop .vnc-grid button:hover,#vnDatePop .vnc-months button:hover{background:rgba(14,107,168,.12)}'+
+    '#vnDatePop button.today{border-color:var(--primary,#0E6BA8)}#vnDatePop button.sel{background:var(--primary,#0E6BA8);color:#fff}'+
+    '#vnDatePop .vnc-months{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}#vnDatePop .vnc-months button{height:34px}'+
+    '#vnDatePop .vnc-time{display:flex;align-items:center;gap:8px;margin-top:8px}#vnDatePop .vnc-time select{width:70px;padding:5px 8px;cursor:pointer}'+
+    '#vnDatePop .vnc-foot{display:flex;justify-content:space-between;margin-top:8px}#vnDatePop .vnc-foot button{padding:4px 10px;color:var(--primary,#0E6BA8);font-weight:600}';
+  document.head.appendChild(st);
+
+  /* ---------- Quét ô hiện có + ô tạo về sau ---------- */
+  function scan(root){
+    if(!root||root.nodeType!==1) return;
+    try{
+      if(root.matches&&root.matches(SEL)) enhance(root);
+      var l=root.querySelectorAll?root.querySelectorAll(SEL):[];
+      for(var i=0;i<l.length;i++) enhance(l[i]);
+    }catch(e){ try{console.warn('[SMART VSMD] vn-date',e);}catch(_){} }
+  }
+  try{
+    new MutationObserver(function(recs){
+      for(var i=0;i<recs.length;i++){ var a=recs[i].addedNodes; for(var j=0;j<a.length;j++) scan(a[j]); }
+    }).observe(document.documentElement,{childList:true,subtree:true});
+  }catch(e){}
+  scan(document.body);
+  window.SMART_VN_DATE={toDisp:toDisp,toISO:toISO};
 })();
 </script>
