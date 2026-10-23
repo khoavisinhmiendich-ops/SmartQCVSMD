@@ -1359,7 +1359,7 @@ function cloudUserIsBusy(){
   const typing=!!(ae && ae!==document.body && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable));
   const modalOpen=!!(document.getElementById('modalRoot') && document.getElementById('modalRoot').children.length);
   const recentEdit=(Date.now()-lastLocalEditTs)<2500;
-  return typing || modalOpen || recentEdit || isSaving || saveQueuedWhileBusy;
+  return typing || modalOpen || recentEdit || isSaving || saveQueuedWhileBusy || cloudMergeBusy;
 }
 /* Màn hình đang mở có dữ liệu ĐANG NHẬP / CHƯA LƯU không? (so giá trị hiện tại với giá trị lúc vừa vẽ form).
    Nếu có -> đồng bộ cloud tuyệt đối KHÔNG vẽ lại màn hình, để không mất dữ liệu đang nhập. */
@@ -1411,6 +1411,8 @@ const CLOUD_ORDER_KEY='__order';
 const CLOUD_RECORD_COLLECTIONS=['results','rapidWaterResults','rapidWaterSheet','clsReports','virologyTDResults','virologyTCResults','chemicalMD','chemicalVS','externalQC','alerts','audit','lots','configs','machines','tests','rapidWaterTests','rapidWaterLots','virologyLots','virologyTDProfiles'];
 const CLOUD_FRONT_COLLECTIONS=['clsReports','alerts','audit','virologyTDResults','virologyTCResults'];
 let cloudMode='records';
+let cloudTombs=new Set();
+let cloudMergeBusy=false;
 let cloudSnap=new Map();
 let cloudRecordsChannel=null;
 const pendingCloud=new Map();
@@ -1449,9 +1451,9 @@ function cloudOrderRows(c,rows,ids){
 }
 function cloudAssemble(rows){
   const st={}, byColl={}; let order=null;
-  cloudSnap=new Map();
+  cloudSnap=new Map(); cloudTombs=new Set();
   rows.forEach(r=>{
-    if(r.deleted) return;
+    if(r.deleted){ cloudTombs.add(r.collection+'|'+r.record_id); return; }
     cloudSnap.set(r.collection+'|'+r.record_id,cloudHash(r.payload));
     if(r.collection==='_kv'){ if(r.record_id===CLOUD_ORDER_KEY) order=r.payload; else st[r.record_id]=r.payload; }
     else (byColl[r.collection]||(byColl[r.collection]=[])).push(r);
@@ -1493,6 +1495,7 @@ async function cloudLoadState(){
     if(cloudIsMissingTable(e)){ console.warn('Chưa có bảng smartqc_records -> dùng cách lưu một khối cũ'); cloudMode='legacy'; return cloudLoadLegacy(); }
     throw e;
   }
+  cloudTombs=new Set();
   if(!rows.length){
     /* Chưa có dữ liệu theo phiếu: chuyển dữ liệu một khối cũ (nếu có) sang từng phiếu. */
     cloudSnap=new Map();
@@ -1527,6 +1530,174 @@ async function cloudGuardNewIds(ws){
     }
   }
 }
+/* ===================== ƯU TIÊN DỮ LIỆU TRÌNH DUYỆT KHI ĐĂNG NHẬP / ĐỒNG BỘ =====================
+   Nếu người dùng vẫn nhập liệu khi CHƯA đăng nhập Supabase, đến khi đăng nhập (hoặc mở lại app đã có phiên đăng nhập)
+   hệ thống KHÔNG còn ghi đè dữ liệu của trình duyệt bằng dữ liệu cloud nữa. Thay vào đó:
+   1) Sao lưu bản trên trình duyệt trước khi gộp.
+   2) Gộp: giữ toàn bộ phiếu mới/đã sửa trên trình duyệt, đồng thời vẫn nhận các phiếu mới từ cloud.
+   3) Đẩy phần của trình duyệt lên Supabase TRƯỚC, rồi hiển thị ngay dữ liệu đã gộp trong app.
+   Phiếu của trình duyệt trùng mã với phiếu khác trên cloud (nhưng nội dung khác) được giữ cả hai, bản trình duyệt được cấp mã mới. */
+const CLOUD_SYNC_SNAP_KEY='smartqc_cloud_sync_snap_v1';
+const CLOUD_OFFLINE_FLAG_KEY='smartqc_offline_edits_v1';
+const CLOUD_PRESYNC_BACKUP_KEY='smartqc_presync_backup_v1';
+/* Danh mục/phiếu được các bản ghi khác tham chiếu theo mã -> không đổi mã khi trùng. */
+const CLOUD_MASTER_COLLECTIONS=['results','lots','configs','machines','tests','rapidWaterTests','rapidWaterLots','rapidWaterSheet','virologyLots','virologyTDProfiles'];
+let cloudSnapSaveTimer=null;
+function cloudOfflineFlagSet(){ try{ return !!localStorage.getItem(CLOUD_OFFLINE_FLAG_KEY); }catch(e){ return false; } }
+function cloudMarkOfflineEdit(){ try{ if(!localStorage.getItem(CLOUD_OFFLINE_FLAG_KEY)) localStorage.setItem(CLOUD_OFFLINE_FLAG_KEY,new Date().toISOString()); }catch(e){} }
+function cloudClearOfflineFlag(){ try{ localStorage.removeItem(CLOUD_OFFLINE_FLAG_KEY); }catch(e){} }
+/* Mốc "bản cloud đã biết ở lần đồng bộ gần nhất" (mã băm ngắn, không gồm nhật ký để nhẹ bộ nhớ trình duyệt). */
+function cloudLoadSyncSnap(){
+  try{
+    const o=JSON.parse(localStorage.getItem(CLOUD_SYNC_SNAP_KEY)||'null');
+    if(o && o.ws===cloudWorkspaceId() && o.h && typeof o.h==='object') return o.h;
+  }catch(e){}
+  return null;
+}
+function cloudSaveSyncSnap(){
+  clearTimeout(cloudSnapSaveTimer);
+  cloudSnapSaveTimer=setTimeout(()=>{
+    try{
+      if(!cloudUser || cloudMergeBusy || !cloudSnap.size) return;
+      const h={};
+      cloudSnap.forEach((v,k)=>{ if(k.slice(0,6)==='audit|') return; h[k]=cloudShortHash(v); });
+      const txt=JSON.stringify({ws:cloudWorkspaceId(),t:new Date().toISOString(),h});
+      if(txt.length>450000) return;
+      localStorage.setItem(CLOUD_SYNC_SNAP_KEY,txt);
+    }catch(e){ console.warn('Không lưu được mốc đồng bộ',e); }
+  },1500);
+}
+/* Gộp dữ liệu trình duyệt (localSt) vào bản cloud vừa tải (remoteSt). Trả về {state, rep}. */
+function cloudMergeLocalFirst(localSt,remoteSt){
+  const rep={added:0,updated:0,renamed:0,dedup:0,kv:0,droppedDeleted:0,keptRemote:0,items:[],conflicts:[]};
+  const out=remoteSt;
+  if(!localSt || typeof localSt!=='object' || !out || typeof out!=='object') return {state:out,rep};
+  const snap=cloudLoadSyncSnap(), offline=cloudOfflineFlagSet();
+  const sh=cloudShortHash;
+  let maxN=Math.max(Number(out.meta&&out.meta.lastId)||0,Number(localSt.meta&&localSt.meta.lastId)||0);
+  const note=(c,id,it,why)=>{ if(rep.items.length<1500) rep.items.push({collection:c,id:id,why:why,payload:it}); };
+  const conflict=o=>{ if(rep.conflicts.length<300) rep.conflicts.push(o); };
+  CLOUD_RECORD_COLLECTIONS.forEach(c=>{
+    const larr=Array.isArray(localSt[c])?localSt[c]:[];
+    if(!Array.isArray(out[c])) out[c]=[];
+    const rarr=out[c];
+    const rids=cloudIdsOf(rarr), lids=cloudIdsOf(larr);
+    const rpos=new Map(); rids.forEach((id,i)=>{ if(id!==null) rpos.set(id,i); });
+    const rcontent=new Set(); rarr.forEach(x=>{ if(x!==null && typeof x==='object') rcontent.add(cloudHash(x)); });
+    const lkeys=new Set(lids.filter(x=>x!==null));
+    const isFront=CLOUD_FRONT_COLLECTIONS.includes(c), isMaster=CLOUD_MASTER_COLLECTIONS.includes(c), isLog=(c==='audit');
+    const toAdd=[], usedNew=new Set();
+    larr.forEach((it,i)=>{
+      const id=lids[i]; if(id===null) return;
+      const key=c+'|'+id, lh=cloudHash(it);
+      if(rcontent.has(lh)){ rep.dedup++; return; }              /* đã có trên cloud (kể cả khác mã) */
+      const lshort=sh(lh), known=snap?snap[key]:undefined;
+      const ri=rpos.get(id);
+      if(ri===undefined){
+        if(cloudTombs.has(key)){
+          /* Phiếu đã bị xóa trên cloud: chỉ khôi phục nếu trình duyệt này có sửa/nhập sau lần đồng bộ cuối. */
+          const restore=(known!==undefined)?(known!==lshort):offline;
+          if(!restore){ rep.droppedDeleted++; return; }
+        }
+        toAdd.push(it); rep.added++; note(c,id,it,'chỉ có ở trình duyệt'); return;
+      }
+      /* Cùng mã nhưng khác nội dung. */
+      if(!isLog && known!==undefined){
+        if(lshort===known){ rep.keptRemote++; return; }          /* trình duyệt không sửa, cloud đã sửa -> lấy cloud */
+        if(sh(cloudHash(rarr[ri]))!==known) conflict({collection:c,id:id,remote:rarr[ri]});
+        rarr[ri]=it; rep.updated++; note(c,id,it,'bản đã sửa trên trình duyệt'); return;
+      }
+      if(isMaster){
+        if(offline){ conflict({collection:c,id:id,remote:rarr[ri]}); rarr[ri]=it; rep.updated++; note(c,id,it,'ưu tiên bản trình duyệt'); }
+        else{ conflict({collection:c,id:id,local:it}); rep.keptRemote++; }
+        return;
+      }
+      /* Phiếu mới của trình duyệt trùng mã với phiếu khác trên cloud -> giữ cả hai, cấp mã mới cho bản của trình duyệt. */
+      const base=(it && it.id!==undefined && it.id!==null)?String(it.id):'';
+      const m=/^([A-Za-z_]+)(\d+)$/.exec(base);
+      let cand;
+      if(m){
+        let guard=0;
+        do{ maxN++; cand=m[1]+maxN; guard++; }while(guard<100000 && (rpos.has(cand)||lkeys.has(cand)||usedNew.has(cand)||cloudTombs.has(c+'|'+cand)));
+      }else{
+        cand=(base||'x')+'_'+Date.now().toString(36)+i;
+      }
+      usedNew.add(cand);
+      const copy=Object.assign({},it,{id:cand});
+      toAdd.push(copy); rep.renamed++; rep.added++; note(c,cand,copy,'trùng mã '+id+' nên được cấp mã mới');
+    });
+    out[c]=toAdd.length?(isFront?toAdd.concat(rarr):rarr.concat(toAdd)):rarr;
+  });
+  /* Các mục cài đặt / cấu hình (không phải danh sách phiếu). */
+  Object.keys(localSt).forEach(k=>{
+    if(CLOUD_RECORD_COLLECTIONS.includes(k) || k===CLOUD_ORDER_KEY || localSt[k]===undefined) return;
+    const key='_kv|'+k, lv=localSt[k];
+    if(out[k]===undefined){
+      if(cloudTombs.has(key) && !offline) return;
+      out[k]=lv; rep.kv++; return;
+    }
+    if(k==='meta') return;
+    const lh=cloudHash(lv); if(lh===cloudHash(out[k])) return;
+    const known=snap?snap[key]:undefined;
+    if(known!==undefined){ if(sh(lh)===known) return; out[k]=lv; rep.kv++; return; }
+    if(offline){ out[k]=lv; rep.kv++; }
+  });
+  /* Bộ đếm mã phiếu: luôn lấy số lớn nhất để không cấp trùng mã. */
+  out.meta=Object.assign({},out.meta||{},{lastId:maxN});
+  return {state:out,rep:rep};
+}
+function cloudSavePresyncBackup(rep){
+  try{
+    if(!rep || (!rep.items.length && !rep.conflicts.length)) return;
+    const head={time:new Date().toISOString(),summary:{added:rep.added,updated:rep.updated,renamed:rep.renamed,keptRemote:rep.keptRemote,droppedDeleted:rep.droppedDeleted}};
+    const pack={items:[],conflicts:[]}; let size=JSON.stringify(head).length+40; const CAP=120000;
+    for(const it of rep.items){ const t=JSON.stringify(it).length; if(size+t>CAP) break; pack.items.push(it); size+=t; }
+    for(const it of rep.conflicts){ const t=JSON.stringify(it).length; if(size+t>CAP) break; pack.conflicts.push(it); size+=t; }
+    pack.truncated=(pack.items.length<rep.items.length)||(pack.conflicts.length<rep.conflicts.length);
+    localStorage.setItem(CLOUD_PRESYNC_BACKUP_KEY,JSON.stringify(Object.assign(head,pack)));
+  }catch(e){ console.warn('Không lưu được bản sao lưu trước khi gộp',e); }
+}
+function cloudNotifyMerge(rep,pushed){
+  if(!rep) return;
+  const up=rep.added+rep.updated;
+  if(!up) return;
+  setTimeout(()=>{ try{
+    if(pushed){
+      let msg='Đã đưa lên cloud '+rep.added+' bản ghi mới'+(rep.updated?(', '+rep.updated+' bản ghi đã sửa'):'')+' từ trình duyệt này; dữ liệu mới từ cloud vẫn được giữ.';
+      if(rep.renamed) msg+=' '+rep.renamed+' phiếu trùng mã đã được cấp mã mới để không ghi đè phiếu khác.';
+      toast('pass','Đã ưu tiên đồng bộ dữ liệu trình duyệt',msg);
+    }else{
+      toast('warning','Chưa đưa được dữ liệu lên cloud','Dữ liệu trình duyệt vẫn được giữ nguyên và đã sao lưu; hệ thống sẽ thử đồng bộ lại ở lần lưu sau.');
+    }
+  }catch(e){} },800);
+}
+/* Sau khi đăng nhập (hoặc mở app khi đã có phiên đăng nhập): gộp ưu tiên trình duyệt -> đẩy lên Supabase trước -> hiển thị ngay.
+   Trả về true nếu đã nạp được dữ liệu vào state. */
+async function cloudSyncAfterLogin(localSt){
+  cloudMergeBusy=true;
+  try{
+    if(localSt){ try{ writeEmergencyBackup(JSON.stringify(localSt)); }catch(e){} }   /* sao lưu bản trình duyệt trước khi gộp */
+    const offline=cloudOfflineFlagSet();
+    const remote=await cloudLoadState();
+    let rep=null;
+    if(remote){
+      let merged=remote;
+      if(localSt && (cloudMode==='records' || offline)){
+        const r=cloudMergeLocalFirst(localSt,remote); merged=r.state; rep=r.rep; cloudSavePresyncBackup(rep);
+      }
+      state=merged;
+    }else if(localSt){ state=localSt; }
+    else return false;
+    migrateState();
+    await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
+    let pushed=false;
+    try{ await cloudPersistState(); pushed=true; }catch(e){ console.error('Supabase push error',e); }
+    if(pushed){ cloudClearOfflineFlag(); cloudSaveSyncSnap(); }
+    cloudNotifyMerge(rep,pushed);
+    return true;
+  }finally{ cloudMergeBusy=false; }
+}
+/* ===== HẾT PHẦN ƯU TIÊN DỮ LIỆU TRÌNH DUYỆT ===== */
 async function cloudPersistState(){
   if(!supabaseClient || !cloudUser || !state) return false;
   if(cloudMode==='legacy') return cloudPersistLegacy();
@@ -1652,6 +1823,7 @@ async function cloudApplyPending(){
   if(localClsDraft) state.clsDraft=localClsDraft;
   migrateState();
   await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
+  cloudSaveSyncSnap();
   if(typeof currentView!=='undefined' && currentView){
     renderNav();
     /* Đang mở phiếu CLS hoặc đang nhập chưa lưu: KHÔNG vẽ lại màn hình (tránh mất dữ liệu đang nhập). Dữ liệu đồng bộ đã được cập nhật trong bộ nhớ. */
@@ -1728,9 +1900,8 @@ async function cloudSignIn(email,password){
   cloudUser=data.user||data.session?.user||null;
   cloudReady=!!cloudUser;
   await subscribeCloudState();
-  const remote=await cloudLoadState();
-  if(remote){ state=remote; migrateState(); await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false); }
-  else await cloudPersistState();
+  /* Ưu tiên dữ liệu đang nhập trên trình duyệt: gộp, đẩy lên Supabase trước rồi hiển thị ngay. */
+  await cloudSyncAfterLogin(state);
   updateCloudIndicator();
   return cloudUser;
 }
@@ -1891,10 +2062,9 @@ async function loadState(){
   await initCloud();
   if(cloudUser){
     try{
-      const remote=await cloudLoadState();
-      if(remote){ state=remote; migrateState(); await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false); updateCloudIndicator(); return; }
-      if(localState){ state=localState; migrateState(); await cloudPersistState(); updateCloudIndicator(); return; }
-    }catch(e){ console.error('Supabase load error',e); }
+      /* Dữ liệu đã nhập trên trình duyệt (kể cả khi chưa đăng nhập) được ưu tiên đưa lên Supabase trước. */
+      if(await cloudSyncAfterLogin(localState)){ updateCloudIndicator(); return; }
+    }catch(e){ console.error('Supabase load error',e); if(state){ updateCloudIndicator(); return; } }
   }
   if(localState){ state=localState; migrateState(); updateCloudIndicator(); return; }
   state = buildInitialCatalog();
@@ -1902,6 +2072,7 @@ async function loadState(){
   updateCloudIndicator();
 }
 function queueSave(){
+  if(!cloudUser) cloudMarkOfflineEdit();   /* nhập liệu khi chưa đăng nhập Supabase -> đánh dấu để ưu tiên đẩy lên khi đăng nhập */
   clearTimeout(saveTimer);
   clearTimeout(retryTimer);
   showSaveIndicator('saving');
@@ -1925,8 +2096,8 @@ async function persistNow(retriesLeft){
   writeEmergencyBackup(payload);
   try{
     await storageAdapter.set(STORAGE_KEY, payload, false);
-    if(cloudUser){
-      try{ await cloudPersistState(); }
+    if(cloudUser && !cloudMergeBusy){
+      try{ await cloudPersistState(); cloudSaveSyncSnap(); }
       catch(cloudErr){ console.error('Supabase save error',cloudErr); toast('warning','Chưa đồng bộ lên cloud','Dữ liệu vẫn đã lưu an toàn trên thiết bị; hệ thống sẽ tiếp tục đồng bộ ở lần lưu sau.'); }
     }
     showSaveIndicator('saved');
@@ -8077,10 +8248,10 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
 /* Chỉ cố định vùng nhập số liệu của Quản lý Hóa chất MD; không thay đổi giao diện chung. */
 #view-chemical-iflash .chem-input,
 #view-chemical-dxi .chem-input,
-#view-chemical-allergen .chem-input{position:relative;z-index:8;}
+#view-chemical-allergen .chem-input{position:relative;z-index:1;}
 #view-chemical-iflash .chem-input:focus,
 #view-chemical-dxi .chem-input:focus,
-#view-chemical-allergen .chem-input:focus{position:relative;z-index:20;}
+#view-chemical-allergen .chem-input:focus{position:relative;z-index:2;}
 .chem-editing-lock{outline:2px solid rgba(22,119,179,.16)!important;}
 </style>
 <script id="smart-chemical-input-lock-final">
@@ -11416,6 +11587,8 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
 <style id="smart-chemical-md-added-modules-style">
   .chem-added-hub-note{font-size:11.5px;color:var(--text-muted);margin-top:4px}
   .chem-added-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}
+  #view-chemical-helminth .chem-added-table-wrap,#view-chemical-rapidwater .chem-added-table-wrap{max-height:670px}
+  #view-chemical-helminth .chem-added-machine-table thead th.chem-added-day,#view-chemical-rapidwater .chem-added-machine-table thead th.chem-added-day{z-index:6}
   .chem-added-machine-table{width:max-content;min-width:100%;border-collapse:collapse}
   .chem-added-machine-table th,.chem-added-machine-table td{border-bottom:1px solid var(--border);border-right:1px solid var(--border);vertical-align:top;padding:7px}
   .chem-added-machine-table th:last-child,.chem-added-machine-table td:last-child{border-right:0}
@@ -11567,7 +11740,8 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   function rapidWaterChemicalTests(){
     ensureAddedState();
     const list=Array.isArray(state.rapidWaterTests)?state.rapidWaterTests:[];
-    return list.filter(t=>t&&((t.category==='Test nhanh')||(t.category==='Test nước'))).map(t=>({name:String(t.name||'').trim(),unit:String(t.unit||'').trim(),sourceTestId:t.id,category:t.category})).filter(t=>t.name);
+    const seenRW=new Set();
+    return list.filter(t=>t&&((t.category==='Test nhanh')||(t.category==='Test nước'))).map(t=>({name:String(t.name||'').trim(),unit:String(t.unit||'').trim(),sourceTestId:t.id,category:t.category})).filter(t=>{if(!t.name)return false;const k=t.name.toLowerCase().replace(/\s+/g,' ');if(seenRW.has(k))return false;seenRW.add(k);return true;});
   }
   function renderChemicalRapidWater(){
     const tests=rapidWaterChemicalTests();
@@ -11728,68 +11902,69 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   };
   const DYE_STRAINS=['S. aureus 29213','E. coli 25922','M. leprae'];
   const DYE_STAFF=['Trâm','Ly','Lợi','Tú','Linh','Bích Phượng'];
+  window.SMQ_DYE_STAFF=DYE_STAFF; /* danh sách người thực hiện dùng chung với module Nhập QC Thuốc thử */
   // Nội dung môi trường lấy theo file Word "NK môi trường NC VS.docx".
   // Khi chọn môi trường, 3 nội dung dưới đây tự hiển thị; không cần nhập thủ công.
   const MEDIA_DEFAULTS={
     'Sabouraud':{
       landscape:'Màu vàng sẫm, bề mặt láng mịn, đồng nhất. Độ dày khoảng 4 mm. ∑ (lấy số liệu điền trên phiếu) đĩa',
-      micro:'Candida albicans 90028. Ủ 37°C/24h => Nấm mọc ổn định',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 37°C/18-24h => Không mọc vi khuẩn, vi nấm'
+      micro:'Candida albicans 90028. Ủ 37°C/24 giờ => Nấm mọc ổn định',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 37°C/18-24 giờ => Không mọc vi khuẩn, vi nấm'
     },
     'BA-Thạch máu':{
       landscape:'Màu đỏ tươi, bề mặt láng mịn, đồng nhất. Độ dày khoảng 3.5 mm. ∑ (lấy số liệu điền trên phiếu) đĩa',
-      micro:'S. aureus 29213 và E. coli 25922. Ủ 37°C/18-24h => Vi khuẩn mọc điển hình',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 37°C/18-24h => Không mọc vi khuẩn, vi nấm'
+      micro:'S. aureus 29213 và E. coli 25922. Ủ 37°C/18-24 giờ => Vi khuẩn mọc điển hình',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 37°C/18-24 giờ => Không mọc vi khuẩn, vi nấm'
     },
     'Mac Conkey':{
       landscape:'Màu hồng, bề mặt láng mịn, đồng nhất. Độ dày khoảng 3.5 mm. ∑ (lấy số liệu điền trên phiếu) đĩa',
-      micro:'S. aureus 29213 và E. coli 25922. Ủ 37°C/18-24h => Vi khuẩn mọc điển hình',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 37°C/18-24h => Không mọc vi khuẩn, vi nấm'
+      micro:'S. aureus 29213 và E. coli 25922. Ủ 37°C/18-24 giờ => Đĩa cấy S. aureus không mọc; Đĩa cấy E.coli mọc điển hình',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 37°C/18-24 giờ => Không mọc vi khuẩn, vi nấm'
     },
     'MH':{
       landscape:'Màu vàng nhạt, bề mặt láng mịn, đồng nhất. Độ dày khoảng 3.6 mm. ∑ (lấy số liệu điền trên phiếu) đĩa',
-      micro:'S. aureus 29213 và E. coli 25922. Ủ 37°C/18-24h => Vi khuẩn mọc điển hình',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 37°C/18-24h => Không mọc vi khuẩn, vi nấm'
+      micro:'S. aureus 29213 và E. coli 25922. Ủ 37°C/18-24 giờ => Vi khuẩn mọc điển hình',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 37°C/18-24 giờ => Không mọc vi khuẩn, vi nấm'
     },
     'BHI':{
       landscape:'Môi trường ống, màu vàng đậm, trong suốt, độ cao khoảng 2cm. ∑ (lấy số liệu điền trên phiếu) ống',
-      micro:'S. aureus 29213 và P. aeruginosa 27853. Ủ 37°C/18-24h => Đục. Ria lại BA mọc điển hình',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24h => Không mọc vi khuẩn, vi nấm'
+      micro:'S. aureus 29213 và P. aeruginosa 27853. Ủ 37°C/18-24 giờ => Đục. Ria lại BA mọc điển hình',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24 giờ => Không mọc vi khuẩn, vi nấm'
     },
     'GC (MT)':{
       landscape:'Màu nâu, bề mặt láng mịn, đồng nhất. Độ dày khoảng 3.5 mm. ∑ (lấy số liệu điền trên phiếu) đĩa',
-      micro:'N. gono 49226. Ủ 36.5°C-10% CO2/24-48h => Vi khuẩn mọc điển hình',
+      micro:'N. gono 49226. Ủ 36.5°C-10% CO2/24-48 giờ => Vi khuẩn mọc điển hình',
       sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 36.5°C-10% CO2/24-48h => Không mọc vi khuẩn, vi nấm'
     },
     'MR':{
       landscape:'Môi trường ống, màu vàng, đồng nhất. Độ cao khoảng 2 mm. ∑ (lấy số liệu điền trên phiếu) đĩa',
-      micro:'P. aeruginosa 27853 và E. coli 25922. Ủ 37°C 18-24h => P. aeruginosa: Không đổi màu; E. coli: Màu đỏ',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 36.5°C-10% CO2/24-48h => Không mọc vi khuẩn, vi nấm'
+      micro:'Cấy E.coli 25922 và P.aeruginosa 27853 vào mỗi ống, ủ 36.5°C/18-24 giờ => Ống cấy E.coli 25922 sau khi nhỏ 03 giọt thuốc thử Methylred vào trên bề mặt xuất hiện màu đỏ. Ống cấy P.aeruginosa không đổi màu sau khi nhỏ thuốc thử.',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) đĩa. Ủ 36.5°C-10% CO2/24-48 giờ => Không mọc vi khuẩn, vi nấm'
     },
-    'URE (MUI)':{
+    'MUI':{
       landscape:'Môi trường ống, màu vàng, đồng nhất, độ cao khoảng 2cm. ∑ (lấy số liệu điền trên phiếu) ống',
-      micro:'S. aureus 29213 và P. aeruginosa 27853. Ủ 37°C/18-24h => Đục. Ria lại BA mọc điển hình',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24h => Không mọc vi khuẩn, vi nấm'
+      micro:'S. aureus 29213 và P. aeruginosa 27853. Ủ 37°C/18-24 giờ => Đục. Ria lại BA mọc điển hình',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24 giờ => Không mọc vi khuẩn, vi nấm'
     },
     'NaCl 0.9%':{
       landscape:'Môi trường ống, trong suốt, độ cao khoảng 2cm. ∑ (lấy số liệu điền trên phiếu) ống',
-      micro:'S. aureus 29213 và E. coli 25922. Ủ 37°C/18-24h => NaCl ria lên BA. Vi khuẩn mọc điển hình',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24h => Ria lên BA. Không mọc vi khuẩn'
+      micro:'S. aureus 29213 và E. coli 25922. Ủ 37°C/18-24 giờ => NaCl ria lên BA. Vi khuẩn mọc điển hình',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24 giờ => Ria lên BA. Không mọc vi khuẩn'
     },
     'Chapman':{
       landscape:'Màu đỏ, nghiêng, đồng nhất. ∑ (lấy số liệu điền trên phiếu) ống',
-      micro:'S. aureus 29213 và CONS TPL. Ủ 37°C/18-24h => Chuyển sang màu vàng và không đổi màu (đỏ)',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24h => Không đổi màu (đỏ), không mọc vi khuẩn, vi nấm'
+      micro:'S. aureus 29213 và CONS TPL. Ủ 37°C/18-24 giờ => Chuyển sang màu vàng và không đổi màu (đỏ)',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24 giờ => Không đổi màu (đỏ), không mọc vi khuẩn, vi nấm'
     },
     'KIA':{
       landscape:'Màu đỏ gạch, thạch nghiêng 1:1, đồng nhất. ∑ (lấy số liệu điền trên phiếu) ống',
-      micro:'E. coli 25922 và P. aeruginosa 27853. Ủ 37°C/18-24h (kovac) => P. aeruginosa không đổi màu. E. coli đổi màu',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24h => Không mọc vi khuẩn, vi nấm'
+      micro:'E. coli 25922 và P. aeruginosa 27853. Ủ 37°C/18-24 giờ (kovac) => P. aeruginosa không đổi màu. E. coli đổi màu',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24 giờ => Không mọc vi khuẩn, vi nấm'
     },
     'Citrate':{
       landscape:'Màu xanh lá, thạch nghiêng, bề mặt láng mịn. ∑ (lấy số liệu điền trên phiếu) ống',
-      micro:'E. coli 25922 và P. aeruginosa 27853. Ủ 37°C/18-24h => E. coli không đổi màu. P. aeruginosa xanh dương',
-      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24h => Không mọc vi khuẩn, vi nấm'
+      micro:'E. coli 25922 và P. aeruginosa 27853. Ủ 37°C/18-24 giờ => E. coli không đổi màu. P. aeruginosa xanh dương',
+      sterility:'Lấy (01, 02,… tùy vào phiếu điền) ống. Ủ 37°C/18-24 giờ => Không mọc vi khuẩn, vi nấm'
     }
   };
   const esc=v=>typeof escapeHtml==='function'?escapeHtml(v??''):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12140,6 +12315,385 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
     const r=selectedMedia(),clean=cleanMediaText(r);if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('XN-BM 5.8.4.07',{views:[{showGridLines:false}]});ws.pageSetup={orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.25,right:.25,top:.35,bottom:.35,header:.1,footer:.1}};[15,20,16,22,30,30,14,17,18].forEach((w,i)=>ws.getColumn(i+1).width=w);ws.mergeCells('A1:I1');ws.getCell('A1').value='BỆNH VIỆN PHONG-DA LIỄU TW QUY HÒA';ws.mergeCells('A2:I2');ws.getCell('A2').value='KHOA VI SINH-MIỄN DỊCH';const month=qcMonthYear(r.qcDate);ws.mergeCells('A3:I3');ws.getCell('A3').value=`SỔ NỘI KIỂM MÔI TRƯỜNG NUÔI CẤY VI SINH THÁNG ${month}`;['A1','A2','A3'].forEach((a,i)=>{ws.getCell(a).font={name:'Times New Roman',size:i===2?14:12,bold:true};ws.getCell(a).alignment={horizontal:'center',vertical:'middle'};});const border={top:{style:'thin',color:{argb:'FF000000'}},left:{style:'thin',color:{argb:'FF000000'}},bottom:{style:'thin',color:{argb:'FF000000'}},right:{style:'thin',color:{argb:'FF000000'}}};const headers=['Ngày thực hiện nội kiểm','Tên môi trường','Ngày pha chế','Đánh giá cảm quan','Kiểm tra Vi sinh','Kiểm tra vô khuẩn','Kết quả','Người thực hiện','Ghi chú'];headers.forEach((t,i)=>{const c=ws.getCell(5,i+1);c.value=t;c.font={name:'Times New Roman',size:9,bold:true};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;});ws.getRow(5).height=45;const has=[r.qcDate,r.mediaType,r.phaDate,clean.landscape,r.micro,clean.sterility,r.result,r.staff,r.note].some(v=>safe(v));if(has){ws.getRow(6).values=[(r.qcDate?fmtDMY(r.qcDate):''),r.mediaType||'',(r.phaDate?fmtDMY(r.phaDate):''),clean.landscape||'',r.micro||'',clean.sterility||'',r.result||'',r.staff||'',r.note||''];ws.getRow(6).height=55;ws.getRow(6).eachCell(c=>{c.font={name:'Times New Roman',size:9};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;});}const foot=8;ws.mergeCells(`F${foot}:G${foot}`);ws.getCell(`F${foot}`).value='KHOA VI SINH – MIỄN DỊCH';ws.getCell(`F${foot}`).font={name:'Times New Roman',size:11,bold:true};ws.getCell(`F${foot}`).alignment={horizontal:'center'};[foot,foot+1,foot+2,foot+3].forEach(rr=>{for(let cc=6;cc<=7;cc++)ws.getCell(rr,cc).border=border;});ws.mergeCells(`F${foot+1}:G${foot+1}`);ws.getCell(`F${foot+1}`).value='TRƯỞNG KHOA';ws.getCell(`F${foot+1}`).font={name:'Times New Roman',size:11,bold:true};ws.getCell(`F${foot+1}`).alignment={horizontal:'center'};ws.mergeCells(`F${foot+2}:G${foot+2}`);ws.getCell(`F${foot+2}`).value='(Đã ký)';ws.getCell(`F${foot+2}`).alignment={horizontal:'center'};if(r.chief){ws.mergeCells(`F${foot+3}:G${foot+3}`);ws.getCell(`F${foot+3}`).value=r.chief;ws.getCell(`F${foot+3}`).alignment={horizontal:'center'};}const fy=foot+(r.chief?4:3);ws.mergeCells(`A${fy}:I${fy}`);ws.getCell(`A${fy}`).value='XN-BM 5.8.4/07    Lần ban hành 01.01/01/2026    Trang 1/1';ws.getCell(`A${fy}`).font={name:'Times New Roman',size:9,bold:true};ws.getCell(`A${fy}`).alignment={horizontal:'center'};ws.printArea=`A1:I${fy}`;await saveWorkbook(wb,'XN-BM_5.8.4.07_Moi_Truong_Nuoi_Cay_'+todayISO()+'.xlsx');
   };
   window.exportMediaWord=function(){officeWordDownload('XN-BM_5.8.4.07_Moi_Truong_Nuoi_Cay',mediaPrintHtml(selectedMedia()),'landscape');};
+})();
+</script>
+
+<script id="smart-qc-reagent-extension">
+(function(){
+  'use strict';
+  /* ===== MODULE NHẬP QC THUỐC THỬ (thuộc Nhập QC Vi sinh) =====
+     Nội dung mặc định lấy từ file Word "Thuốc_thử.docx". Chọn Thuốc thử -> tự hiển thị Vi khuẩn chứng, Mã chủng, Kết quả
+     tương ứng; 3 ô này vẫn sửa trực tiếp được. Dữ liệu lưu ở state.qcReagent (tự lưu + đồng bộ cloud như các module khác). */
+  const REAGENT_DEFAULTS={
+    'Catalase':{strains:'S. aureus\nE. fae',codes:'25923\n29212',result:'Sủi bọt (+)\nKhông sủi bọt (+)'},
+    'Coagulase':{strains:'S. aureus\nCONS',codes:'25923\nTpl',result:'Đông huyết tương (+)\nKhông đông huyết tương (-)'},
+    'Oxidase':{strains:'E. coli\nP. ae',codes:'25922\n27853',result:'Không đổi màu (-)\nĐổi màu tím (+)'},
+    'Methy Red':{strains:'E. coli\nP. ae',codes:'25922\n27853',result:'Đổi màu đỏ (+)\nKhông đổi màu (-)'},
+    'Kovac':{strains:'E. coli\nP. ae',codes:'25922\n27853',result:'Đổi màu đỏ (+)\nKhông đổi màu (-)'}
+  };
+  const VIEW_ID='virology-reagent';
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(v??''):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const nl2br=v=>esc(v).replace(/\r?\n/g,'<br>');
+  const safe=v=>String(v??'').trim();
+  const D=v=>{const s=String(v||'').trim();const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:s;};
+  const staffList=()=>(Array.isArray(window.SMQ_DYE_STAFF)&&window.SMQ_DYE_STAFF.length)?window.SMQ_DYE_STAFF:['Trâm','Ly','Lợi','Tú','Linh','Bích Phượng'];
+  function ensure(){
+    if(typeof state==='undefined'||!state)return false;
+    if(!state.qcReagent||typeof state.qcReagent!=='object'||Array.isArray(state.qcReagent))state.qcReagent={rows:[],custom:{},types:[]};
+    const q=state.qcReagent;
+    if(!Array.isArray(q.rows))q.rows=[];
+    if(!q.custom||typeof q.custom!=='object')q.custom={};
+    if(!Array.isArray(q.types))q.types=[];
+    return true;
+  }
+  function reagentTypes(){ensure();return [...new Set(Object.keys(REAGENT_DEFAULTS).concat(state.qcReagent.types||[]).filter(Boolean))];}
+  function preset(name){ensure();return state.qcReagent.custom[name]||REAGENT_DEFAULTS[name]||{strains:'',codes:'',result:''};}
+  /* Đạt / Không đạt theo từng vi khuẩn chứng (dòng trên / dòng dưới của ô Kết quả) */
+  const EVAL_OPTS=['Đạt','Không đạt'];
+  function readEvals(){const out=[];document.querySelectorAll('#view-'+VIEW_ID+' [data-rg-eval]').forEach(s=>{out[+s.getAttribute('data-rg-eval')]=s.value;});return Array.from(out,v=>v||'');}
+  function buildEvals(saved){
+    const host=document.getElementById('smq_rg_evals');if(!host)return;
+    const cur=Array.isArray(saved)?saved:readEvals();
+    let lines=fv('smq_rg_strains').split(/\r?\n/);
+    if(!lines.some(x=>x.trim()))lines=fv('smq_rg_result').split(/\r?\n/);
+    const items=[];lines.forEach((t,i)=>{if(t.trim())items.push(`<label class="field"><span class="fl-label">${esc(t.trim())}</span><select data-rg-eval="${i}"><option value="">— Chọn —</option>${EVAL_OPTS.map(o=>`<option>${o}</option>`).join('')}</select></label>`);});
+    host.innerHTML=items.length?`<div class="smq-rg-evalbox"><div class="smq-rg-evaltitle">Đánh giá Đạt / Không đạt theo từng vi khuẩn chứng</div><div class="smq-rg-evalgrid">${items.join('')}</div></div>`:'';
+    host.querySelectorAll('[data-rg-eval]').forEach(sel=>{const v=cur[+sel.getAttribute('data-rg-eval')];if(v)sel.value=v;});
+  }
+  window.smqRgRebuildEvals=function(){buildEvals();};
+  function resultText(x){
+    const rl=String(x.result||'').split(/\r?\n/),sl=String(x.strains||'').split(/\r?\n/),ev=Array.isArray(x.evals)?x.evals:[];
+    const n=Math.max(rl.length,sl.length,ev.length),out=[];
+    for(let i=0;i<n;i++){
+      const r=(rl[i]||'').trim(),e=ev[i]||'',s=(sl[i]||'').trim();
+      out.push(r?(e?r+' – '+e:r):(e?(s?s+': ':'')+e:''));
+    }
+    while(out.length&&!out[out.length-1])out.pop();
+    return out.join('\n');
+  }
+  const ymOf=d=>{const m=String(d||'').match(/^(\d{4})-(\d{2})/);return m?m[1]+'-'+m[2]:'';};
+  const monthText=ym=>{const m=String(ym||'').match(/^(\d{4})-(\d{2})$/);return m?`${m[2]}/${m[1]}`:'……/……';};
+
+  /* ---------- CSS của phiếu in (dùng chung cho xem trước trên màn hình và cửa sổ in PDF) ---------- */
+  const RG_BASE_CSS=`
+.smq-exact-reagent-form{font-family:'Times New Roman',Times,serif;color:#111;background:#fff;width:100%;margin:0 auto}
+.smq-exact-reagent-form .exact-reagent-head{text-align:center;line-height:1.25;font-size:14pt;margin-bottom:8px;color:#111}
+.smq-exact-reagent-form .exact-reagent-head .b{font-weight:700}
+.smq-exact-reagent-form .exact-reagent-head .sp{height:1.25em}
+.smq-exact-reagent-form .exact-reagent-table{width:100%;border-collapse:collapse;border-spacing:0;table-layout:fixed;margin:5mm 0}
+.smq-exact-reagent-form .exact-reagent-table th,.smq-exact-reagent-form .exact-reagent-table td{border:1px solid #000!important;padding:3px 4px;vertical-align:middle;line-height:1.2;background:#fff!important;color:#111!important;text-transform:none!important;letter-spacing:0!important;white-space:normal;overflow:visible;overflow-wrap:break-word;word-break:normal;hyphens:none}
+.smq-exact-reagent-form .exact-reagent-table th{text-align:center;font-weight:700;font-size:11pt!important}
+.smq-exact-reagent-form .exact-reagent-table th.n{font-weight:400;font-size:14pt!important}
+.smq-exact-reagent-form .exact-reagent-table td{font-size:12pt!important}
+.smq-exact-reagent-form .exact-reagent-table td.c{text-align:center}
+.smq-exact-reagent-form .exact-reagent-table td.d{text-align:center;white-space:nowrap;font-size:11pt!important;padding-left:1px;padding-right:1px}
+.smq-exact-reagent-form .exact-reagent-table th.s{white-space:nowrap;padding-left:1px;padding-right:1px}
+.smq-exact-reagent-form .exact-reagent-table td.l{text-align:left}
+.smq-exact-reagent-form .exact-reagent-table tr.blank td{height:8mm;padding-top:0;padding-bottom:0}
+.smq-exact-reagent-form .exact-reagent-sign{display:flex;justify-content:flex-end;margin-top:6mm;padding-right:5%;font-size:14pt;line-height:1.25;color:#111}
+.smq-exact-reagent-form .exact-reagent-sign .in{min-width:36%;text-align:center}
+.smq-exact-reagent-form .exact-reagent-sign .b{font-weight:700}
+.smq-exact-reagent-form .exact-reagent-sign img{display:inline-block;vertical-align:middle}
+`;
+  const RG_PRINT_CSS=RG_BASE_CSS+`
+@page{size:A4 landscape;margin:8mm}
+@media print{html,body{width:100%;margin:0!important;padding:0!important}.smq-exact-reagent-form{width:100%!important}.exact-reagent-table tr{break-inside:avoid;page-break-inside:avoid}}
+body{margin:0}
+`;
+  (function injectCss(){
+    if(document.getElementById('smart-qc-reagent-screen-style'))return;
+    const st=document.createElement('style');st.id='smart-qc-reagent-screen-style';
+    st.textContent=RG_BASE_CSS+`
+.smq-rg-multi textarea{min-height:64px;line-height:1.35}
+.smq-rg-evalbox{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface-2)}
+.smq-rg-evaltitle{font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px}
+.smq-rg-evalgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:760px){.smq-rg-evalgrid{grid-template-columns:1fr}}
+.smq-rg-filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.smq-rg-filter-row select{min-width:200px}
+.smq-new-rg-form{display:flex;flex-direction:column;gap:10px}
+.smq-new-rg-form textarea{min-height:70px}
+`;
+    document.head.appendChild(st);
+  })();
+
+  /* ---------- Điều hướng: thêm vào nhóm "Nhập QC Vi sinh" ---------- */
+  function addSubnav(){
+    try{
+      const group=NAV.find(g=>g.items&&g.items.some(x=>x.id==='virology'));
+      const parent=group&&group.items.find(x=>x.id==='virology');
+      if(!parent)return;
+      parent.children=parent.children||[];
+      if(!parent.children.some(c=>c.id===VIEW_ID))parent.children.push({id:VIEW_ID,label:'Nhập QC Thuốc thử',icon:iconFlask()});
+    }catch(e){console.warn('QC reagent nav',e)}
+  }
+  function ensureViews(){
+    const content=document.getElementById('content');if(!content)return;
+    if(!document.getElementById('view-'+VIEW_ID)){const v=document.createElement('div');v.className='view';v.id='view-'+VIEW_ID;content.appendChild(v);}
+  }
+  const prevBuild=window.buildViewShells;
+  window.buildViewShells=function(){if(typeof prevBuild==='function')prevBuild();ensureViews();addSubnav();};
+  addSubnav();ensureViews();
+  try{VIEW_META[VIEW_ID]=['Nhập QC Thuốc thử','Nội kiểm tra chất lượng thuốc thử — Catalase, Coagulase, Oxidase, Methy Red, Kovac'];}catch(e){console.warn('QC reagent meta',e);}
+  const prevRender=window.renderView;
+  window.renderView=function(view){
+    if(view===VIEW_ID){renderReagent();if(typeof formatVisibleDates==='function')formatVisibleDates(document.getElementById('view-'+view)||document.body);return;}
+    if(typeof prevRender==='function')return prevRender.apply(this,arguments);
+  };
+  const prevGo=window.go;
+  window.go=function(view){
+    if(view===VIEW_ID){
+      currentView=view;
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      const el=document.getElementById('view-'+view);if(el)el.classList.add('active');
+      document.getElementById('viewTitle').textContent=VIEW_META[view][0];
+      document.getElementById('viewSub').textContent=VIEW_META[view][1];
+      renderNav();renderReagent();
+      toggleSidebar(false);window.scrollTo(0,0);return;
+    }
+    if(typeof prevGo==='function')return prevGo.apply(this,arguments);
+  };
+
+  /* ---------- Form nhập ---------- */
+  let editIdx=null,filterType='';
+  function fv(id){const e=document.getElementById(id);return e?e.value:'';}
+  function formValues(){
+    return {reagent:fv('smq_rg_type'),stt:safe(fv('smq_rg_stt')),recvDate:fv('smq_rg_recv'),phaDate:fv('smq_rg_pha'),qcDate:fv('smq_rg_date'),
+      strains:fv('smq_rg_strains'),codes:fv('smq_rg_codes'),expDate:fv('smq_rg_exp'),result:fv('smq_rg_result'),
+      staff:fv('smq_rg_staff'),chief:safe(fv('smq_rg_chief')),note:fv('smq_rg_note'),evals:readEvals()};
+  }
+  function fillPreset(){
+    const p=preset(fv('smq_rg_type'));
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
+    set('smq_rg_strains',p.strains);set('smq_rg_codes',p.codes);set('smq_rg_result',p.result);
+    buildEvals([]);
+  }
+  window.smqRgTypeChange=function(){fillPreset();};
+  function renderReagent(){
+    if(!ensure())return;editIdx=null;
+    const el=document.getElementById('view-'+VIEW_ID);if(!el)return;
+    const types=reagentTypes();
+    el.innerHTML=`<div class="card"><div class="card-head"><div><h3>Nhập QC Thuốc thử</h3><div class="smq-subnav-note">Chọn Thuốc thử để tự hiển thị Vi khuẩn chứng, Mã chủng và Kết quả tương ứng. Ba ô này có thể chỉnh sửa trực tiếp.</div></div><div class="btn-row"><button class="btn sm" onclick="addNewReagent()">＋ Thêm thuốc thử mới</button></div></div>
+    <div class="card-body"><div class="smq-grid">
+      <label class="field"><span class="fl-label">Thuốc thử / thanh lọc</span><select id="smq_rg_type" onchange="smqRgTypeChange()">${types.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>
+      <label class="field"><span class="fl-label">STT</span><input id="smq_rg_stt" placeholder="Tự đánh số khi lưu"></label>
+      <label class="field"><span class="fl-label">Ngày nhận</span><input id="smq_rg_recv" type="date"></label>
+      <label class="field"><span class="fl-label">Ngày pha</span><input id="smq_rg_pha" type="date"></label>
+      <label class="field"><span class="fl-label">Ngày kiểm tra</span><input id="smq_rg_date" type="date" value="${todayISO()}"></label>
+      <label class="field"><span class="fl-label">Hạn sử dụng</span><input id="smq_rg_exp" type="date"></label>
+      <label class="field smq-rg-multi"><span class="fl-label">Vi khuẩn chứng</span><textarea id="smq_rg_strains" placeholder="Vi khuẩn chứng" oninput="smqRgRebuildEvals()"></textarea></label>
+      <label class="field smq-rg-multi"><span class="fl-label">Mã chủng</span><textarea id="smq_rg_codes" placeholder="Mã chủng"></textarea></label>
+      <label class="field smq-rg-multi span2"><span class="fl-label">Kết quả</span><textarea id="smq_rg_result" placeholder="Kết quả" oninput="smqRgRebuildEvals()"></textarea></label>
+      <div class="span2" id="smq_rg_evals"></div>
+      <label class="field"><span class="fl-label">Người thực hiện</span><select id="smq_rg_staff"><option value="">— Chọn —</option>${staffList().map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>
+      <label class="field"><span class="fl-label">TRƯỞNG KHOA</span><input id="smq_rg_chief" placeholder="Để trống để điền"></label>
+      <label class="field span2"><span class="fl-label">Ghi chú</span><textarea id="smq_rg_note" placeholder="Nhập ghi chú"></textarea></label>
+    </div>
+    <div class="btn-row" style="margin-top:12px"><button class="btn primary" onclick="saveReagent()">✓ Lưu QC thuốc thử</button><button class="btn" onclick="previewReagent()">👁 Xem trước</button><button class="btn" onclick="exportReagentExcel()">⬇ Excel</button><button class="btn" onclick="exportReagentWord()">⬇ Word</button><button class="btn" onclick="printReagent()">🖨 PDF</button></div></div></div>
+    <div id="smq_rg_history" style="margin-top:14px"></div>`;
+    fillPreset();renderHistory();
+  }
+  function collect(){
+    const v=formValues();
+    const sameMonth=state.qcReagent.rows.filter(r=>ymOf(r.qcDate)===ymOf(v.qcDate)).length;
+    return {...v,id:'RG'+Date.now().toString(36),sttManual:!!v.stt,stt:v.stt||String(sameMonth+1),createdAt:new Date().toISOString(),user:(state.settings&&state.settings.currentUser)||''};
+  }
+  window.saveReagent=function(){
+    if(!ensure())return;
+    const row=collect();
+    if(!row.reagent){toast('warning','Thiếu thuốc thử','Vui lòng chọn Thuốc thử.');return;}
+    if(editIdx!==null&&state.qcReagent.rows[editIdx]){
+      const old=state.qcReagent.rows[editIdx];
+      row.id=old.id||row.id;row.createdAt=old.createdAt||row.createdAt;row.updatedAt=new Date().toISOString();
+      if(!row.sttManual)row.stt=old.stt||row.stt;
+      state.qcReagent.rows[editIdx]=row;editIdx=null;queueSave();renderReagent();toast('pass','Đã cập nhật QC thuốc thử','Phiếu đã được cập nhật.');return;
+    }
+    state.qcReagent.rows.unshift(row);queueSave();renderReagent();toast('pass','Đã lưu QC thuốc thử','Phiếu đã được lưu và sẵn sàng in/xuất.');
+  };
+  window.smqRgFilter=function(){filterType=fv('smq_rg_filter');renderHistory();};
+  function renderHistory(){
+    const host=document.getElementById('smq_rg_history');if(!host||!ensure())return;
+    const all=state.qcReagent.rows;
+    const list=smartRecentAsc(all,r=>r.qcDate,0).filter(o=>!filterType||o.item.reagent===filterType);
+    const shown=list.length>50?list.slice(list.length-50):list;
+    const rows=shown.map((o,n)=>{const r=o.item,i=o.idx;return `<tr><td>${n+1}</td><td>${esc(r.reagent)}</td><td>${esc(r.qcDate)}</td><td>${esc(r.expDate||'—')}</td><td>${esc(r.staff||'—')}</td><td><button class="btn sm" onclick="smqRgPreviewByIndex(${i})">👁 Xem</button><button class="btn sm" onclick="smqRgEditByIndex(${i})">Sửa</button><button class="btn sm" onclick="smqRgPrintByIndex(${i})">🖨 In</button><button class="btn sm" onclick="smqRgDeleteByIndex(${i})">Xóa</button></td></tr>`;}).join('');
+    const opts=['<option value="">Tất cả thuốc thử</option>'].concat(reagentTypes().map(x=>`<option value="${esc(x)}"${x===filterType?' selected':''}>${esc(x)}</option>`)).join('');
+    host.innerHTML=`<div class="card"><div class="card-head"><h3>Lịch sử QC thuốc thử</h3><div class="smq-rg-filter-row"><select id="smq_rg_filter" onchange="smqRgFilter()" aria-label="Lọc thuốc thử">${opts}</select><span class="hint">${all.length} phiếu</span></div></div><div class="card-body"><div class="table-wrap"><table><thead><tr><th>#</th><th>Thuốc thử</th><th>Ngày kiểm tra</th><th>Hạn sử dụng</th><th>Người thực hiện</th><th>Thao tác</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="tbl-empty">Chưa có dữ liệu.</td></tr>'}</tbody></table></div></div></div>`;
+    if(typeof formatVisibleDates==='function')formatVisibleDates(host);
+  }
+  window.smqRgEditByIndex=function(i){
+    if(!ensure())return;const r=state.qcReagent.rows[i];if(!r)return;
+    const sel=document.getElementById('smq_rg_type');if(!sel)return;
+    if(r.reagent&&![...sel.options].some(o=>o.value===r.reagent||o.text===r.reagent)){const o=document.createElement('option');o.textContent=r.reagent;sel.appendChild(o);}
+    sel.value=r.reagent||sel.value;
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=(v==null?'':v);};
+    set('smq_rg_stt',r.sttManual?r.stt:'');set('smq_rg_recv',r.recvDate);set('smq_rg_pha',r.phaDate);set('smq_rg_date',r.qcDate);set('smq_rg_exp',r.expDate);
+    set('smq_rg_strains',r.strains);set('smq_rg_codes',r.codes);set('smq_rg_result',r.result);set('smq_rg_staff',r.staff);set('smq_rg_chief',r.chief);set('smq_rg_note',r.note);
+    buildEvals(r.evals||[]);
+    editIdx=i;
+    const btn=document.querySelector('#view-'+VIEW_ID+' button[onclick="saveReagent()"]');
+    if(btn){btn.textContent='✓ Cập nhật QC thuốc thử';if(!document.getElementById('smq_rg_cancel_edit')){const c=document.createElement('button');c.className='btn ghost';c.id='smq_rg_cancel_edit';c.textContent='Hủy sửa';c.onclick=function(){renderReagent();};btn.insertAdjacentElement('afterend',c);}}
+    sel.scrollIntoView({behavior:'smooth',block:'center'});
+  };
+  window.smqRgDeleteByIndex=function(i){
+    if(!ensure())return;const r=state.qcReagent.rows[i];if(!r)return;
+    if(!window.confirm('Xóa phiếu QC thuốc thử'+(r.reagent?' '+r.reagent:'')+(r.qcDate?' ngày '+r.qcDate:'')+'?\nThao tác này không thể hoàn tác.'))return;
+    state.qcReagent.rows.splice(i,1);queueSave();renderHistory();toast('pass','Đã xóa phiếu QC thuốc thử','Phiếu đã được xóa khỏi danh sách.');
+  };
+
+  /* ---------- Thêm thuốc thử mới ---------- */
+  window.addNewReagent=function(){
+    showModal('Thêm thuốc thử mới',`<div class="smq-new-rg-form"><label class="field"><span class="fl-label">Tên thuốc thử</span><input id="smq_new_rg_name" placeholder="Nhập tên thuốc thử mới" autocomplete="off"></label><label class="field"><span class="fl-label">Vi khuẩn chứng</span><textarea id="smq_new_rg_strains" placeholder="Vi khuẩn chứng (mỗi chủng một dòng)"></textarea></label><label class="field"><span class="fl-label">Mã chủng</span><textarea id="smq_new_rg_codes" placeholder="Mã chủng (mỗi mã một dòng, theo thứ tự vi khuẩn chứng)"></textarea></label><label class="field"><span class="fl-label">Kết quả</span><textarea id="smq_new_rg_result" placeholder="Kết quả (mỗi kết quả một dòng, theo thứ tự vi khuẩn chứng)"></textarea></label></div><div class="btn-row" style="margin-top:12px"><button class="btn primary" onclick="saveNewReagent()">Lưu</button><button class="btn ghost" onclick="closeModal()">Đóng</button></div>`,'wide');
+  };
+  window.saveNewReagent=function(){
+    if(!ensure())return;
+    const g=id=>document.getElementById(id)?.value||'';
+    const name=safe(g('smq_new_rg_name'));
+    if(!name){toast('warning','Thiếu thông tin','Vui lòng nhập Tên thuốc thử.');return;}
+    const exists=reagentTypes().some(x=>x.toLowerCase()===name.toLowerCase());
+    const realName=reagentTypes().find(x=>x.toLowerCase()===name.toLowerCase())||name;
+    state.qcReagent.custom[realName]={strains:g('smq_new_rg_strains').trim(),codes:g('smq_new_rg_codes').trim(),result:g('smq_new_rg_result').trim()};
+    if(!REAGENT_DEFAULTS[realName]&&!state.qcReagent.types.includes(realName))state.qcReagent.types.push(realName);
+    queueSave();closeModal();renderReagent();
+    const sel=document.getElementById('smq_rg_type');if(sel){sel.value=realName;fillPreset();}
+    toast('pass',exists?'Đã cập nhật thuốc thử':'Đã thêm thuốc thử',realName);
+  };
+
+  /* ---------- Phiếu in: SỔ NỘI KIỂM CHẤT LƯỢNG THUỐC THỬ THÁNG ---------- */
+  function sortRows(list){return list.slice().sort((a,b)=>{const da=String(a.qcDate||''),db=String(b.qcDate||'');return da<db?-1:da>db?1:String(a.createdAt||'').localeCompare(String(b.createdAt||''));});}
+  function bookFor(ym,extra){
+    ensure();
+    let list=state.qcReagent.rows.filter(r=>ymOf(r.qcDate)===ym);
+    if(extra){const k=list.findIndex(r=>extra.id&&r.id===extra.id);if(k>=0)list[k]=extra;else list.push(extra);}
+    list=sortRows(list);
+    const chief=(extra&&extra.chief)||(list.slice().reverse().find(r=>safe(r.chief))||{}).chief||'';
+    return {ym,rows:list.map((r,i)=>({...r,stt:(r.sttManual&&safe(r.stt))?r.stt:String(i+1)})),chief};
+  }
+  const COLS=[450,950,900,900,950,850,750,950,2250,900,950];
+  function bodyRows(rows){
+    const tr=rows.map(x=>`<tr><td class="c">${esc(x.stt)}</td><td class="c">${esc(x.reagent||'')}</td><td class="d">${esc(D(x.recvDate))}</td><td class="d">${esc(D(x.phaDate))}</td><td class="d">${esc(D(x.qcDate))}</td><td class="c">${nl2br(x.strains)}</td><td class="c">${nl2br(x.codes)}</td><td class="d">${esc(D(x.expDate))}</td><td class="l">${nl2br(resultText(x))}</td><td class="c">${esc(x.staff||'')}</td><td class="l">${nl2br(x.note)}</td></tr>`);
+    return tr.join('');
+  }
+  function sigHtml(chief){
+    const img=(chief&&typeof window.SMART_QC_SIGNATURE_HTML==='function'&&window.SMART_QC_SIGNATURE_HTML(chief))||'(Đã ký)';
+    return `<div class="exact-reagent-sign"><div class="in"><div class="b">KHOA VI SINH – MIỄN DỊCH</div><div class="b">TRƯỞNG KHOA</div><div>${img}</div><div>${esc(chief||'')}</div></div></div>`;
+  }
+  function printHtml(book){
+    const sum=COLS.reduce((a,b)=>a+b,0);
+    const cg=COLS.map(w=>`<col style="width:${(w*100/sum).toFixed(2)}%">`).join('');
+    return `<div class="smq-exact-reagent-form"><div class="exact-reagent-head"><div>BỆNH VIỆN PHONG – DA LIỄU TRUNG ƯƠNG QUY HÒA</div><div class="b">KHOA VI SINH – MIỄN DỊCH</div><div class="sp"></div><div class="b">SỔ NỘI KIỂM CHẤT LƯỢNG THUỐC THỬ THÁNG ${esc(monthText(book.ym))}</div></div><table class="exact-reagent-table"><colgroup>${cg}</colgroup><thead><tr><th class="s" rowspan="2">STT</th><th class="n" rowspan="2">Thuốc thử</th><th colspan="2">Ngày</th><th rowspan="2">Ngày kiểm tra</th><th rowspan="2">Vi khuẩn chứng</th><th rowspan="2">Mã chủng</th><th rowspan="2">Hạn sử dụng</th><th rowspan="2">Kết quả</th><th rowspan="2">Người thực hiện</th><th rowspan="2">Ghi chú</th></tr><tr><th class="n">Nhận</th><th class="n">Pha</th></tr></thead><tbody>${bodyRows(book.rows)}</tbody></table>${sigHtml(book.chief)}</div>`;
+  }
+  function openPrint(title,html){
+    const w=window.open('','_blank','width=1200,height=900');if(!w){toast('warning','Không thể mở cửa sổ in','Hãy cho phép cửa sổ bật lên.');return;}
+    const hh=typeof window.SMART_QC_APPLY_SIGNATURES==='function'?window.SMART_QC_APPLY_SIGNATURES(html):html;
+    w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${RG_PRINT_CSS}</style></head><body>${hh}</body></html>`);
+    w.document.close();setTimeout(()=>w.print(),600);
+  }
+  function formBook(){ /* sổ tháng của "Ngày kiểm tra" đang chọn; chưa có phiếu đã lưu thì dùng nội dung đang nhập */
+    ensure();const v=formValues(),ym=ymOf(v.qcDate);
+    const b=bookFor(ym);
+    if(b.rows.length)return b;
+    return bookFor(ym,{...v,id:'__form'});
+  }
+  window.previewReagent=function(){
+    ensure();const v=formValues(),ym=ymOf(v.qcDate);
+    const cur=editIdx!==null&&state.qcReagent.rows[editIdx]?{...v,id:state.qcReagent.rows[editIdx].id,sttManual:!!v.stt}:{...v,id:'__form',sttManual:!!v.stt};
+    showModal('Xem trước · QC Thuốc thử',printHtml(bookFor(ym,cur))+'<div class="btn-row" style="margin-top:12px"><button class="btn primary" onclick="printReagent();closeModal()">🖨 In PDF</button><button class="btn ghost" onclick="closeModal()">Đóng</button></div>','wide');
+  };
+  window.printReagent=function(){openPrint('QC Thuốc thử',printHtml(formBook()));};
+  window.smqRgPreviewByIndex=function(i){ensure();const r=state.qcReagent.rows[i];if(!r)return;showModal('Xem trước · QC Thuốc thử',printHtml(bookFor(ymOf(r.qcDate),r))+'<div class="btn-row" style="margin-top:12px"><button class="btn primary" onclick="smqRgPrintByIndex('+i+');closeModal()">🖨 In PDF</button><button class="btn ghost" onclick="closeModal()">Đóng</button></div>','wide');};
+  window.smqRgPrintByIndex=function(i){ensure();const r=state.qcReagent.rows[i];if(r)openPrint('QC Thuốc thử',printHtml(bookFor(ymOf(r.qcDate),r)));};
+
+  /* ---------- Xuất Word (.docx) đúng form file Word mẫu ---------- */
+  function wxe(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function wRun(text,o={}){
+    const rpr=`<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/>${o.b?'<w:b/>':''}<w:sz w:val="${o.sz||24}"/><w:szCs w:val="${o.sz||24}"/>`;
+    const parts=String(text??'').split(/\r?\n/);
+    return `<w:r><w:rPr>${rpr}</w:rPr>${parts.map((p,i)=>(i?'<w:br/>':'')+`<w:t xml:space="preserve">${wxe(p)}</w:t>`).join('')}</w:r>`;
+  }
+  function wPara(runs,jc,after){return `<w:p><w:pPr><w:spacing w:after="${after||0}" w:line="240" w:lineRule="auto"/><w:jc w:val="${jc||'left'}"/></w:pPr>${runs}</w:p>`;}
+  function wCell(w,runs,o={}){
+    return `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.span?`<w:gridSpan w:val="${o.span}"/>`:''}${o.vm?(o.vm==='restart'?'<w:vMerge w:val="restart"/>':'<w:vMerge/>'):''}<w:tcMar><w:left w:w="60" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tcMar><w:vAlign w:val="center"/></w:tcPr>${wPara(runs,o.jc||'center')}</w:tc>`;
+  }
+  function buildDocx(book){
+    const GRID=[640,1330,1260,1260,1330,1200,1060,1330,3150,1260,1318];
+    const hdr=(t,sz)=>wRun(t,{b:sz!==28,sz:sz||22});
+    const r1=`<w:tr><w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>${wCell(GRID[0],hdr('STT'),{vm:'restart'})}${wCell(GRID[1],hdr('Thuốc thử',28),{vm:'restart'})}${wCell(GRID[2]+GRID[3],hdr('Ngày'),{span:2})}${wCell(GRID[4],hdr('Ngày kiểm tra'),{vm:'restart'})}${wCell(GRID[5],hdr('Vi khuẩn chứng'),{vm:'restart'})}${wCell(GRID[6],hdr('Mã chủng'),{vm:'restart'})}${wCell(GRID[7],hdr('Hạn sử dụng'),{vm:'restart'})}${wCell(GRID[8],hdr('Kết quả'),{vm:'restart'})}${wCell(GRID[9],hdr('Người thực hiện'),{vm:'restart'})}${wCell(GRID[10],hdr('Ghi chú'),{vm:'restart'})}</w:tr>`;
+    const r2=`<w:tr><w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>${wCell(GRID[0],'',{vm:'cont'})}${wCell(GRID[1],'',{vm:'cont'})}${wCell(GRID[2],wRun('Nhận',{sz:28}))}${wCell(GRID[3],wRun('Pha',{sz:28}))}${[4,5,6,7,8,9,10].map(i=>wCell(GRID[i],'',{vm:'cont'})).join('')}</w:tr>`;
+    const dat=book.rows.map(x=>{
+      const c=(i,t,jc)=>wCell(GRID[i],wRun(t,{sz:24}),{jc});
+      return `<w:tr><w:trPr><w:cantSplit/></w:trPr>${c(0,x.stt,'center')}${c(1,x.reagent||'','center')}${c(2,D(x.recvDate),'center')}${c(3,D(x.phaDate),'center')}${c(4,D(x.qcDate),'center')}${c(5,x.strains,'center')}${c(6,x.codes,'center')}${c(7,D(x.expDate),'center')}${c(8,resultText(x),'left')}${c(9,x.staff||'','center')}${c(10,x.note,'left')}</w:tr>`;
+    });
+    const total=GRID.reduce((a,b)=>a+b,0);
+    const tbl=`<w:tbl><w:tblPr><w:tblW w:w="${total}" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/></w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>${GRID.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${r1}${r2}${dat.join('')}</w:tbl>`;
+    const head=`<w:p><w:pPr><w:spacing w:after="160" w:line="278" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr>${wRun('BỆNH VIỆN PHONG – DA LIỄU TRUNG ƯƠNG QUY HÒA',{sz:28})}<w:r><w:br/></w:r>${wRun('KHOA VI SINH – MIỄN DỊCH',{b:1,sz:28})}<w:r><w:br/></w:r><w:r><w:br/></w:r>${wRun('SỔ NỘI KIỂM CHẤT LƯỢNG THUỐC THỬ THÁNG '+monthText(book.ym),{b:1,sz:28})}</w:p>`;
+    /* chữ ký Trưởng khoa (nếu có ảnh chữ ký) */
+    let sigRun=wRun('(Đã ký)',{sz:28}),image=null;
+    const sigs=window.SMART_QC_SIGNATURES_DATA||{};const src=book.chief&&sigs[String(book.chief).trim()];
+    const mm=src&&String(src).match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
+    if(mm){image={ext:mm[1]==='png'?'png':'jpg',b64:mm[2]};const cx=115*9525,cy=42*9525;
+      sigRun=`<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="1" name="Chữ ký"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="signature.${image.ext}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdSig1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;}
+    const tabs=n=>'<w:r><w:rPr><w:sz w:val="28"/></w:rPr>'+'<w:tab/>'.repeat(n)+'</w:r>';
+    const sign=`<w:p><w:pPr><w:spacing w:before="240" w:after="0" w:line="278" w:lineRule="auto"/></w:pPr>${tabs(10)}${wRun('KHOA VI SINH – MIỄN DỊCH',{b:1,sz:28})}<w:r><w:br/></w:r>${tabs(11)}${wRun('TRƯỞNG KHOA',{b:1,sz:28})}<w:r><w:br/></w:r>${tabs(11)}${sigRun}<w:r><w:br/></w:r>${tabs(11)}${wRun(book.chief||'',{sz:28})}</w:p>`;
+    const NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+    const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${head}${tbl}${sign}<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="1000" w:right="850" w:bottom="1000" w:left="850" w:header="720" w:footer="720" w:gutter="0"/><w:cols w:space="720"/></w:sectPr></w:body></w:document>`;
+    return {doc,image};
+  }
+  async function wordBlob(book){
+    if(!window.JSZip)throw new Error('Chưa tải được thư viện JSZip. Vui lòng kiểm tra kết nối mạng rồi thử lại.');
+    const {doc,image}=buildDocx(book);const zip=new JSZip();
+    const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`;
+    const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+    const drels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdSt" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${image?`<Relationship Id="rIdSig1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/signature.${image.ext}"/>`:''}</Relationships>`;
+    const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="28"/><w:szCs w:val="24"/><w:lang w:val="vi-VN" w:eastAsia="en-US" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="160" w:line="278" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>`;
+    zip.file('[Content_Types].xml',ct);zip.folder('_rels').file('.rels',rels);
+    const w=zip.folder('word');w.file('document.xml',doc);w.file('styles.xml',styles);w.folder('_rels').file('document.xml.rels',drels);
+    if(image)w.folder('media').file('signature.'+image.ext,image.b64,{base64:true});
+    return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  }
+  function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
+  window.exportReagentWord=async function(){
+    try{
+      const b=formBook();const blob=await wordBlob(b);
+      download(blob,'So_noi_kiem_Thuoc_thu_'+(b.ym||todayISO())+'.docx');
+      toast('pass','Đã xuất Word (.docx)','Sổ nội kiểm thuốc thử đã được xuất theo form mẫu.');
+    }catch(err){console.error(err);toast('danger','Xuất Word thất bại',err&&err.message||'Không thể tạo file Word.');}
+  };
+  window.__smqReagentBuild={bookFor,printHtml,buildDocx,wordBlob,formBook};
+
+  /* ---------- Xuất Excel đúng form ---------- */
+  window.exportReagentExcel=async function(){
+    if(!window.ExcelJS){toast('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối mạng rồi thử lại.');return;}
+    const b=formBook();
+    const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('So noi kiem thuoc thu',{views:[{showGridLines:false}]});
+    ws.pageSetup={orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.25,right:.25,top:.35,bottom:.35,header:.1,footer:.1}};
+    [6,16,13,13,14,17,14,15,34,16,18].forEach((w,i)=>ws.getColumn(i+1).width=w);
+    const TN='Times New Roman';
+    ws.mergeCells('A1:K1');ws.getCell('A1').value='BỆNH VIỆN PHONG – DA LIỄU TRUNG ƯƠNG QUY HÒA';
+    ws.mergeCells('A2:K2');ws.getCell('A2').value='KHOA VI SINH – MIỄN DỊCH';
+    ws.mergeCells('A4:K4');ws.getCell('A4').value='SỔ NỘI KIỂM CHẤT LƯỢNG THUỐC THỬ THÁNG '+monthText(b.ym);
+    [['A1',14,false],['A2',14,true],['A4',14,true]].forEach(([a,s,bd])=>{ws.getCell(a).font={name:TN,size:s,bold:bd};ws.getCell(a).alignment={horizontal:'center',vertical:'middle'};});
+    const border={top:{style:'thin',color:{argb:'FF000000'}},left:{style:'thin',color:{argb:'FF000000'}},bottom:{style:'thin',color:{argb:'FF000000'}},right:{style:'thin',color:{argb:'FF000000'}}};
+    const H=(cell,text,bold,size)=>{const c=ws.getCell(cell);c.value=text;c.font={name:TN,size:size||11,bold:bold!==false};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;};
+    ['A','B','E','F','G','H','I','J','K'].forEach(c=>ws.mergeCells(`${c}6:${c}7`));
+    H('A6','STT');H('B6','Thuốc thử',false,14);ws.mergeCells('C6:D6');H('C6','Ngày');H('E6','Ngày kiểm tra');H('F6','Vi khuẩn chứng');H('G6','Mã chủng');H('H6','Hạn sử dụng');H('I6','Kết quả');H('J6','Người thực hiện');H('K6','Ghi chú');
+    H('C7','Nhận',false,14);H('D7','Pha',false,14);
+    for(let r=6;r<=7;r++)for(let c=1;c<=11;c++)ws.getCell(r,c).border=border;
+    const data=b.rows.slice();
+    data.forEach((x,i)=>{
+      const rr=8+i;const vals=x?[x.stt,x.reagent||'',D(x.recvDate),D(x.phaDate),D(x.qcDate),x.strains||'',x.codes||'',D(x.expDate),resultText(x),x.staff||'',x.note||'']:[];
+      ws.getRow(rr).values=vals;
+      const lines=x?Math.max(1,...[x.strains,x.codes,resultText(x),x.note].map(t=>String(t||'').split(/\r?\n/).length)):1;
+      ws.getRow(rr).height=Math.max(22,lines*16);
+      ws.getRow(rr).eachCell({includeEmpty:true},(c,col)=>{c.font={name:TN,size:12};c.alignment={horizontal:(col===9||col===11)?'left':'center',vertical:'middle',wrapText:true};c.border=border;});
+    });
+    const foot=8+data.length+1;
+    const put=(r,t,bold)=>{ws.mergeCells(`H${r}:K${r}`);const c=ws.getCell(`H${r}`);c.value=t;c.font={name:TN,size:14,bold:!!bold};c.alignment={horizontal:'center'};};
+    put(foot,'KHOA VI SINH – MIỄN DỊCH',true);put(foot+1,'TRƯỞNG KHOA',true);put(foot+2,'(Đã ký)',false);put(foot+3,b.chief||'',false);
+    ws.printArea=`A1:K${foot+3}`;
+    await saveWorkbook(wb,'So_noi_kiem_Thuoc_thu_'+(b.ym||todayISO())+'.xlsx');
+  };
+  ensure();
 })();
 </script>
 
@@ -14474,6 +15028,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     ['Quản lý Hóa chất MD',['chemicalMD','chemicalCustomTests','chemicalCustomAux']],
     ['Quản lý Hóa chất Vi sinh',['chemicalVS','chemicalVSMonthlyAux']],
     ['Nhập QC Thuốc nhuộm / Môi trường nuôi cấy',['qcDyeMedia']],
+    ['Nhập QC Thuốc thử',['qcReagent']],
     ['Ngoại kiểm',['externalQC']],
     ['Báo cáo trực CLS',['clsReports','clsDraft']]
   ];
