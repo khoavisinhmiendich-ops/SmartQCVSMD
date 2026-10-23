@@ -12182,6 +12182,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   function renderDyeFormOnly(){
     const host=document.getElementById('smq_dye_components');if(host)host.innerHTML=`<div class="table-wrap"><table class="smq-mini-table"><thead><tr><th>STT</th><th>Tên thuốc nhuộm</th><th>Màu sắc</th>${DYE_STRAINS.map(s=>`<th>${esc(s)}<br><small>Đạt / Không đạt</small></th>`).join('')}</tr></thead><tbody>${dyeComponentRows()}</tbody></table></div>`;
   }
+  const DEFAULT_CHIEF='TK. Nguyễn Thị Bình';
   function renderDye(){
     ensure();editDyeIdx=null;const el=document.getElementById('view-virology-dye');if(!el)return;
     el.innerHTML=`<div class="card"><div class="card-head"><div><h3>Nhập QC Thuốc nhuộm</h3><div class="smq-subnav-note">Theo form XN-BM 5.8.4/07 — lựa chọn bộ thuốc nhuộm để hiển thị thành phần và màu sắc tương ứng.</div></div><div class="btn-row"><button class="btn sm" onclick="addNewDyeComponent()">＋ Thêm thuốc nhuộm mới</button><button class="btn sm" onclick="addNewDyeStrain()">＋ Thêm mới chủng</button></div></div>
@@ -12191,7 +12192,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       <label class="field"><span class="fl-label">Ngày pha/LOT</span><input id="smq_dye_lot" placeholder="Để trống để tự điền"></label>
       <label class="field"><span class="fl-label">Ngày nội kiểm</span><input id="smq_dye_date" type="date" value="${todayISO()}"></label>
       <label class="field"><span class="fl-label">Người thực hiện</span><select id="smq_dye_staff"><option value="">— Chọn —</option>${DYE_STAFF.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>
-      <label class="field"><span class="fl-label">TRƯỞNG KHOA</span><input id="smq_dye_chief" placeholder="Để trống để điền"></label>
+      <label class="field"><span class="fl-label">TRƯỞNG KHOA</span><input id="smq_rg_chief" value="${esc(DEFAULT_CHIEF)}" placeholder="Nhập tên trưởng khoa"></label>
       <label class="field span2"><span class="fl-label">Ghi chú</span><textarea id="smq_dye_note" placeholder="Nhập ghi chú"></textarea></label>
     </div><div id="smq_dye_components" style="margin-top:10px"></div>
     <div class="btn-row" style="margin-top:12px"><button class="btn primary" onclick="saveDye()">✓ Lưu QC thuốc nhuộm</button><button class="btn" onclick="previewDye()">👁 Xem trước</button><button class="btn" onclick="exportDyeExcel()">⬇ Excel</button><button class="btn" onclick="exportDyeWord()">⬇ Word</button><button class="btn" onclick="printDye()">🖨 PDF</button></div></div></div>
