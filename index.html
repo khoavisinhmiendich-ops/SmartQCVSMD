@@ -12472,6 +12472,7 @@ body{margin:0}
   function renderReagent(){
     if(!ensure())return;editIdx=null;
     const el=document.getElementById('view-'+VIEW_ID);if(!el)return;
+    const DEFAULT_CHIEF='TK. Nguyễn Thị Bình';
     const types=reagentTypes();
     el.innerHTML=`<div class="card"><div class="card-head"><div><h3>Nhập QC Thuốc thử</h3><div class="smq-subnav-note">Chọn Thuốc thử để tự hiển thị Vi khuẩn chứng, Mã chủng và Kết quả tương ứng. Ba ô này có thể chỉnh sửa trực tiếp.</div></div><div class="btn-row"><button class="btn sm" onclick="addNewReagent()">＋ Thêm thuốc thử mới</button></div></div>
     <div class="card-body"><div class="smq-grid">
@@ -12486,9 +12487,8 @@ body{margin:0}
       <label class="field smq-rg-multi span2"><span class="fl-label">Kết quả</span><textarea id="smq_rg_result" placeholder="Kết quả" oninput="smqRgRebuildEvals()"></textarea></label>
       <div class="span2" id="smq_rg_evals"></div>
       <label class="field"><span class="fl-label">Người thực hiện</span><select id="smq_rg_staff"><option value="">— Chọn —</option>${staffList().map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>
-      <label class="field"><span class="fl-label">TRƯỞNG KHOA</span><input id="smq_rg_chief" placeholder="Để trống để điền"></label>
+      <label class="field"><span class="fl-label">TRƯỞNG KHOA</span><input id="smq_rg_chief" value="${esc(DEFAULT_CHIEF)}" placeholder="Nhập tên trưởng khoa"></label>
       <label class="field span2"><span class="fl-label">Ghi chú</span><textarea id="smq_rg_note" placeholder="Nhập ghi chú"></textarea></label>
-    </div>
     <div class="btn-row" style="margin-top:12px"><button class="btn primary" onclick="saveReagent()">✓ Lưu QC thuốc thử</button><button class="btn" onclick="previewReagent()">👁 Xem trước</button><button class="btn" onclick="exportReagentExcel()">⬇ Excel</button><button class="btn" onclick="exportReagentWord()">⬇ Word</button><button class="btn" onclick="printReagent()">🖨 PDF</button></div></div></div>
     <div id="smq_rg_history" style="margin-top:14px"></div>`;
     fillPreset();renderHistory();
