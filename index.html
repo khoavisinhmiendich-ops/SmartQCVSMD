@@ -2552,7 +2552,10 @@ const NAV=[
   ]},
   {group:'Báo cáo & Hệ thống', items:[
     {id:'reports', label:'Báo cáo QC XNMDTĐ', icon:iconReport()},
-    {id:'reports-cls', label:'Báo cáo trực CLS', icon:iconReport()},
+    {id:'reports-cls', label:'Báo cáo trực CLS', icon:iconReport(), children:[
+      {id:'reports-cls', label:'Báo cáo trực', icon:iconReport()},
+      {id:'duty-summary', label:'Tổng hợp trực & Ngoài giờ', icon:iconReport()}
+    ]},
     {id:'whonet', label:'Kết nối WHONET', icon:iconWhonet()},
     {id:'audit', label:'Nhật kí', icon:iconHistoryClock()},
     {id:'users', label:'Người dùng', icon:iconUser()},
@@ -2644,6 +2647,7 @@ const VIEW_META={
   reports:['Báo cáo XN MDTĐ','Xuất báo cáo QC'],
   'external-qc':['Ngoại kiểm','Theo dõi và đánh giá kết quả ngoại kiểm — Ngoại kiểm MD và Ngoại kiểm VS'],
   'reports-cls':['Báo cáo trực CLS','SỔ GHI CHÉP THƯỜNG TRỰC — XN Vi sinh - Miễn dịch'],
+  'duty-summary':['Tổng hợp trực & Ngoài giờ','Tổng hợp Ngày trực, Ngày làm ngoài giờ, Nghỉ bù, Nghỉ phép theo từng nhân viên — lấy từ Báo cáo trực CLS'],
   audit:['Nhật kí','Lịch sử thao tác — không thể chỉnh sửa hoặc xoá'],
   users:['Người dùng','Danh sách người dùng hệ thống'],
   system:['Hệ thống','Cấu hình chung']
@@ -4768,7 +4772,7 @@ if('serviceWorker' in navigator){
    ===================================================================== */
 function buildViewShells(){
   const content=document.getElementById('content');
-  const ids=['dashboard','virology','virology-tc','virology-td','virology-dye','virology-media','entry','whonet','rapidwater-entry','chart','westgard','alerts','handling','tests','machines','chemical-md','chemical-iflash','chemical-allergen','chemical-dxi','chemical-vs','lots','rapidwater-lots','reports','external-qc','reports-cls','audit','users','system'];
+  const ids=['dashboard','virology','virology-tc','virology-td','virology-dye','virology-media','entry','whonet','rapidwater-entry','chart','westgard','alerts','handling','tests','machines','chemical-md','chemical-iflash','chemical-allergen','chemical-dxi','chemical-vs','lots','rapidwater-lots','reports','external-qc','reports-cls','duty-summary','audit','users','system'];
   content.innerHTML=ids.map(id=>`<div class="view" id="view-${id}"></div>`).join('');
 }
 const WEEKDAYS_VI=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
@@ -11901,7 +11905,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
     ]
   };
   const DYE_STRAINS=['S. aureus 29213','E. coli 25922','M. leprae'];
-  const DYE_STAFF=['Trâm','Ly','Lợi','Tú','Linh','Bích Phượng'];
+  const DYE_STAFF=['Nguyễn Thị Ngọc Trâm','Trần Thị Cẩm Ly','Nguyễn Hồng Lợi','Nguyễn Thị Tú','Nguyễn Thị Thùy Linh','Nguyễn Thị Bích Phượng'];
   window.SMQ_DYE_STAFF=DYE_STAFF; /* danh sách người thực hiện dùng chung với module Nhập QC Thuốc thử */
   // Nội dung môi trường lấy theo file Word "NK môi trường NC VS.docx".
   // Khi chọn môi trường, 3 nội dung dưới đây tự hiển thị; không cần nhập thủ công.
@@ -12337,7 +12341,7 @@ function renderMedia(){ensure();editMediaIdx=null;const el=document.getElementBy
   const nl2br=v=>esc(v).replace(/\r?\n/g,'<br>');
   const safe=v=>String(v??'').trim();
   const D=v=>{const s=String(v||'').trim();const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:s;};
-  const staffList=()=>(Array.isArray(window.SMQ_DYE_STAFF)&&window.SMQ_DYE_STAFF.length)?window.SMQ_DYE_STAFF:['Trâm','Ly','Lợi','Tú','Linh','Bích Phượng'];
+  const staffList=()=>(Array.isArray(window.SMQ_DYE_STAFF)&&window.SMQ_DYE_STAFF.length)?window.SMQ_DYE_STAFF:['Nguyễn Thị Ngọc Trâm','Trần Thị Cẩm Ly','Nguyễn Hồng Lợi','Nguyễn Thị Tú','Nguyễn Thị Thùy Linh','Nguyễn Thị Bích Phượng'];
   function ensure(){
     if(typeof state==='undefined'||!state)return false;
     if(!state.qcReagent||typeof state.qcReagent!=='object'||Array.isArray(state.qcReagent))state.qcReagent={rows:[],custom:{},types:[]};
@@ -15031,7 +15035,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     ['Nhập QC Thuốc nhuộm / Môi trường nuôi cấy',['qcDyeMedia']],
     ['Nhập QC Thuốc thử',['qcReagent']],
     ['Ngoại kiểm',['externalQC']],
-    ['Báo cáo trực CLS',['clsReports','clsDraft']]
+    ['Báo cáo trực CLS',['clsReports','clsDraft']],
+    ['Tổng hợp trực & Ngoài giờ',['dutySummary']]
   ];
   var base=null, baseState=null, dirtyAt=0, lastSweep=0, lastLog={};
   function hashStr(t){var h=5381;for(var i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return t.length+':'+h;}
@@ -15283,5 +15288,1001 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   }catch(e){}
   scan(document.body);
   window.SMART_VN_DATE={toDisp:toDisp,toISO:toISO};
+})();
+</script>
+
+<script id="smart-duty-summary-module-20261026">
+(function(){
+  'use strict';
+  /* ======================================================================
+     MODULE MỚI: TỔNG HỢP TRỰC & NGOÀI GIỜ (tách từ Báo cáo trực CLS)
+     - Dữ liệu trực / ngoài giờ tự lấy từ module Báo cáo trực (state.clsReports):
+         Ngày, Người trực, Người làm ngoài giờ (chỉ tính Thứ 7 và Chủ nhật).
+     - Nghỉ bù / Nghỉ phép nhập tay (chọn nhân viên trong 12 người, chọn khoảng ngày).
+     - Ngày cuối tháng (30/31, hoặc 28/29 với tháng 2) hệ thống tự chốt & lưu vào module.
+     - In / xuất PDF, Word, Excel.
+     Không thay đổi bất kỳ module nào khác.
+     ====================================================================== */
+  if(window.__SMART_DUTY_SUMMARY__) return;
+  window.__SMART_DUTY_SUMMARY__=true;
+
+  const VIEW='duty-summary';
+  const FALLBACK_STAFF=["Nguyễn Thị Bình","Nguyễn Thái Hòa","Bùi Thị Tiến Phước","Nguyễn Thị Tú","Trần Thị Cẩm Ly","Nguyễn Thị Ngọc Trâm","Nguyễn Thị Kim Phượng","Nguyễn Thị Thùy Linh","Lê Diệu Đan","Nguyễn Thị Bích Phượng","Nguyễn Gia Khang","Nguyễn Hồng Lợi"];
+  const TYPE_LABEL={bu:'Nghỉ bù',phep:'Nghỉ phép'};
+  const NONE='Không';
+
+  /* ---------- tiện ích ---------- */
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pad=n=>String(n).padStart(2,'0');
+  const staffList=()=>{const a=window.SMART_QC_STAFF_NAMES;return Array.isArray(a)&&a.length?a.slice():FALLBACK_STAFF.slice();};
+  const hasState=()=>typeof state!=='undefined'&&state&&typeof state==='object';
+  function parseISO(s){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||''));if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);return(d.getFullYear()===+m[1]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[3])?d:null;}
+  function toISO(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+  function normDate(v){
+    const s=String(v==null?'':v).trim();
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)){const t=s.slice(0,10);return parseISO(t)?t:'';}
+    const m=/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/.exec(s);
+    if(m){const t=m[3]+'-'+pad(+m[2])+'-'+pad(+m[1]);return parseISO(t)?t:'';}
+    return '';
+  }
+  const toVN=iso=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');return m?m[3]+'/'+m[2]+'/'+m[1]:String(iso||'');};
+  const fmtN=n=>String(Math.round((+n||0)*100)/100).replace('.',',');
+  const daysText=n=>fmtN(n)+' ngày';
+  const lastDayOf=(y,m)=>new Date(y,m,0).getDate();
+  const ymKey=(y,m)=>y+'-'+pad(m);
+  function nameKey(s){
+    return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase()
+      .replace(/\([^)]*\)/g,' ').replace(/^\s*(tk|ktvtk|ktv|nv|bs|ths|cn|ds)\.\s*/,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+  }
+  const IGNORE_NAMES=new Set(['','khong','none','khong co','k','x']);
+  function toast2(kind,title,msg){try{if(typeof toast==='function')toast(kind,title,msg);}catch(e){}}
+  function save(){try{if(typeof queueSave==='function')queueSave();}catch(e){console.warn('duty save',e);}}
+
+  /* ---------- dữ liệu module ---------- */
+  function ds(){
+    if(!hasState())return null;
+    let d=state.dutySummary;
+    if(!d||typeof d!=='object'||Array.isArray(d)){d=state.dutySummary={leaves:[],closed:{}};}
+    if(!Array.isArray(d.leaves))d.leaves=[];
+    if(!d.buPick||typeof d.buPick!=='object'||Array.isArray(d.buPick))d.buPick={};
+    if(!d.closed||typeof d.closed!=='object'||Array.isArray(d.closed))d.closed={};
+    return d;
+  }
+  /* số ngày làm việc (Thứ 2 – Thứ 6) trong khoảng from..to (gồm cả hai đầu) */
+  function workdays(fromISO,toISO_){
+    const a=parseISO(fromISO),b=parseISO(toISO_);if(!a||!b||b<a)return 0;
+    let n=0;for(let d=new Date(a);d<=b;d.setDate(d.getDate()+1)){const w=d.getDay();if(w!==0&&w!==6)n++;}
+    return n;
+  }
+  /* tách khoảng ngày theo từng tháng để mỗi bản ghi chỉ thuộc 1 tháng */
+  function splitByMonth(fromISO,toISO_){
+    const a=parseISO(fromISO),b=parseISO(toISO_);if(!a||!b||b<a)return [];
+    const out=[];let cur=new Date(a);
+    while(cur<=b){
+      const end=new Date(cur.getFullYear(),cur.getMonth()+1,0);
+      const segEnd=end<b?end:b;
+      out.push({from:toISO(cur),to:toISO(segEnd)});
+      cur=new Date(segEnd.getFullYear(),segEnd.getMonth(),segEnd.getDate()+1);
+    }
+    return out;
+  }
+
+  /* ---------- lịch Lễ / Tết Việt Nam (tự tính, tự cập nhật theo năm) ---------- */
+  /* Âm lịch Việt Nam (múi giờ UTC+7, thuật toán thiên văn Hồ Ngọc Đức) → dùng cho Tết Nguyên đán và Giỗ Tổ Hùng Vương (10/3 âm lịch). */
+  const VNLUNAR=(function(){
+    const TZ=7;
+    function jdFromDate(dd_,mm,yy){const a=Math.floor((14-mm)/12),y=yy+4800-a,m=mm+12*a-3;let jd=dd_+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-Math.floor(y/100)+Math.floor(y/400)-32045;if(jd<2299161)jd=dd_+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-32083;return jd;}
+    function jdToDate(jd){let a,b,c;if(jd>2299160){a=jd+32044;b=Math.floor((4*a+3)/146097);c=a-Math.floor(b*146097/4);}else{b=0;c=jd+32082;}const d=Math.floor((4*c+3)/1461),e=c-Math.floor(1461*d/4),m=Math.floor((5*e+2)/153);return [e-Math.floor((153*m+2)/5)+1,m+3-12*Math.floor(m/10),b*100+d-4800+Math.floor(m/10)];}
+    function newMoon(k){const T=k/1236.85,T2=T*T,T3=T2*T,dr=Math.PI/180;let Jd1=2415020.75933+29.53058868*k+0.0001178*T2-0.000000155*T3;Jd1+=0.00033*Math.sin((166.56+132.87*T-0.009173*T2)*dr);const M=359.2242+29.10535608*k-0.0000333*T2-0.00000347*T3,Mpr=306.0253+385.81691806*k+0.0107306*T2+0.00001236*T3,F=21.2964+390.67050646*k-0.0016528*T2-0.00000239*T3;let C1=(0.1734-0.000393*T)*Math.sin(M*dr)+0.0021*Math.sin(2*dr*M);C1-=0.4068*Math.sin(Mpr*dr);C1+=0.0161*Math.sin(dr*2*Mpr);C1-=0.0004*Math.sin(dr*3*Mpr);C1+=0.0104*Math.sin(dr*2*F)-0.0051*Math.sin(dr*(M+Mpr));C1+=-0.0074*Math.sin(dr*(M-Mpr))+0.0004*Math.sin(dr*(2*F+M));C1+=-0.0004*Math.sin(dr*(2*F-M))-0.0006*Math.sin(dr*(2*F+Mpr));C1+=0.0010*Math.sin(dr*(2*F-Mpr))+0.0005*Math.sin(dr*(2*Mpr+M));const dt=T<-11?0.001+0.000839*T+0.0002261*T2-0.00000845*T3-0.000000081*T*T3:-0.000278+0.000265*T+0.000262*T2;return Jd1+C1-dt;}
+    function sunLong(jdn){const T=(jdn-2451545.0)/36525,T2=T*T,dr=Math.PI/180,M=357.52910+35999.05030*T-0.0001559*T2-0.00000048*T*T2,L0=280.46645+36000.76983*T+0.0003032*T2;let DL=(1.914600-0.004817*T-0.000014*T2)*Math.sin(dr*M);DL+=(0.019993-0.000101*T)*Math.sin(dr*2*M)+0.000290*Math.sin(dr*3*M);let L=(L0+DL)*dr;L-=Math.PI*2*Math.floor(L/(Math.PI*2));return L;}
+    const sunSeg=dn=>Math.floor(sunLong(dn-0.5-TZ/24)/Math.PI*6);
+    const nmDay=k=>Math.floor(newMoon(k)+0.5+TZ/24);
+    function month11(yy){const off=jdFromDate(31,12,yy)-2415021,k=Math.floor(off/29.530588853);let nm=nmDay(k);if(sunSeg(nm)>=9)nm=nmDay(k-1);return nm;}
+    function leapOff(a11){const k=Math.floor((a11-2415021.076998695)/29.530588853+0.5);let last=0,i=1,arc=sunSeg(nmDay(k+i));do{last=arc;i++;arc=sunSeg(nmDay(k+i));}while(arc!==last&&i<14);return i-1;}
+    /* ngày âm lịch (không nhuận) → [ngày, tháng, năm] dương lịch */
+    function lunar2solar(ld,lm,ly){let a11,b11;if(lm<11){a11=month11(ly-1);b11=month11(ly);}else{a11=month11(ly);b11=month11(ly+1);}const k=Math.floor(0.5+(a11-2415021.076998695)/29.530588853);let off=lm-11;if(off<0)off+=12;if(b11-a11>365){if(off>=leapOff(a11))off+=1;}return jdToDate(nmDay(k+off)+ld-1);}
+    return {lunar2solar};
+  })();
+
+  /* Kỳ nghỉ "dài ngày": số ngày nghỉ liên tục (ngày Lễ/Tết + Thứ 7, CN liền kề) từ mức này trở lên. */
+  const LONG_MIN=4;
+  /* Thông báo chính thức từng năm của Chính phủ / Bộ Nội vụ — ghi đè quy tắc mặc định (bổ sung mỗi năm khi có thông báo mới):
+       tet : các ngày nghỉ Tết Âm lịch được công bố;  qk : 2 ngày nghỉ Quốc khánh;  off : ngày nghỉ hoán đổi (không gắn nhãn Lễ/Tết). */
+  const HOL_OFFICIAL={
+    2026:{qk:['2026-09-01','2026-09-02'],off:['2026-08-31']},
+    2027:{tet:['2027-02-04','2027-02-05','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-02-10'],qk:['2027-09-02','2027-09-03']}
+  };
+  const HOL_CACHE={};
+  const isWE=iso=>{const a=parseISO(iso);if(!a)return false;const w=a.getDay();return w===0||w===6;};
+  function holYear(y){
+    if(HOL_CACHE[y])return HOL_CACHE[y];
+    const map=new Map(),off=new Set(),ov=HOL_OFFICIAL[y]||{};
+    const iso=(m,d)=>y+'-'+pad(m)+'-'+pad(d);
+    /* nhóm ngày lễ; ngày lễ trùng Thứ 7/CN thì được nghỉ bù vào ngày làm việc kế tiếp (Điều 112 Bộ luật Lao động) */
+    const group=(dates,kind,name)=>{
+      dates.forEach(d=>map.set(d,{k:kind,n:name}));
+      let need=dates.filter(isWE).length,cur=dates[dates.length-1],guard=0;
+      while(need>0&&guard++<14){cur=addDaysISO(cur,1);if(isWE(cur)||map.has(cur))continue;map.set(cur,{k:kind,n:name+' (nghỉ bù)'});need--;}
+    };
+    group([iso(1,1)],'Tết','Tết Dương lịch');
+    if(ov.tet){ov.tet.forEach(d=>map.set(d,{k:'Tết',n:'Tết Âm lịch'}));}
+    else{
+      const s=VNLUNAR.lunar2solar(1,1,y);
+      if(s){const S=y+'-'+pad(s[1])+'-'+pad(s[0]);group([addDaysISO(S,-1),S,addDaysISO(S,1),addDaysISO(S,2),addDaysISO(S,3)],'Tết','Tết Âm lịch');}
+    }
+    const g=VNLUNAR.lunar2solar(10,3,y);
+    if(g)group([y+'-'+pad(g[1])+'-'+pad(g[0])],'Lễ','Giỗ Tổ Hùng Vương');
+    group([iso(4,30),iso(5,1)],'Lễ','Ngày Chiến thắng 30/4 và Quốc tế Lao động 1/5');
+    /* Quốc khánh: 2/9 + 1 ngày liền kề (mặc định: Thứ 2, Thứ 5, CN nghỉ thêm ngày sau; còn lại nghỉ thêm ngày trước) */
+    const qk=ov.qk||(function(){const s=iso(9,2),w=parseISO(s).getDay();return (w===0||w===1||w===4)?[s,iso(9,3)]:[iso(9,1),s];})();
+    group(qk,'Lễ','Quốc khánh');
+    if(y>=2026)group([iso(11,24)],'Lễ','Ngày Văn hóa Việt Nam');
+    (ov.off||[]).forEach(d=>off.add(d));
+    return HOL_CACHE[y]={map:map,off:off};
+  }
+  /* thông tin ngày Lễ/Tết: {k:'Lễ'|'Tết', n:tên} hoặc null */
+  function holInfo(iso){
+    const m=/^(\d{4})-\d{2}-\d{2}$/.exec(String(iso||''));if(!m)return null;
+    const y=+m[1];if(y<2000||y>2100)return null;
+    return holYear(y).map.get(iso)||null;
+  }
+  const holLabel=iso=>{const h=holInfo(iso);return h?h.k:'';};
+  /* ngày nghỉ: Thứ 7, CN, ngày Lễ/Tết (kể cả nghỉ bù) hoặc ngày nghỉ hoán đổi theo thông báo */
+  function isOffDay(iso){
+    if(isWE(iso))return true;
+    const m=/^(\d{4})-/.exec(String(iso||''));if(!m)return false;
+    const y=+m[1];if(y<2000||y>2100)return false;
+    const hy=holYear(y);return hy.map.has(iso)||hy.off.has(iso);
+  }
+  /* ngày làm việc đầu tiên sau (không tính) ngày iso */
+  function nextWorkday(iso){let cur=addDaysISO(iso,1),g=0;while(isOffDay(cur)&&g++<40)cur=addDaysISO(cur,1);return cur;}
+  /* chuỗi ngày nghỉ liên tục chứa iso: {from,to,len} */
+  function offRun(iso){
+    let s=iso,e=iso,n=1,g=0;
+    while(g++<40&&isOffDay(addDaysISO(s,-1))){s=addDaysISO(s,-1);n++;}
+    g=0;while(g++<40&&isOffDay(addDaysISO(e,1))){e=addDaysISO(e,1);n++;}
+    return {from:s,to:e,len:n};
+  }
+  const isLongHoliday=iso=>!!holInfo(iso)&&offRun(iso).len>=LONG_MIN;
+
+  /* ---------- nghỉ bù tự động theo ngày trực ---------- */
+  const dd=iso=>String(iso||'').slice(8,10);
+  const addDaysISO=(iso,n)=>{const a=parseISO(iso);if(!a)return '';a.setDate(a.getDate()+n);return toISO(a);};
+  /* 5 ngày làm việc Thứ 2 – Thứ 6 dùng cho thanh chọn nghỉ bù khi trực Thứ 7:
+     tuần làm việc ngay sau ngày trực (Thứ 2 = ngày trực + 2) */
+  function weekDays(dutyISO){
+    const a=parseISO(dutyISO);if(!a)return [];
+    const mon=a.getDay()===6?addDaysISO(dutyISO,2):addDaysISO(dutyISO,-((a.getDay()+6)%7));
+    return [0,1,2,3,4].map(i=>addDaysISO(mon,i));
+  }
+  /* các ngày có thể chọn làm ngày nghỉ bù:
+     - trực Thứ 7: Thứ 2 – Thứ 6 tuần sau (bỏ ngày Lễ/Tết, bổ sung ngày làm việc kế tiếp cho đủ 5 ngày);
+     - trực Lễ/Tết dài ngày: 10 ngày làm việc đầu tiên sau kỳ nghỉ. */
+  function pickDays(dutyISO){
+    if(holInfo(dutyISO)){
+      const out=[];let cur=nextWorkday(dutyISO),g=0;
+      while(out.length<10&&g++<60){if(!isOffDay(cur))out.push(cur);cur=addDaysISO(cur,1);}
+      return out;
+    }
+    const base=weekDays(dutyISO);if(!base.length)return [];
+    const out=base.filter(x=>!isOffDay(x));
+    let cur=addDaysISO(base[4],1),g=0;
+    while(out.length<5&&g++<60){if(!isOffDay(cur))out.push(cur);cur=addDaysISO(cur,1);}
+    return out;
+  }
+  /* Quy tắc: trực Chủ nhật nghỉ bù Thứ 2, trực Thứ 2 nghỉ bù Thứ 3, ... trực Thứ 5 nghỉ bù Thứ 6 (1 ngày hôm sau);
+     trực Thứ 6 không nghỉ bù;
+     trực Thứ 7 được nghỉ bù 1 ngày tự chọn trong Thứ 2 – Thứ 6 (mặc định Thứ 3 tuần sau).
+     Trực ngày Lễ/Tết: nghỉ ngắn ngày → nghỉ bù vào ngày làm việc ngay sau đó;
+     nghỉ dài ngày (từ LONG_MIN ngày liên tục) → tự chọn ngày nghỉ bù linh hoạt.
+     Ngày nghỉ bù không bao giờ rơi vào ngày Lễ/Tết/ngày nghỉ hoán đổi (tự dời sang ngày làm việc kế tiếp). */
+  function buRule(dutyISO){
+    const a=parseISO(dutyISO);if(!a)return {kind:'none'};
+    if(holInfo(dutyISO)){
+      if(isLongHoliday(dutyISO))return {kind:'pick'};
+      return {kind:'auto',date:nextWorkday(dutyISO)};
+    }
+    const w=a.getDay();
+    if(w===5)return {kind:'none'};
+    if(w===6)return {kind:'pick'};
+    const nx=addDaysISO(dutyISO,1);
+    return {kind:'auto',date:isOffDay(nx)?nextWorkday(nx):nx};
+  }
+  const buKey=(nk,dutyISO)=>nk+'|'+dutyISO;
+  /* Ngày nghỉ bù của các ca trực "tự chọn" (trực Thứ 7, trực Lễ/Tết dài ngày), tính riêng từng nhân viên:
+     ưu tiên ngày đã chọn; chưa chọn thì dùng ngày mặc định (Thứ 3 tuần sau / ngày làm việc đầu tiên sau kỳ nghỉ)
+     và tự dời sang ngày kế tiếp nếu trùng với một ngày nghỉ bù khác của cùng người đó. */
+  function pickMap(){
+    const out=new Map(),d0=ds(),by=new Map();
+    const reports=hasState()&&Array.isArray(state.clsReports)?state.clsReports:[];
+    reports.forEach(r=>{
+      if(!r)return;const d=normDate(r.date);if(!d)return;
+      const nk=nameKey(String(r.staff==null?'':r.staff).trim());if(IGNORE_NAMES.has(nk))return;
+      if(buRule(d).kind!=='pick')return;
+      if(!by.has(nk))by.set(nk,new Set());by.get(nk).add(d);
+    });
+    by.forEach((set,nk)=>{
+      const dates=[...set].sort(),taken=new Set();
+      dates.forEach(d=>{const v=d0&&d0.buPick&&d0.buPick[buKey(nk,d)];if(v&&pickDays(d).indexOf(v)>=0){out.set(buKey(nk,d),v);taken.add(v);}});
+      dates.forEach(d=>{
+        if(out.has(buKey(nk,d)))return;
+        const opts=pickDays(d);if(!opts.length)return;
+        const tue=weekDays(d)[1];
+        let v=holInfo(d)?opts[0]:(opts.indexOf(tue)>=0?tue:opts[0]);
+        if(taken.has(v)){const free=opts.find(o=>!taken.has(o));if(free)v=free;}
+        out.set(buKey(nk,d),v);taken.add(v);
+      });
+    });
+    return out;
+  }
+  function workdayList(fromISO,toISO_){
+    const a=parseISO(fromISO),b=parseISO(toISO_),out=[];if(!a||!b||b<a)return out;
+    for(let d=new Date(a);d<=b;d.setDate(d.getDate()+1)){const w=d.getDay();if(w!==0&&w!==6)out.push(toISO(d));}
+    return out;
+  }
+
+  
+
+  /* ---------- tổng hợp từ Báo cáo trực ---------- */
+  function compute(y,m){
+    const ym=ymKey(y,m),names=staffList();
+    const keyMap=new Map(names.map(n=>[nameKey(n),n]));
+    const mk=(name,extra)=>({name:name,duty:new Set(),ot:new Set(),buM:new Map(),buO:new Map(),phep:[],extra:extra});
+    const rows=new Map(names.map(n=>[n,mk(n,false)]));
+    const extraRows=new Map();
+    const pick=raw=>{
+      const t=String(raw==null?'':raw).trim();const k=nameKey(t);
+      if(IGNORE_NAMES.has(k))return null;
+      const std=keyMap.get(k);if(std)return rows.get(std);
+      if(!extraRows.has(k))extraRows.set(k,mk(t,true));
+      return extraRows.get(k);
+    };
+    const reports=hasState()&&Array.isArray(state.clsReports)?state.clsReports:[];
+    const PM=pickMap();
+    reports.forEach(r=>{
+      if(!r)return;
+      const d=normDate(r.date);if(!d)return;
+      const nk=nameKey(String(r.staff==null?'':r.staff).trim());
+      const ignored=IGNORE_NAMES.has(nk);
+      const inYm=d.slice(0,7)===ym;
+      /* nghỉ bù tự động: tính từ ngày trực (có thể rơi sang tháng sau) */
+      let buDate='',isPick=false;
+      if(!ignored){
+        const ru=buRule(d);
+        if(ru.kind==='auto')buDate=ru.date;
+        else if(ru.kind==='pick'){isPick=true;buDate=PM.get(buKey(nk,d))||(pickDays(d)[0]||'');}
+      }
+      const buIn=!!buDate&&buDate.slice(0,7)===ym;
+      if(!inYm&&!buIn)return;
+      if(inYm){
+        const rowD=pick(r.staff);if(rowD)rowD.duty.add(d);
+        const wk=parseISO(d).getDay();
+        if(wk===0||wk===6){
+          String(r.outsideHours==null?'':r.outsideHours).split(/\s*[,;\n]\s*/).forEach(n=>{const rw=pick(n);if(rw)rw.ot.add(d);});
+        }
+      }
+      if(!ignored&&(buIn||(inYm&&isPick))){
+        const rw=pick(r.staff);
+        if(rw){
+          const rec={from:buDate,to:buDate,days:1,duty:d,sel:isPick};
+          if(buIn){const ex=rw.buM.get(buDate);if(!(ex&&ex.sel&&!rec.sel))rw.buM.set(buDate,rec);}
+          else rw.buO.set(d,rec);
+        }
+      }
+    });
+    const d0=ds();
+    ((d0&&d0.leaves)||[]).forEach(l=>{
+      /* nghỉ bù nhập tay (dữ liệu cũ) không còn dùng — nghỉ bù nay tự tính theo ngày trực */
+      if(!l||l.type!=='phep'||!l.from||String(l.from).slice(0,7)!==ym)return;
+      const rw=pick(l.name);if(!rw)return;
+      rw.phep.push({from:l.from,to:l.to||l.from,days:+l.days||0});
+    });
+    const fin=r=>{
+      const byFrom=(a,b)=>a.from.localeCompare(b.from);
+      const bu=[...r.buM.values()].sort(byFrom),buOut=[...r.buO.values()].sort(byFrom),phep=r.phep.slice().sort(byFrom);
+      return {name:r.name,extra:r.extra,duty:[...r.duty].sort(),ot:[...r.ot].sort(),bu,buOut,phep,
+        buDays:bu.reduce((s,x)=>s+x.days,0),phepDays:phep.reduce((s,x)=>s+x.days,0)};
+    };
+    const list=names.map(n=>fin(rows.get(n)));
+    [...extraRows.values()].sort((a,b)=>a.name.localeCompare(b.name,'vi')).forEach(r=>list.push(fin(r)));
+    return list;
+  }
+  const sig=rows=>JSON.stringify(rows);
+  function hasAnyData(rows){return rows.some(r=>r.duty.length||r.ot.length||r.bu.length||r.phep.length);}
+
+  /* dữ liệu hiển thị: bản đã chốt (nếu có) hoặc dữ liệu trực tiếp */
+  function dataFor(y,m){
+    const d=ds(),ym=ymKey(y,m),c=d&&d.closed[ym];
+    const live=compute(y,m);
+    if(c&&Array.isArray(c.rows))return {rows:c.rows,closed:c,stale:sig(c.rows)!==sig(live),live};
+    return {rows:live,closed:null,stale:false,live};
+  }
+
+  /* ---------- văn bản dùng chung cho màn hình / PDF / Word / Excel ---------- */
+  function recText(l,withDays){
+    const a=toVN(l.from),b=toVN(l.to||l.from);
+    return (l.from===(l.to||l.from)?a:a+' – '+b)+(withDays?' ('+daysText(l.days)+')':'');
+  }
+  /* mỗi ngày nghỉ một dòng, chỉ hiển thị ngày (tháng/năm đã có ở bộ lọc tháng) */
+  function leaveLines(list){
+    const out=[];
+    (list||[]).forEach(x=>{
+      const to=x.to||x.from,wd=workdayList(x.from,to);
+      if(wd.length&&Math.abs(wd.length-(+x.days||0))<1e-9)wd.forEach(d=>out.push(dd(d)));
+      else out.push((x.from===to?dd(x.from):dd(x.from)+' – '+dd(to))+' ('+daysText(x.days)+')');
+    });
+    return out;
+  }
+  const linesText=a=>a.length?a.join('\n'):NONE;
+  /* ngày trực Thứ 7 / Chủ nhật ghi kèm nhãn để nhận biết cột Tổng hợp trực (Thứ 7 & CN) */
+  const isWeekend=iso=>{const a=parseISO(iso);if(!a)return false;const w=a.getDay();return w===0||w===6;};
+  const dutyLabel=x=>{const a=parseISO(x),w=a?a.getDay():-1,h=holLabel(x),p=[];if(w===6)p.push('Thứ 7');else if(w===0)p.push('CN');if(h)p.push(h);return dd(x)+(p.length?' ('+p.join(', ')+')':'');};
+  function rowTexts(r){
+    const nWe=r.duty.filter(isWeekend).length,nWd=r.duty.length-nWe;
+    return {
+      duty:r.duty.length?r.duty.map(x=>dutyLabel(x)).join('\n'):NONE,
+      ot:r.ot.length?r.ot.map(x=>dd(x)).join('\n'):NONE,
+      dutyWd:nWd?daysText(nWd):NONE,
+      dutyWe:nWe?daysText(nWe):NONE,
+      otN:r.ot.length?daysText(r.ot.length):NONE,
+      bu:linesText(leaveLines(r.bu)),
+      phep:linesText(leaveLines(r.phep))
+    };
+  }
+  function totals(rows){
+    const t={wd:0,we:0,ot:0,bu:0,phep:0};
+    rows.forEach(r=>{r.duty.forEach(d=>{if(isWeekend(d))t.we++;else t.wd++;});t.ot+=r.ot.length;t.bu+=r.buDays;t.phep+=r.phepDays;});
+    return {dutyWd:t.wd?daysText(t.wd):NONE,dutyWe:t.we?daysText(t.we):NONE,otN:t.ot?daysText(t.ot):NONE,bu:t.bu?daysText(t.bu):NONE,phep:t.phep?daysText(t.phep):NONE};
+  }
+  const HEADERS=['STT','Họ và tên nhân viên','Ngày trực','Ngày làm ngoài giờ','Ngày thường','Thứ 7 & CN','Tổng hợp ngoài giờ','Nghỉ bù','Nghỉ phép'];
+  const GROUP='Tổng hợp trực';  /* tiêu đề nhóm phủ 2 cột: Ngày thường | Thứ 7 & CN */
+  const monthTitle=(y,m)=>'Tháng '+pad(m)+' năm '+y;
+  const todayVN=()=>{const n=new Date();return pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear();};
+
+  /* ---------- biểu mẫu in / PDF / Word ---------- */
+  function buildPrintHTML(y,m,rows){
+    const TD='border:1px solid #333;padding:4px 6px;vertical-align:middle;font-size:10pt;color:#111;';
+    const TH='border:1px solid #333;padding:5px 6px;vertical-align:middle;text-align:center;font-weight:700;font-size:10pt;background:#EAF3FB;color:#111;text-transform:none;letter-spacing:0;';
+    const nl=t=>esc(t).replace(/\n/g,'<br>');
+    const W=['4%','15%','17%','15%','7%','7%','8%','14%','13%'];
+    const body=rows.map((r,i)=>{
+      const t=rowTexts(r);
+      return '<tr>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+(i+1)+'</td>'
+        +'<td style="'+TD+'text-align:left;font-weight:600;">'+esc(r.name)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.duty)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.ot)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.dutyWd)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.dutyWe)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.otN)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.bu)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.phep)+'</td>'
+        +'</tr>';
+    }).join('');
+    const tt=totals(rows);
+    const totalRow='<tr>'
+      +'<td colspan="4" class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">TỔNG CỘNG</td>'
+      +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.dutyWd)+'</td>'
+      +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.dutyWe)+'</td>'
+      +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.otN)+'</td>'
+      +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.bu)+'</td>'
+      +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.phep)+'</td>'
+      +'</tr>';
+    const NB='border:none;padding:2px 0;font-size:10.5pt;';
+    return '<div class="duty-print" style="font-family:\'Times New Roman\',Times,serif;color:#111;background:#fff;">'
+      +'<table class="no-border word-no-border" style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;"><tr>'
+      +'<td style="'+NB+'text-align:center;width:50%;"><b>BỘ Y TẾ</b><br><b>BỆNH VIỆN PHONG – DA LIỄU TW QUY HÒA</b><br><b>KHOA VI SINH – MIỄN DỊCH</b></td>'
+      +'<td style="'+NB+'text-align:right;vertical-align:top;width:50%;">Ngày lập: '+todayVN()+'</td>'
+      +'</tr></table>'
+      +'<h1 style="text-align:center;font-size:16pt;margin:8px 0 2px;">TỔNG HỢP TRỰC &amp; NGOÀI GIỜ</h1>'
+      +'<h2 style="text-align:center;font-size:12.5pt;font-weight:400;margin:0 0 10px;">'+monthTitle(y,m)+'</h2>'
+      +'<table style="width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #333;">'
+      +'<colgroup>'+W.map(w=>'<col style="width:'+w+'">').join('')+'</colgroup>'
+      +'<thead><tr>'+HEADERS.map((h,i)=>i===4?'<th colspan="2" style="'+TH+'">'+esc(GROUP)+'</th>':(i===5?'':'<th style="border:none;background:#fff;padding:0;"></th>')).join('')+'</tr>'
+      +'<tr>'+HEADERS.map(h=>'<th style="'+TH+'">'+esc(h)+'</th>').join('')+'</tr></thead>'
+      +'<tbody>'+body+totalRow+'</tbody></table>'
+      +'<p style="font-size:9.5pt;font-style:italic;margin:6px 0 0;">Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.</p>'
+      +'<table class="no-border word-no-border" style="width:100%;border-collapse:collapse;border:none;margin-top:18px;page-break-inside:avoid;"><tr>'
+      +'<td style="'+NB+'text-align:center;width:50%;"><b>Người lập biểu</b><br><i>(Ký, ghi rõ họ tên)</i><br><br><br></td>'
+      +'<td style="'+NB+'text-align:center;width:50%;"><b>Trưởng khoa</b><br><i>(Ký, ghi rõ họ tên)</i><br><br><br></td>'
+      +'</tr></table>'
+      +'</div>';
+  }
+
+  /* ---------- tải file ---------- */
+  function downloadFile(blob,name){
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+  }
+  async function exportExcel(y,m,rows){
+    const fileName='Tong_hop_truc_ngoai_gio_'+pad(m)+'-'+y+'.xlsx';
+    const tt=totals(rows);
+    const lines=[
+      ['BỘ Y TẾ'],['BỆNH VIỆN PHONG – DA LIỄU TW QUY HÒA'],['KHOA VI SINH – MIỄN DỊCH'],[],
+      ['TỔNG HỢP TRỰC & NGOÀI GIỜ'],[monthTitle(y,m)],[]
+    ];
+    const data=rows.map((r,i)=>{const t=rowTexts(r);return [i+1,r.name,t.duty,t.ot,t.dutyWd,t.dutyWe,t.otN,t.bu,t.phep];});
+    const totalLine=['TỔNG CỘNG','','','',tt.dutyWd,tt.dutyWe,tt.otN,tt.bu,tt.phep];
+    const HDR1=['STT','Họ và tên nhân viên','Ngày trực','Ngày làm ngoài giờ',GROUP,'','Tổng hợp ngoài giờ','Nghỉ bù','Nghỉ phép'];
+    const HDR2=['','','','',HEADERS[4],HEADERS[5],'','',''];
+    if(window.ExcelJS){
+      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();
+      const ws=wb.addWorksheet('T'+pad(m)+'-'+y,{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3}}});
+      [6,28,20,20,14,14,18,18,18].forEach((w,i)=>{ws.getColumn(i+1).width=w;});
+      const font=(o)=>Object.assign({name:'Times New Roman',size:11},o||{});
+      const thin={style:'thin',color:{argb:'FF333333'}};
+      const border={top:thin,left:thin,bottom:thin,right:thin};
+      lines.forEach(l=>ws.addRow(l));
+      [1,2,3].forEach(r=>{ws.mergeCells(r,1,r,4);const c=ws.getCell(r,1);c.font=font({bold:true});c.alignment={horizontal:'left'};});
+      ws.mergeCells(5,1,5,9);ws.getCell(5,1).font=font({bold:true,size:16});ws.getCell(5,1).alignment={horizontal:'center',vertical:'middle'};
+      ws.mergeCells(6,1,6,9);ws.getCell(6,1).font=font({size:12.5});ws.getCell(6,1).alignment={horizontal:'center'};
+      const hr=ws.addRow(HDR1),hr2=ws.addRow(HDR2);
+      hr.height=30;
+      [hr,hr2].forEach(row=>row.eachCell({includeEmpty:true},c=>{c.font=font({bold:true});c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF3FB'}};}));
+      [1,2,3,4,7,8,9].forEach(c=>ws.mergeCells(hr.number,c,hr2.number,c));
+      ws.mergeCells(hr.number,5,hr.number,6);
+      data.forEach(arr=>{
+        const r=ws.addRow(arr);
+        r.eachCell({includeEmpty:true},(c,col)=>{
+          c.font=font(col===2?{bold:true}:{});
+          c.border=border;
+          c.alignment={vertical:'middle',wrapText:true,horizontal:col===2?'left':'center'};
+        });
+      });
+      const tr=ws.addRow(totalLine);
+      const trNum=tr.number;
+      ws.mergeCells(trNum,1,trNum,4);
+      tr.eachCell({includeEmpty:true},(c,col)=>{
+        c.font=font({bold:true});c.border=border;
+        c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF5F5F5'}};
+        c.alignment={vertical:'middle',wrapText:true,horizontal:'center'};
+      });
+      ws.addRow([]);
+      const note=ws.addRow(['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.']);
+      ws.mergeCells(note.number,1,note.number,9);note.getCell(1).font=font({italic:true,size:10});
+      ws.addRow([]);
+      const d1=ws.addRow(['','','','','','','Ngày lập: '+todayVN()]);ws.mergeCells(d1.number,7,d1.number,9);d1.getCell(7).font=font();d1.getCell(7).alignment={horizontal:'center'};
+      const s1=ws.addRow(['','Người lập biểu','','','','','Trưởng khoa']);
+      ws.mergeCells(s1.number,2,s1.number,3);ws.mergeCells(s1.number,7,s1.number,9);
+      [2,7].forEach(c=>{s1.getCell(c).font=font({bold:true});s1.getCell(c).alignment={horizontal:'center'};});
+      const s2=ws.addRow(['','(Ký, ghi rõ họ tên)','','','','','(Ký, ghi rõ họ tên)']);
+      ws.mergeCells(s2.number,2,s2.number,3);ws.mergeCells(s2.number,7,s2.number,9);
+      [2,7].forEach(c=>{s2.getCell(c).font=font({italic:true});s2.getCell(c).alignment={horizontal:'center'};});
+      ws.views=[{state:'frozen',ySplit:7}];
+      const buf=await wb.xlsx.writeBuffer();
+      downloadFile(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),fileName);
+      return;
+    }
+    if(window.XLSX){
+      const aoa=[...lines,HDR1,HDR2,...data,totalLine,[],['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.'],[],['','','','','','','Ngày lập: '+todayVN()],['','Người lập biểu','','','','','Trưởng khoa'],['','(Ký, ghi rõ họ tên)','','','','','(Ký, ghi rõ họ tên)']];
+      const ws=XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols']=[6,28,20,20,14,14,18,18,18].map(w=>({wch:w}));
+      ws['!merges']=[[1,2,3,4,7,8,9].map(c=>({s:{r:7,c:c-1},e:{r:8,c:c-1}}))][0].concat([{s:{r:7,c:4},e:{r:7,c:5}}]);
+      const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'T'+pad(m)+'-'+y);
+      XLSX.writeFile(wb,fileName);return;
+    }
+    throw new Error('Thư viện xuất Excel chưa được tải. Hãy kiểm tra kết nối mạng rồi thử lại.');
+  }
+
+  /* ---------- khóa mật khẩu cho mục Tổng hợp trực & Ngoài giờ ---------- */
+  const PASS_HASH='6596090684378693';
+  let unlocked=false;
+  function passHash(s){
+    s=String(s==null?'':s).normalize('NFC');
+    let a=0xdeadbeef,b=0x41c6ce57;
+    for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677);}
+    a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);
+    b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);
+    return String(4294967296*(2097151&b)+(a>>>0));
+  }
+  function lockHTML(){
+    return '<div class="card"><div class="card-head"><div><h3>TỔNG HỢP TRỰC &amp; NGOÀI GIỜ</h3><span class="hint">Mục này được bảo vệ bằng mật khẩu — nhập mật khẩu để xem</span></div></div>'
+      +'<div class="card-body"><div class="ds-toolbar" style="justify-content:flex-start"><label class="field" style="margin:0"><span class="fl-label">Mật khẩu</span><input type="password" id="ds_pass" autocomplete="off" style="min-width:220px"></label>'
+      +'<div class="btn-row"><button type="button" class="btn primary" data-ds-act="unlock">Mở khóa</button></div></div></div></div>';
+  }
+  function tryUnlock(){
+    const inp=document.getElementById('ds_pass');
+    if(inp&&passHash(inp.value)===PASS_HASH){unlocked=true;render();return;}
+    toast2('danger','Sai mật khẩu','Mật khẩu không đúng, vui lòng nhập lại.');
+    if(inp){inp.value='';inp.focus();}
+  }
+
+  /* ---------- giao diện ---------- */
+  const ui={y:null,m:null,form:{name:'',type:'phep',from:'',to:'',days:'',dirty:false},filter:{name:'',type:'',from:'',to:''}};
+  function initUI(){
+    if(ui.y)return;
+    const n=new Date();ui.y=n.getFullYear();ui.m=n.getMonth()+1;
+  }
+  function ensureShell(){
+    let el=document.getElementById('view-'+VIEW);
+    if(!el){const c=document.getElementById('content');if(c){c.insertAdjacentHTML('beforeend','<div class="view" id="view-'+VIEW+'"></div>');el=document.getElementById('view-'+VIEW);}}
+    return el;
+  }
+  function statusHTML(y,m,data){
+    const lastD=lastDayOf(y,m),lastTxt=pad(lastD)+'/'+pad(m)+'/'+y;
+    if(data.closed){
+      const c=data.closed,t=new Date(c.closedAt);
+      const when=isNaN(t)?'':pad(t.getHours())+':'+pad(t.getMinutes())+' '+pad(t.getDate())+'/'+pad(t.getMonth()+1)+'/'+t.getFullYear();
+      return '<span class="ds-chip ds-chip-ok">✔ Đã chốt'+(c.auto?' tự động':'')+(when?' lúc '+esc(when):'')+'</span>'
+        +(data.stale?'<span class="ds-chip ds-chip-warn">Dữ liệu nguồn đã thay đổi sau khi chốt — bấm “Cập nhật dữ liệu”</span>':'');
+    }
+    return '<span class="ds-chip">Đang theo dõi — hệ thống tự chốt vào ngày cuối tháng ('+lastTxt+')</span>';
+  }
+  const WDN=['CN','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+  /* ô Nghỉ bù: mỗi ngày một dòng; ca trực Thứ 7 có thanh chọn ngày nghỉ bù (Thứ 2 – Thứ 6) */
+  function buSelectHTML(r,x){
+    const ymC=ymKey(ui.y,ui.m),hl=holInfo(x.duty);
+    return '<select class="ds-bu-sel" data-ds-bu="1" data-name="'+esc(r.name)+'" data-duty="'+esc(x.duty)+'" title="Trực '+(hl?hl.k:'Thứ 7')+' ngày '+esc(toVN(x.duty))+' — chọn ngày nghỉ bù'+(hl?'':' (Thứ 2 – Thứ 6)')+'">'
+      +pickDays(x.duty).map(o=>{
+        const lab=WDN[parseISO(o).getDay()]+' - '+(o.slice(0,7)===ymC?dd(o):dd(o)+'/'+o.slice(5,7));
+        return '<option value="'+o+'"'+(o===x.from?' selected':'')+'>'+lab+'</option>';
+      }).join('')+'</select>';
+  }
+  function buCellHTML(r,t){
+    const items=(r.bu||[]).concat(r.buOut||[]).sort((a,b)=>a.from.localeCompare(b.from));
+    if(!items.length)return '<td class="ds-c ds-none">'+NONE+'</td>';
+    const lines=[];
+    items.forEach(x=>{
+      if(x.sel&&x.duty)lines.push(buSelectHTML(r,x));
+      else leaveLines([x]).forEach(s=>lines.push(esc(s)));
+    });
+    return '<td class="ds-c">'+lines.join('<br>')+'</td>';
+  }
+  function summaryTable(rows){
+    const nl=t=>esc(t).replace(/\n/g,'<br>');
+    const cell=t=>'<td class="ds-c'+(t===NONE?' ds-none':'')+'">'+nl(t)+'</td>';
+    const body=rows.map((r,i)=>{
+      const t=rowTexts(r);
+      return '<tr><td class="ds-c">'+(i+1)+'</td><td class="ds-name">'+esc(r.name)+(r.extra?' <span class="hint">(ngoài danh sách)</span>':'')+'</td>'
+        +cell(t.duty)+cell(t.ot)+cell(t.dutyWd)+cell(t.dutyWe)+cell(t.otN)+buCellHTML(r,t)+cell(t.phep)+'</tr>';
+    }).join('');
+    const tt=totals(rows);
+    return '<div class="table-wrap"><table class="ds-table ds-sum"><thead><tr>'+[0,1,2,3].map(i=>'<th rowspan="2">'+esc(HEADERS[i])+'</th>').join('')+'<th colspan="2">'+esc(GROUP)+'</th>'+[6,7,8].map(i=>'<th rowspan="2">'+esc(HEADERS[i])+'</th>').join('')+'</tr><tr><th>'+esc(HEADERS[4])+'</th><th>'+esc(HEADERS[5])+'</th></tr></thead><tbody>'+body
+      +'<tr class="ds-total"><td colspan="4" class="ds-c">TỔNG CỘNG</td><td class="ds-c">'+esc(tt.dutyWd)+'</td><td class="ds-c">'+esc(tt.dutyWe)+'</td><td class="ds-c">'+esc(tt.otN)+'</td><td class="ds-c">'+esc(tt.bu)+'</td><td class="ds-c">'+esc(tt.phep)+'</td></tr>'
+      +'</tbody></table></div>';
+  }
+  /* ---------- Tổng xem: bảng thu gọn (chỉ hiện sau khi đã chốt tháng) ---------- */
+  const wdName=iso=>{const a=parseISO(iso);return a?WDN[a.getDay()]:'';};
+  const cntText=n=>n?daysText(n):NONE;
+  /* mỗi ngày trực chỉ tính vào 1 nhóm, ưu tiên: Tết → Lễ → Thứ 7 & CN → Ngày thường (tổng 4 nhóm = tổng số ngày trực) */
+  function overviewRows(rows){
+    return rows.map(r=>{
+      let wd=0,we=0,le=0,tet=0;
+      r.duty.forEach(d=>{const k=holLabel(d);if(k==='Tết')tet++;else if(k==='Lễ')le++;else if(isWeekend(d))we++;else wd++;});
+      const dow=d=>{const a=parseISO(d);return a?a.getDay():-1;};
+      const sat=r.ot.filter(d=>dow(d)===6),sun=r.ot.filter(d=>dow(d)===0);
+      const bu=(r.bu||[]).concat(r.buOut||[]).sort((a,b)=>a.from.localeCompare(b.from));
+      const buLines=bu.map(x=>wdName(x.from)+' - '+toVN(x.from)+(x.duty?' (bù trực '+dd(x.duty)+'/'+String(x.duty).slice(5,7)+')':''));
+      return {name:r.name,extra:r.extra,wd:wd,we:we,le:le,tet:tet,otN:r.ot.length,sat:sat,sun:sun,buLines:buLines,
+        buDays:bu.reduce((s,x)=>s+(+x.days||0),0)};
+    });
+  }
+  const dayList=a=>a.length?daysText(a.length)+' ('+a.map(dd).join(', ')+')':NONE;
+  function ovCells(o,i){
+    return [i+1,o.name,cntText(o.wd),cntText(o.we),cntText(o.le),cntText(o.tet),cntText(o.otN),dayList(o.sat),dayList(o.sun),o.buLines.length?o.buLines.join('\n'):NONE];
+  }
+  function ovTotals(ov){
+    const s={wd:0,we:0,le:0,tet:0,otN:0,sat:0,sun:0,bu:0};
+    ov.forEach(o=>{s.wd+=o.wd;s.we+=o.we;s.le+=o.le;s.tet+=o.tet;s.otN+=o.otN;s.sat+=o.sat.length;s.sun+=o.sun.length;s.bu+=o.buDays;});
+    return ['TỔNG CỘNG','',cntText(s.wd),cntText(s.we),cntText(s.le),cntText(s.tet),cntText(s.otN),cntText(s.sat),cntText(s.sun),cntText(s.bu)];
+  }
+  const OV_NOTE='Ghi chú: mỗi ngày trực chỉ tính vào 1 nhóm theo thứ tự ưu tiên Tết → Lễ → Thứ 7 & CN → Ngày thường; ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.';
+  let ovOpen=false;
+  function ovHTML(y,m,data){
+    const ov=overviewRows(data.rows),tt=ovTotals(ov),c=data.closed;
+    const nl=t=>esc(t).replace(/\n/g,'<br>');
+    const cell=t=>'<td class="ds-c'+(t===NONE?' ds-none':'')+'">'+nl(t)+'</td>';
+    const body=ov.map((o,i)=>{
+      const v=ovCells(o,i);
+      return '<tr><td class="ds-c">'+v[0]+'</td><td class="ds-name">'+esc(o.name)+(o.extra?' <span class="hint">(ngoài danh sách)</span>':'')+'</td>'
+        +cell(v[2])+cell(v[3])+cell(v[4])+cell(v[5])+cell(v[6])+cell(v[7])+cell(v[8])
+        +'<td class="ds-bu'+(v[9]===NONE?' ds-none':'')+'">'+nl(v[9])+'</td></tr>';
+    }).join('');
+    const total='<tr class="ds-total"><td colspan="2" class="ds-c">TỔNG CỘNG</td>'+tt.slice(2,9).map(t=>'<td class="ds-c">'+esc(t)+'</td>').join('')+'<td class="ds-bu">'+esc(tt[9])+'</td></tr>';
+    const t=c&&c.closedAt?new Date(c.closedAt):null;
+    const when=t&&!isNaN(t)?pad(t.getHours())+':'+pad(t.getMinutes())+' '+pad(t.getDate())+'/'+pad(t.getMonth()+1)+'/'+t.getFullYear():'';
+    const closeIcon=(typeof svgIcon==='function')?svgIcon('<path d="M6 6l12 12M18 6L6 18"/>',17):'✕';
+    return '<div class="modal-backdrop" data-ov-bg="1"><div class="modal wide ds-ov-modal">'
+      +'<div class="modal-head"><h3>TỔNG XEM — '+esc(monthTitle(y,m))+'</h3><button type="button" class="close-x" data-ov-act="close" title="Đóng">'+closeIcon+'</button></div>'
+      +'<div class="modal-body">'
+      +'<div class="hint" style="margin-bottom:10px">Bảng thu gọn từ dữ liệu đã chốt'+(when?' lúc '+esc(when):'')+' · '+ov.length+' nhân viên'+(data.stale?' · <b>Dữ liệu nguồn đã thay đổi sau khi chốt — đóng bảng và bấm “Cập nhật dữ liệu”.</b>':'')+'</div>'
+      +'<div class="table-wrap"><table class="ds-ov-table"><thead><tr><th rowspan="2">STT</th><th rowspan="2">Họ và tên nhân viên</th><th colspan="4">Tổng hợp trực</th><th colspan="3">Tổng hợp ngoài giờ</th><th rowspan="2">Nghỉ bù (thứ – ngày)</th></tr>'
+      +'<tr><th>Ngày thường</th><th>Thứ 7 &amp; CN</th><th>Lễ</th><th>Tết</th><th>Số ngày</th><th>Thứ 7</th><th>Chủ nhật</th></tr></thead><tbody>'+body+total+'</tbody></table></div>'
+      +'<div class="hint" style="margin-top:8px;font-style:italic">'+esc(OV_NOTE)+'</div>'
+      +'</div>'
+      +'<div class="modal-foot"><button type="button" class="btn primary" data-ov-act="excel">Xuất Excel</button><button type="button" class="btn ghost" data-ov-act="close">Đóng</button></div>'
+      +'</div></div>';
+  }
+  function mountOverview(data){
+    let root=document.getElementById('ds-ov-root');
+    if(!root){root=document.createElement('div');root.id='ds-ov-root';document.body.appendChild(root);root.addEventListener('click',ovClick);}
+    root.innerHTML=ovHTML(ui.y,ui.m,data);
+  }
+  function closeOverview(){ovOpen=false;const r=document.getElementById('ds-ov-root');if(r)r.innerHTML='';}
+  function openOverview(){
+    const data=dataFor(ui.y,ui.m);
+    if(!data.closed){toast2('warning','Chưa chốt tháng','Hãy bấm “Chốt tháng ngay” trước khi xem Tổng xem.');return;}
+    ovOpen=true;mountOverview(data);
+  }
+  function refreshOverview(){
+    if(!ovOpen)return;
+    const data=dataFor(ui.y,ui.m);
+    if(!data.closed){closeOverview();return;}
+    mountOverview(data);
+  }
+  function ovClick(e){
+    const t=e.target;if(!t)return;
+    if(t.dataset&&t.dataset.ovBg){closeOverview();return;}
+    const b=t.closest&&t.closest('[data-ov-act]');if(!b)return;
+    if(b.dataset.ovAct==='close')return closeOverview();
+    if(b.dataset.ovAct==='excel')return doOvExcel();
+  }
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ovOpen)closeOverview();});
+  async function doOvExcel(){
+    try{
+      const data=dataFor(ui.y,ui.m);
+      if(!data.closed){toast2('warning','Chưa chốt tháng','Hãy bấm “Chốt tháng ngay” trước khi xuất Excel.');return;}
+      await exportOverviewExcel(ui.y,ui.m,data.rows);
+      toast2('pass','Đã xuất Excel','Tổng xem trực & ngoài giờ '+pad(ui.m)+'/'+ui.y);
+    }catch(err){console.error(err);toast2('danger','Xuất thất bại',(err&&err.message)||'Không thể xuất file.');}
+  }
+  async function exportOverviewExcel(y,m,rows){
+    const fileName='Tong_xem_truc_ngoai_gio_'+pad(m)+'-'+y+'.xlsx';
+    const ov=overviewRows(rows),tt=ovTotals(ov);
+    const lines=[
+      ['BỘ Y TẾ'],['BỆNH VIỆN PHONG – DA LIỄU TW QUY HÒA'],['KHOA VI SINH – MIỄN DỊCH'],[],
+      ['TỔNG XEM TRỰC & NGOÀI GIỜ'],[monthTitle(y,m)],[]
+    ];
+    const data=ov.map((o,i)=>ovCells(o,i));
+    const HDR1=['STT','Họ và tên nhân viên','Tổng hợp trực','','','','Tổng hợp ngoài giờ','','','Nghỉ bù (thứ – ngày)'];
+    const HDR2=['','','Ngày thường','Thứ 7 & CN','Lễ','Tết','Số ngày','Thứ 7','Chủ nhật',''];
+    if(window.ExcelJS){
+      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();
+      const ws=wb.addWorksheet('TX'+pad(m)+'-'+y,{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3}}});
+      [6,28,13,13,12,12,11,20,20,38].forEach((w,i)=>{ws.getColumn(i+1).width=w;});
+      const font=(o)=>Object.assign({name:'Times New Roman',size:11},o||{});
+      const thin={style:'thin',color:{argb:'FF333333'}};
+      const border={top:thin,left:thin,bottom:thin,right:thin};
+      lines.forEach(l=>ws.addRow(l));
+      [1,2,3].forEach(r=>{ws.mergeCells(r,1,r,4);const c=ws.getCell(r,1);c.font=font({bold:true});c.alignment={horizontal:'left'};});
+      ws.mergeCells(5,1,5,10);ws.getCell(5,1).font=font({bold:true,size:16});ws.getCell(5,1).alignment={horizontal:'center',vertical:'middle'};
+      ws.mergeCells(6,1,6,10);ws.getCell(6,1).font=font({size:12.5});ws.getCell(6,1).alignment={horizontal:'center'};
+      const hr=ws.addRow(HDR1),hr2=ws.addRow(HDR2);
+      hr.height=24;
+      [hr,hr2].forEach(row=>row.eachCell({includeEmpty:true},c=>{c.font=font({bold:true});c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF3FB'}};}));
+      [1,2,10].forEach(c=>ws.mergeCells(hr.number,c,hr2.number,c));
+      ws.mergeCells(hr.number,3,hr.number,6);ws.mergeCells(hr.number,7,hr.number,9);
+      data.forEach(arr=>{
+        const r=ws.addRow(arr);
+        r.eachCell({includeEmpty:true},(c,col)=>{
+          c.font=font(col===2?{bold:true}:{});
+          c.border=border;
+          c.alignment={vertical:'middle',wrapText:true,horizontal:(col===2||col===10)?'left':'center'};
+        });
+      });
+      const tr=ws.addRow(tt);
+      ws.mergeCells(tr.number,1,tr.number,2);
+      tr.eachCell({includeEmpty:true},(c,col)=>{
+        c.font=font({bold:true});c.border=border;
+        c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF5F5F5'}};
+        c.alignment={vertical:'middle',wrapText:true,horizontal:col===10?'left':'center'};
+      });
+      ws.addRow([]);
+      const note=ws.addRow([OV_NOTE]);
+      ws.mergeCells(note.number,1,note.number,10);note.getCell(1).font=font({italic:true,size:10});note.getCell(1).alignment={wrapText:true,vertical:'top'};note.height=28;
+      ws.addRow([]);
+      const d1=ws.addRow(['','','','','','','','Ngày lập: '+todayVN()]);ws.mergeCells(d1.number,8,d1.number,10);d1.getCell(8).font=font();d1.getCell(8).alignment={horizontal:'center'};
+      const s1=ws.addRow(['','Người lập biểu','','','','','','Trưởng khoa']);
+      ws.mergeCells(s1.number,2,s1.number,4);ws.mergeCells(s1.number,8,s1.number,10);
+      [2,8].forEach(c=>{s1.getCell(c).font=font({bold:true});s1.getCell(c).alignment={horizontal:'center'};});
+      const s2=ws.addRow(['','(Ký, ghi rõ họ tên)','','','','','','(Ký, ghi rõ họ tên)']);
+      ws.mergeCells(s2.number,2,s2.number,4);ws.mergeCells(s2.number,8,s2.number,10);
+      [2,8].forEach(c=>{s2.getCell(c).font=font({italic:true});s2.getCell(c).alignment={horizontal:'center'};});
+      ws.views=[{state:'frozen',ySplit:9}];
+      const buf=await wb.xlsx.writeBuffer();
+      downloadFile(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),fileName);
+      return;
+    }
+    if(window.XLSX){
+      const aoa=[...lines,HDR1,HDR2,...data,tt,[],[OV_NOTE],[],['','','','','','','','Ngày lập: '+todayVN()],['','Người lập biểu','','','','','','Trưởng khoa'],['','(Ký, ghi rõ họ tên)','','','','','','(Ký, ghi rõ họ tên)']];
+      const ws=XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols']=[6,28,13,13,12,12,11,20,20,38].map(w=>({wch:w}));
+      ws['!merges']=[0,1,9].map(c=>({s:{r:7,c:c},e:{r:8,c:c}})).concat([{s:{r:7,c:2},e:{r:7,c:5}},{s:{r:7,c:6},e:{r:7,c:8}}]);
+      const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'TX'+pad(m)+'-'+y);
+      XLSX.writeFile(wb,fileName);return;
+    }
+    throw new Error('Thư viện xuất Excel chưa được tải. Hãy kiểm tra kết nối mạng rồi thử lại.');
+  }
+  function leaveListRange(){
+    const f=ui.filter;
+    if(f.from||f.to)return {from:f.from||'0000-00-00',to:f.to||'9999-99-99',label:(f.from?toVN(f.from):'…')+' – '+(f.to?toVN(f.to):'…')};
+    const ym=ymKey(ui.y,ui.m);return {from:ym+'-01',to:ym+'-31',label:'tháng '+pad(ui.m)+'/'+ui.y};
+  }
+  function leaveListHTML(){
+    const d=ds(),f=ui.filter,rg=leaveListRange();
+    const list=((d&&d.leaves)||[]).filter(l=>{
+      if(l.type!=='phep')return false;
+      if(f.name&&l.name!==f.name)return false;
+      return l.from<=rg.to&&(l.to||l.from)>=rg.from;
+    }).sort((a,b)=>a.from.localeCompare(b.from)||String(a.name).localeCompare(String(b.name),'vi'));
+    const rows=list.length?list.map((l,i)=>'<tr><td class="ds-c">'+(i+1)+'</td><td class="ds-name">'+esc(l.name)+'</td><td class="ds-c">'+esc(toVN(l.from))+'</td><td class="ds-c">'+esc(toVN(l.to||l.from))+'</td><td class="ds-c">'+esc(daysText(l.days))+'</td><td class="ds-c"><button type="button" class="btn ghost sm" data-ds-act="del-leave" data-id="'+esc(l.id)+'">Xóa</button></td></tr>').join('')
+      :'<tr><td colspan="6" class="ds-c ds-none">Không</td></tr>';
+    return '<div class="table-wrap"><table class="ds-table ds-leave"><thead><tr><th>STT</th><th>Nhân viên</th><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +'<div class="hint" style="margin-top:6px">Đang hiển thị: '+esc(rg.label)+' · '+list.length+' bản ghi'+(f.from||f.to?'':' (để trống ngày lọc = theo tháng đang chọn ở trên)')+'</div>';
+  }
+  function historyHTML(){
+    const d=ds();const keys=Object.keys((d&&d.closed)||{}).sort().reverse();
+    if(!keys.length)return '<div class="hint">Chưa có tháng nào được chốt. Hệ thống tự chốt vào ngày cuối tháng (30 hoặc 31).</div>';
+    return '<div class="table-wrap"><table class="ds-table"><thead><tr><th>Tháng</th><th>Thời điểm chốt</th><th>Hình thức</th><th></th></tr></thead><tbody>'
+      +keys.map(k=>{const c=d.closed[k],t=new Date(c.closedAt),[yy,mm]=k.split('-');
+        const when=isNaN(t)?'':pad(t.getHours())+':'+pad(t.getMinutes())+' '+pad(t.getDate())+'/'+pad(t.getMonth()+1)+'/'+t.getFullYear();
+        return '<tr><td class="ds-c">'+mm+'/'+yy+'</td><td class="ds-c">'+esc(when)+'</td><td class="ds-c">'+(c.auto?'Tự động':'Thủ công')+'</td><td class="ds-c"><button type="button" class="btn ghost sm" data-ds-act="open-month" data-ym="'+k+'">Xem</button></td></tr>';}).join('')
+      +'</tbody></table></div>';
+  }
+  function render(){
+    const el=ensureShell();if(!el)return;
+    initUI();autoCheck();
+    if(!unlocked){
+      closeOverview();
+      el.innerHTML=lockHTML();
+      el.onclick=onClick;el.onchange=null;el.oninput=null;
+      el.onkeydown=function(e){if(e.key==='Enter'&&e.target&&e.target.id==='ds_pass'){e.preventDefault();tryUnlock();}};
+      setTimeout(function(){const i=document.getElementById('ds_pass');if(i)i.focus();},0);
+      return;
+    }
+    const data=dataFor(ui.y,ui.m),names=staffList(),f=ui.form,fl=ui.filter;
+    const opt=(v,t,sel)=>'<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(t)+'</option>';
+    el.innerHTML=
+      '<div class="card"><div class="card-head"><div><h3>TỔNG HỢP TRỰC &amp; NGOÀI GIỜ</h3><span class="hint">Tự lấy Ngày, Người trực, Người làm ngoài giờ (Thứ 7, Chủ nhật) từ Báo cáo trực CLS · Nghỉ bù tự tính theo ngày trực, Nghỉ phép nhập bên dưới</span></div></div>'
+      +'<div class="card-body">'
+      +'<div class="ds-toolbar"><label class="field" style="margin:0"><span class="fl-label">Tháng</span><input type="month" id="ds_month" value="'+ymKey(ui.y,ui.m)+'" style="min-width:150px"></label>'
+      +'<div class="ds-status">'+statusHTML(ui.y,ui.m,data)+'</div>'
+      +'<div class="btn-row ds-actions"><button type="button" class="btn primary" data-ds-act="pdf">In / Xuất PDF</button><button type="button" class="btn" data-ds-act="word">Xuất Word</button><button type="button" class="btn" data-ds-act="excel">Xuất Excel</button><button type="button" class="btn ghost" data-ds-act="close-now">'+(data.closed?'Cập nhật dữ liệu':'Chốt tháng ngay')+'</button>'+(data.closed?'<button type="button" class="btn" data-ds-act="overview">Tổng xem</button>':'')+'</div></div>'
+      +summaryTable(data.rows)
+      +'</div></div>'
+      +'<div class="card" style="margin-top:14px"><div class="card-head"><div><h3>Nghỉ phép</h3><span class="hint">Chọn nhân viên và khoảng ngày — hệ thống tự cộng dồn vào bảng tổng hợp</span></div></div>'
+      +'<div class="card-body">'
+      +'<div class="form-grid c3">'
+      +'<label class="field"><span class="fl-label">Nhân viên</span><select id="ds_f_name"><option value="">— Chọn nhân viên —</option>'+names.map(n=>opt(n,n,f.name===n)).join('')+'</select></label>'
+      +'<label class="field"><span class="fl-label">Từ ngày</span><input type="date" id="ds_f_from" value="'+esc(f.from)+'"></label>'
+      +'<label class="field"><span class="fl-label">Đến ngày</span><input type="date" id="ds_f_to" value="'+esc(f.to)+'"></label>'
+      +'<label class="field"><span class="fl-label">Số ngày</span><input type="number" id="ds_f_days" min="0.5" step="0.5" value="'+esc(f.days)+'" placeholder="Tự tính (Thứ 2 – Thứ 6)"></label>'
+      +'<div class="field" style="display:flex;align-items:flex-end"><button type="button" class="btn primary" data-ds-act="add-leave">+ Thêm nghỉ phép</button></div>'
+      +'</div>'
+      +'<div class="hint" style="margin:2px 0 14px">Số ngày tự tính theo ngày làm việc Thứ 2 – Thứ 6 trong khoảng đã chọn; có thể nhập lại (ví dụ 0,5 ngày). Khoảng ngày qua nhiều tháng sẽ tự tách theo từng tháng.</div>'
+      +'<h4 style="margin:6px 0">Danh sách đã nhập</h4>'
+      +'<div class="form-grid c3" style="margin-bottom:8px">'
+      +'<label class="field"><span class="fl-label">Lọc nhân viên</span><select id="ds_l_name"><option value="">Tất cả</option>'+names.map(n=>opt(n,n,fl.name===n)).join('')+'</select></label>'
+      +'<label class="field"><span class="fl-label">Lọc từ ngày</span><input type="date" id="ds_l_from" value="'+esc(fl.from)+'"></label>'
+      +'<label class="field"><span class="fl-label">Lọc đến ngày</span><input type="date" id="ds_l_to" value="'+esc(fl.to)+'"></label>'
+      +'<div class="field" style="display:flex;align-items:flex-end"><button type="button" class="btn ghost" data-ds-act="clear-filter">Xóa bộ lọc</button></div>'
+      +'</div>'
+      +'<div id="ds_leave_list">'+leaveListHTML()+'</div>'
+      +'</div></div>'
+      +'<div class="card" style="margin-top:14px"><div class="card-head"><h3>Các tháng đã chốt</h3></div><div class="card-body">'+historyHTML()+'</div></div>';
+    el.onclick=onClick;el.onchange=onChange;el.oninput=onInput;
+    refreshOverview();
+  }
+  function autoDays(){
+    const f=ui.form;if(f.dirty)return;
+    const n=(f.from&&f.to)?workdays(f.from,f.to):0;
+    f.days=n?String(n):'';
+    const e=document.getElementById('ds_f_days');if(e)e.value=f.days;
+  }
+  function onInput(e){
+    const id=e.target&&e.target.id;
+    if(id==='ds_f_days'){ui.form.days=e.target.value;ui.form.dirty=e.target.value!=='';}
+  }
+  function onChange(e){
+    const t0=e.target;
+    if(t0&&t0.dataset&&t0.dataset.dsBu)return changeBu(t0.dataset.name,t0.dataset.duty,t0.value);
+    const id=e.target&&e.target.id;if(!id)return;
+    const f=ui.form,fl=ui.filter;
+    if(id==='ds_month'){const m=/^(\d{4})-(\d{2})$/.exec(e.target.value||'');if(m){ui.y=+m[1];ui.m=+m[2];render();}return;}
+    if(id==='ds_f_name'){f.name=e.target.value;return;}
+    if(id==='ds_f_type'){f.type=e.target.value;return;}
+    if(id==='ds_f_from'){f.from=e.target.value;if(f.from&&(!f.to||f.to<f.from)){f.to=f.from;const t=document.getElementById('ds_f_to');if(t)t.value=f.to;}f.dirty=false;autoDays();return;}
+    if(id==='ds_f_to'){f.to=e.target.value;f.dirty=false;autoDays();return;}
+    if(id==='ds_f_days'){f.days=e.target.value;f.dirty=e.target.value!=='';if(!f.dirty)autoDays();return;}
+    if(id==='ds_l_name'){fl.name=e.target.value;refreshList();return;}
+    if(id==='ds_l_type'){fl.type=e.target.value;refreshList();return;}
+    if(id==='ds_l_from'){fl.from=e.target.value;refreshList();return;}
+    if(id==='ds_l_to'){fl.to=e.target.value;refreshList();return;}
+  }
+  function refreshList(){const box=document.getElementById('ds_leave_list');if(box)box.innerHTML=leaveListHTML();}
+  function onClick(e){
+    const b=e.target.closest&&e.target.closest('[data-ds-act]');if(!b)return;
+    const act=b.dataset.dsAct;
+    if(act==='unlock')return tryUnlock();
+    if(act==='add-leave')return addLeave();
+    if(act==='del-leave')return delLeave(b.dataset.id);
+    if(act==='clear-filter'){ui.filter={name:'',type:'',from:'',to:''};render();return;}
+    if(act==='open-month'){const m=/^(\d{4})-(\d{2})$/.exec(b.dataset.ym||'');if(m){ui.y=+m[1];ui.m=+m[2];render();window.scrollTo(0,0);}return;}
+    if(act==='close-now')return closeNow();
+    if(act==='overview')return openOverview();
+    if(act==='pdf')return doExport('pdf');
+    if(act==='word')return doExport('word');
+    if(act==='excel')return doExport('excel');
+  }
+
+  /* ---------- chọn ngày nghỉ bù cho ca trực Thứ 7 ---------- */
+  function changeBu(name,duty,val){
+    const d=ds();if(!d)return;
+    if(pickDays(duty).indexOf(val)<0)return;
+    const nk=nameKey(name),old=pickMap().get(buKey(nk,duty))||val;
+    if(old===val)return;
+    d.buPick[buKey(nk,duty)]=val;
+    refreshClosedMonths([duty.slice(0,7),old.slice(0,7),val.slice(0,7)]);
+    save();render();
+    toast2('pass','Đã chọn ngày nghỉ bù',name+' · trực '+(holLabel(duty)||'Thứ 7')+' '+toVN(duty)+' → nghỉ bù '+toVN(val));
+  }
+
+  /* ---------- nghiệp vụ nghỉ phép ---------- */
+  function addLeave(){
+    const d=ds();if(!d)return;const f=ui.form;f.type='phep';
+    if(!f.name){toast2('warning','Thiếu thông tin','Hãy chọn nhân viên.');return;}
+    if(!f.from||!f.to){toast2('warning','Thiếu thông tin','Hãy chọn Từ ngày và Đến ngày.');return;}
+    if(f.to<f.from){toast2('warning','Ngày không hợp lệ','Đến ngày phải sau hoặc bằng Từ ngày.');return;}
+    const segs=splitByMonth(f.from,f.to);if(!segs.length){toast2('warning','Ngày không hợp lệ','Không đọc được khoảng ngày đã chọn.');return;}
+    const manual=parseFloat(String(f.days).replace(',','.'));const hasManual=f.dirty&&isFinite(manual)&&manual>0;
+    if(segs.length>1&&hasManual)toast2('warning','Khoảng ngày qua nhiều tháng','Số ngày nhập tay không áp dụng cho khoảng qua nhiều tháng; hệ thống tự tính theo từng tháng.');
+    const recs=[];let dup=0;
+    for(const s of segs){
+      const days=(segs.length===1&&hasManual)?manual:workdays(s.from,s.to);
+      if(!(days>0)){toast2('warning','Không có ngày làm việc','Khoảng ngày chỉ gồm Thứ 7/Chủ nhật. Hãy nhập tay Số ngày nếu vẫn muốn ghi nhận.');return;}
+      if(d.leaves.some(l=>l.name===f.name&&l.type===f.type&&l.from===s.from&&(l.to||l.from)===s.to)){dup++;continue;}
+      recs.push({id:(typeof uid==='function'?uid('NL'):'NL'+Date.now()+Math.random().toString(36).slice(2,5)),name:f.name,type:f.type,from:s.from,to:s.to,days:days,createdAt:new Date().toISOString(),createdBy:(hasState()&&state.settings&&state.settings.currentUser)||''});
+    }
+    if(!recs.length){toast2('warning','Đã tồn tại','Bản ghi này đã được nhập trước đó.');return;}
+    recs.forEach(r=>d.leaves.push(r));
+    refreshClosedMonths(recs.map(r=>r.from.slice(0,7)));
+    save();
+    ui.form={name:f.name,type:f.type,from:'',to:'',days:'',dirty:false};
+    const first=recs[0].from;ui.y=+first.slice(0,4);ui.m=+first.slice(5,7);
+    render();
+    toast2('pass','Đã thêm '+TYPE_LABEL[f.type].toLowerCase(),f.name+' · '+recs.map(r=>recText(r,true)).join('; ')+(dup?' ('+dup+' bản ghi trùng đã bỏ qua)':''));
+  }
+  function delLeave(id){
+    const d=ds();if(!d)return;const i=d.leaves.findIndex(l=>String(l.id)===String(id));if(i<0)return;
+    const l=d.leaves[i];
+    if(!window.confirm('Xóa '+(TYPE_LABEL[l.type]||'bản ghi')+' của '+l.name+' ('+recText(l,true)+')?'))return;
+    d.leaves.splice(i,1);
+    refreshClosedMonths([String(l.from).slice(0,7)]);
+    save();render();toast2('pass','Đã xóa','Bản ghi đã được xóa.');
+  }
+
+  /* ---------- chốt tháng ---------- */
+  function closeMonth(y,m,auto){
+    const d=ds();if(!d)return;
+    const ym=ymKey(y,m),old=d.closed[ym];
+    d.closed[ym]={closedAt:new Date().toISOString(),auto:old?!!old.auto:!!auto,by:(hasState()&&state.settings&&state.settings.currentUser)||'',rows:compute(y,m)};
+    save();
+  }
+  /* tháng đã chốt mà thay đổi nghỉ bù/nghỉ phép -> tự cập nhật bản chốt */
+  function refreshClosedMonths(yms){
+    const d=ds();if(!d)return;
+    [...new Set(yms)].forEach(ym=>{if(d.closed[ym]){const [y,m]=ym.split('-').map(Number);const c=d.closed[ym];c.rows=compute(y,m);c.updatedAt=new Date().toISOString();}});
+  }
+  function closeNow(){
+    const data=dataFor(ui.y,ui.m);
+    if(!data.closed&&!hasAnyData(data.live)){toast2('warning','Chưa có dữ liệu','Tháng '+pad(ui.m)+'/'+ui.y+' chưa có dữ liệu trực, ngoài giờ, nghỉ bù hoặc nghỉ phép.');return;}
+    closeMonth(ui.y,ui.m,false);render();
+    toast2('pass',data.closed?'Đã cập nhật dữ liệu':'Đã chốt tháng','Tháng '+pad(ui.m)+'/'+ui.y+' đã được lưu vào Tổng hợp trực & Ngoài giờ.');
+  }
+  /* kiểm tra tự động: ngày cuối tháng (30/31; tháng 2 là 28/29) và bổ sung các tháng đã qua chưa chốt */
+  function autoCheck(){
+    try{
+      if(!hasState()||!state.settings)return;
+      const app=document.getElementById('app');if(app&&app.style.display==='none')return;
+      const d=ds();if(!d)return;
+      const now=new Date(),cy=now.getFullYear(),cm=now.getMonth()+1,curYM=ymKey(cy,cm);
+      let changed=false;
+      if(now.getDate()===lastDayOf(cy,cm)){
+        const c=d.closed[curYM],rows=compute(cy,cm);
+        if(!c){if(hasAnyData(rows)){d.closed[curYM]={closedAt:now.toISOString(),auto:true,by:'',rows};changed=true;}}
+        else if(c.auto){const t=new Date(c.closedAt);
+          if(t.getFullYear()===cy&&t.getMonth()+1===cm&&t.getDate()===now.getDate()&&sig(c.rows)!==sig(rows)){c.rows=rows;c.closedAt=now.toISOString();changed=true;}}
+      }
+      const months=new Set();
+      ((hasState()&&Array.isArray(state.clsReports))?state.clsReports:[]).forEach(r=>{const x=normDate(r&&r.date);if(x)months.add(x.slice(0,7));});
+      d.leaves.forEach(l=>{if(l&&l.from)months.add(String(l.from).slice(0,7));});
+      const limit=new Date(cy,cm-1-12,1);const limYM=ymKey(limit.getFullYear(),limit.getMonth()+1);
+      [...months].filter(k=>/^\d{4}-\d{2}$/.test(k)&&k<curYM&&k>=limYM&&!d.closed[k]).sort().forEach(k=>{
+        const [y,m]=k.split('-').map(Number),rows=compute(y,m);
+        if(hasAnyData(rows)){d.closed[k]={closedAt:now.toISOString(),auto:true,by:'',rows};changed=true;}
+      });
+      if(changed){save();
+        const el=document.getElementById('view-'+VIEW);
+        if(el&&el.classList.contains('active')&&!window.__dutyRendering){window.__dutyRendering=true;try{render();}finally{window.__dutyRendering=false;}}
+      }
+    }catch(e){console.warn('SMART VSMD duty auto-close',e);}
+  }
+
+  /* ---------- in / xuất ---------- */
+  async function doExport(type){
+    try{
+      const y=ui.y,m=ui.m,data=dataFor(y,m),rows=data.rows;
+      if(type==='pdf'){
+        const html=buildPrintHTML(y,m,rows);
+        if(typeof window.printWithClass==='function')window.printWithClass(html,'landscape');
+        else if(typeof window.printNew==='function')window.printNew(html);
+        else toast2('danger','In PDF thất bại','Không tìm thấy chức năng in.');
+        return;
+      }
+      if(type==='word'){
+        if(typeof window.officeWordDownload!=='function'){toast2('danger','Xuất Word thất bại','Không tìm thấy chức năng xuất Word.');return;}
+        await window.officeWordDownload('Tong_hop_truc_ngoai_gio_T'+pad(m)+'_'+y,buildPrintHTML(y,m,rows),'landscape');
+        return;
+      }
+      if(type==='excel'){await exportExcel(y,m,rows);toast2('pass','Đã xuất Excel','Tổng hợp trực & ngoài giờ '+pad(m)+'/'+y);return;}
+    }catch(err){console.error(err);toast2('danger','Xuất thất bại',(err&&err.message)||'Không thể xuất file.');}
+  }
+
+  /* ---------- điều hướng ---------- */
+  const prevGo=window.go;
+  window.go=function(view){
+    if(view!==VIEW)closeOverview();
+    if(view===VIEW){
+      const el=ensureShell();if(!el)return;
+      if(typeof currentView==='undefined'||currentView!==VIEW)unlocked=false;
+      currentView=VIEW;
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      el.classList.add('active');
+      const meta=((typeof VIEW_META!=='undefined'&&VIEW_META[VIEW])||['Tổng hợp trực & Ngoài giờ','']);
+      const t=document.getElementById('viewTitle'),s=document.getElementById('viewSub');
+      if(t)t.textContent=meta[0];if(s)s.textContent=meta[1];
+      if(typeof renderNav==='function')renderNav();
+      render();
+      if(typeof toggleSidebar==='function')toggleSidebar(false);
+      window.scrollTo(0,0);return;
+    }
+    return typeof prevGo==='function'?prevGo.apply(this,arguments):undefined;
+  };
+  const prevRender=window.renderView;
+  window.renderView=function(view){
+    if(view===VIEW){render();return;}
+    return typeof prevRender==='function'?prevRender.apply(this,arguments):undefined;
+  };
+
+  /* ---------- CSS riêng cho module mới ---------- */
+  const css=document.createElement('style');css.id='smart-duty-summary-style';
+  css.textContent=
+    '#view-duty-summary .ds-toolbar{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;justify-content:space-between;margin-bottom:14px}'
+    +'#view-duty-summary .ds-status{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 260px;align-items:center}'
+    +'#view-duty-summary .ds-chip{display:inline-block;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600;background:rgba(100,116,139,.12);color:var(--text-muted)}'
+    +'#view-duty-summary .ds-chip-ok{background:rgba(22,163,74,.13);color:#15803d}'
+    +'#view-duty-summary .ds-chip-warn{background:rgba(217,119,6,.15);color:#b45309}'
+    +'#view-duty-summary .ds-actions{justify-content:flex-end;flex-wrap:wrap}'
+    +'#view-duty-summary .ds-table{width:100%;min-width:980px}'
+    +'#view-duty-summary .ds-table th{text-align:center;white-space:nowrap}'
+    +'#view-duty-summary .ds-table td{vertical-align:top;line-height:1.45;word-break:break-word}'
+    +'#view-duty-summary .ds-table td.ds-c{text-align:center}'
+    +'#view-duty-summary .ds-table td.ds-name{font-weight:600;white-space:nowrap}'
+    +'#view-duty-summary .ds-sum td{vertical-align:middle}'
+    +'#view-duty-summary .ds-sum thead tr:first-child th:nth-child(2),#view-duty-summary .ds-leave thead th:nth-child(2){text-align:left}'
+    +'#view-duty-summary .ds-sum thead th[colspan]{border-bottom:1px solid rgba(100,116,139,.25)}'
+    +'#view-duty-summary .ds-bu-sel{width:auto;min-width:0;max-width:100%;padding:4px 8px;font-size:12.5px}'
+    +'#view-duty-summary .ds-none{color:var(--text-muted);font-style:italic}'
+    +'#view-duty-summary .ds-total td{font-weight:700;background:rgba(100,116,139,.08)}'
+    +'#ds-ov-root .ds-ov-modal{max-width:1180px}'
+    +'#ds-ov-root .table-wrap{max-height:62vh}'
+    +'#ds-ov-root .ds-ov-table{width:100%;min-width:940px;font-size:12.5px}'
+    +'#ds-ov-root .ds-ov-table th{text-align:center;white-space:nowrap}'
+    +'#ds-ov-root .ds-ov-table td{vertical-align:middle;line-height:1.45;word-break:break-word}'
+    +'#ds-ov-root .ds-ov-table td.ds-c{text-align:center}'
+    +'#ds-ov-root .ds-ov-table td.ds-name{font-weight:600;white-space:nowrap;text-align:left}'
+    +'#ds-ov-root .ds-ov-table td.ds-bu{text-align:left;min-width:230px}'
+    +'#ds-ov-root .ds-ov-table .ds-none{color:var(--text-muted);font-style:italic}'
+    +'#ds-ov-root .ds-ov-table .ds-total td{font-weight:700;background:rgba(100,116,139,.08)}'
+    +'#ds-ov-root .ds-ov-table thead th[colspan]{border-bottom:1px solid rgba(100,116,139,.25)}'
+    +'@media(max-width:700px){#view-duty-summary .ds-actions{justify-content:flex-start}}';
+  document.head.appendChild(css);
+
+  /* ---------- tự kiểm tra chốt tháng ---------- */
+  setTimeout(autoCheck,4000);
+  setInterval(autoCheck,60000);
+
+  window.SMART_DUTY_SUMMARY={compute,dataFor,rowTexts,totals,buildPrintHTML,autoCheck,closeMonth,workdays,splitByMonth,nameKey,render,overviewRows,holInfo,offRun,pickDays,buRule};
 })();
 </script>
