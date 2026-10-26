@@ -1385,7 +1385,8 @@ function cloudStatusText(){
 function updateCloudIndicator(){
   const el=document.getElementById('sysStatus');
   if(!el) return;
-  if(cloudUser) el.innerHTML='<span class="sdot"></span>Đồng bộ đám mây';
+  if(cloudUser && cloudSyncPending) el.innerHTML='<span class="sdot"></span>Đã lưu trên máy — chờ đồng bộ';
+  else if(cloudUser) el.innerHTML='<span class="sdot"></span>Đồng bộ đám mây';
   else el.innerHTML='<span class="sdot"></span>Hệ thống hoạt động';
 }
 async function initCloud(){
@@ -1692,12 +1693,75 @@ async function cloudSyncAfterLogin(localSt){
     await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
     let pushed=false;
     try{ await cloudPersistState(); pushed=true; }catch(e){ console.error('Supabase push error',e); }
+    cloudLastPushOk=pushed;
     if(pushed){ cloudClearOfflineFlag(); cloudSaveSyncSnap(); }
     cloudNotifyMerge(rep,pushed);
     return true;
   }finally{ cloudMergeBusy=false; }
 }
 /* ===== HẾT PHẦN ƯU TIÊN DỮ LIỆU TRÌNH DUYỆT ===== */
+/* ===================== TỰ ĐỒNG BỘ LẠI KHI CÓ MẠNG / ĐĂNG NHẬP LẠI =====================
+   - Mất mạng hoặc lỗi Supabase: vẫn nhập bình thường, dữ liệu tự lưu trên máy (localStorage + bản sao lưu).
+   - Khi mạng ổn định trở lại (hoặc mở lại app / đăng nhập Supabase): dữ liệu đã nhập trên máy được ưu tiên,
+     gộp với dữ liệu cloud, tự đẩy lên Supabase rồi hiển thị ngay trong app — không mất dữ liệu nào. */
+let cloudSyncPending=false, cloudResyncBusy=false, cloudResyncTimer=null, cloudResyncTries=0, cloudLastPushOk=true;
+function cloudMarkPending(){
+  cloudMarkOfflineEdit();                 /* đánh dấu: máy này có dữ liệu chưa đẩy lên cloud -> ưu tiên khi gộp */
+  if(!cloudSyncPending){ cloudSyncPending=true; try{ updateCloudIndicator(); }catch(e){} }
+}
+function cloudScheduleResync(ms){ clearTimeout(cloudResyncTimer); cloudResyncTimer=setTimeout(cloudTryResync,ms||15000); }
+function cloudAfterResyncRender(draft){
+  try{ if(draft!==undefined) state.clsDraft=draft; }catch(e){}
+  let tries=0;
+  const go=()=>{
+    try{
+      if(typeof renderNav==='function') renderNav();
+      if(typeof currentView!=='undefined' && currentView && typeof renderView==='function'){
+        const onCls=(currentView==='reports-cls');
+        /* Đang gõ / đang có ô nhập chưa lưu (trừ phiếu CLS vì đã tự lưu nháp từng phím) -> chờ, không làm mất chữ đang nhập. */
+        if(cloudUserIsBusy() || (!onCls && cloudViewHasUnsaved())){ if(tries++<40){ setTimeout(go,2500); } return; }
+        const sx=window.scrollX, sy=window.scrollY; renderView(currentView); try{ window.scrollTo(sx,sy); }catch(e){}
+      }
+    }catch(e){ console.warn('Vẽ lại sau đồng bộ',e); }
+  };
+  go();
+}
+async function cloudTryResync(){
+  clearTimeout(cloudResyncTimer);
+  if(!cloudSyncPending || cloudResyncBusy || !supabaseClient || !cloudUser || !state) return;
+  if(typeof navigator!=='undefined' && navigator.onLine===false) return;            /* chưa có mạng: chờ sự kiện "online" */
+  /* Phần gộp/đẩy dữ liệu chạy ngầm trong bộ nhớ; chỉ hoãn khi vừa gõ phím hoặc đang lưu (không chờ bỏ con trỏ khỏi ô nhập). */
+  if(isSaving||saveQueuedWhileBusy||cloudMergeBusy||(Date.now()-lastLocalEditTs)<2500){ cloudScheduleResync(3000); return; }
+  cloudResyncBusy=true;
+  const draft=state.clsDraft; let ok=false;
+  try{
+    cloudLastPushOk=false;
+    await cloudSyncAfterLogin(state);       /* tải cloud -> gộp ưu tiên dữ liệu trên máy -> đẩy lên Supabase -> cập nhật state */
+    ok=cloudLastPushOk;
+  }catch(e){ console.error('Supabase resync error',e); }
+  finally{ cloudResyncBusy=false; }
+  if(ok){
+    cloudSyncPending=false; cloudResyncTries=0; cloudClearOfflineFlag();
+    try{ updateCloudIndicator(); }catch(e){}
+    cloudAfterResyncRender(draft);
+    try{ toast('pass','Đã đồng bộ dữ liệu lên Supabase','Dữ liệu nhập trên máy khi mất mạng/chưa đăng nhập đã được đưa lên cloud và hiển thị trong app.'); }catch(e){}
+  }else{
+    cloudResyncTries++; cloudScheduleResync(Math.min(60000,15000*cloudResyncTries));
+  }
+}
+window.addEventListener('online',()=>{
+  if(!cloudUser) return;
+  cloudMarkPending();
+  try{ toast('pass','Đã có mạng trở lại','Đang đồng bộ dữ liệu đã nhập trên máy lên Supabase…'); }catch(e){}
+  cloudTryResync();
+});
+window.addEventListener('offline',()=>{
+  if(!cloudConfig) return;
+  if(cloudUser) cloudMarkPending();
+  try{ toast('warning','Mất kết nối mạng','Bạn vẫn nhập dữ liệu bình thường — dữ liệu tự lưu trên máy và sẽ tự đồng bộ khi có mạng.'); }catch(e){}
+});
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && cloudSyncPending) cloudTryResync(); });
+/* ===== HẾT PHẦN TỰ ĐỒNG BỘ LẠI ===== */
 async function cloudPersistState(){
   if(!supabaseClient || !cloudUser || !state) return false;
   if(cloudMode==='legacy') return cloudPersistLegacy();
@@ -2063,8 +2127,16 @@ async function loadState(){
   if(cloudUser){
     try{
       /* Dữ liệu đã nhập trên trình duyệt (kể cả khi chưa đăng nhập) được ưu tiên đưa lên Supabase trước. */
-      if(await cloudSyncAfterLogin(localState)){ updateCloudIndicator(); return; }
-    }catch(e){ console.error('Supabase load error',e); if(state){ updateCloudIndicator(); return; } }
+      if(await cloudSyncAfterLogin(localState)){
+        if(!cloudLastPushOk){ cloudMarkPending(); cloudScheduleResync(15000); }
+        updateCloudIndicator(); return;
+      }
+    }catch(e){
+      console.error('Supabase load error',e);
+      /* Mở app khi mất mạng / Supabase lỗi: dùng dữ liệu trên máy, tự gộp + đồng bộ lại khi ổn định. */
+      cloudMarkPending(); cloudScheduleResync(15000);
+      if(state){ updateCloudIndicator(); return; }
+    }
   }
   if(localState){ state=localState; migrateState(); updateCloudIndicator(); return; }
   state = buildInitialCatalog();
@@ -2097,8 +2169,17 @@ async function persistNow(retriesLeft){
   try{
     await storageAdapter.set(STORAGE_KEY, payload, false);
     if(cloudUser && !cloudMergeBusy){
-      try{ await cloudPersistState(); cloudSaveSyncSnap(); }
-      catch(cloudErr){ console.error('Supabase save error',cloudErr); toast('warning','Chưa đồng bộ lên cloud','Dữ liệu vẫn đã lưu an toàn trên thiết bị; hệ thống sẽ tiếp tục đồng bộ ở lần lưu sau.'); }
+      if(cloudSyncPending || (typeof navigator!=='undefined' && navigator.onLine===false)){
+        /* Mất mạng / đang chờ đồng bộ lại: chỉ lưu trên máy, không đẩy từng phần lên cloud để tránh ghi đè dữ liệu cloud chưa gộp. */
+        cloudMarkPending(); cloudScheduleResync(5000);
+      }else{
+        try{ await cloudPersistState(); cloudSaveSyncSnap(); }
+        catch(cloudErr){
+          console.error('Supabase save error',cloudErr);
+          cloudMarkPending(); cloudScheduleResync(15000);
+          toast('warning','Chưa đồng bộ lên cloud','Dữ liệu vẫn đã lưu an toàn trên máy; hệ thống sẽ tự đồng bộ lại khi mạng/Supabase ổn định.');
+        }
+      }
     }
     showSaveIndicator('saved');
   }catch(e){
@@ -10292,7 +10373,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
       <section class="cls-sec"><h4>IV/ Xét nghiệm cấp cứu</h4><div class="table-wrap"><table><thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead><tbody>${renderCaseRows(r.emergencies,'em')}</tbody></table></div><div class="btn-row" style="margin-top:8px"><button type="button" class="btn ghost sm" id="cls-add-em-row">+ Thêm hàng</button></div></section>
       <section class="cls-sec"><h4 style="font-weight:400">* Tình hình trong khoa ổn định</h4><div>Máy móc hoạt động bình thường.</div><textarea id="cls_machineIssue" rows="2" placeholder="Nếu có lỗi, nhập thông tin lỗi.">${esc(r.machineIssue)}</textarea></section>
       <div class="btn-row cls-bottom-actions"><button class="btn primary" id="cls-save-final">Lưu phiếu trực CLS</button><button class="btn" id="cls-new-final">Phiếu mới</button></div></div></div>`;
-    const recent=`<div class="card" style="margin-top:14px"><div class="card-head"><h3>Danh sách đã nhập gần đây</h3></div><div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Thứ</th><th>Bác Sĩ</th><th>Người trực</th><th>Tổng BN</th><th></th></tr></thead><tbody>${smartRecentAsc(state.clsReports,x=>x.date,20).map(o=>o.item).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.weekday)}</td><td>${esc(x.doctor)}</td><td>${esc(x.staff)}</td><td>${esc(x.totalPatients)}</td><td><button class="btn ghost sm" data-final-edit="${esc(x.id)}">Sửa</button> <button class="btn sm" data-final-export="pdf" data-final-id="${esc(x.id)}">In PDF</button> <button class="btn sm" data-final-export="word" data-final-id="${esc(x.id)}">Word</button> <button class="btn sm" data-final-export="excel" data-final-id="${esc(x.id)}">Excel</button> <button class="btn sm" data-final-delete="${esc(x.id)}">Xóa</button></td></tr>`).join('')}</tbody></table></div></div>`;
+    const recent=`<div class="card" style="margin-top:14px"><div class="card-head"><h3>Danh sách đã nhập gần đây</h3></div><div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Thứ</th><th>Bác Sĩ</th><th>Người trực</th><th>Tổng BN</th><th></th></tr></thead><tbody>${smartRecentAsc(state.clsReports,x=>x.date,0).map(o=>o.item).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.weekday)}</td><td>${esc(x.doctor)}</td><td>${esc(x.staff)}</td><td>${esc(x.totalPatients)}</td><td><button class="btn ghost sm" data-final-edit="${esc(x.id)}">Sửa</button> <button class="btn sm" data-final-export="pdf" data-final-id="${esc(x.id)}">In PDF</button> <button class="btn sm" data-final-export="word" data-final-id="${esc(x.id)}">Word</button> <button class="btn sm" data-final-export="excel" data-final-id="${esc(x.id)}">Excel</button> <button class="btn sm" data-final-delete="${esc(x.id)}">Xóa</button></td></tr>`).join('')}</tbody></table></div></div>`;
     el.innerHTML=card+recent;
     const bindSave=()=>saveCLSDraft(readCLSForm());el.querySelectorAll('input,select,textarea').forEach(e=>{e.addEventListener('input',bindSave);e.addEventListener('change',bindSave);});
     function applyFilter(which){const q=trim(document.getElementById(which==='imm'?'cls-filter-imm':'cls-filter-mic')?.value).toLowerCase();const id=which==='imm'?'clsimm':'clsmic';document.querySelectorAll('#'+id+' tbody tr').forEach(tr=>{const name=tr.cells[1]?.textContent.toLowerCase()||'';tr.style.display=!q||name.includes(q)?'':'none';});}
@@ -16284,5 +16365,72 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   setInterval(autoCheck,60000);
 
   window.SMART_DUTY_SUMMARY={compute,dataFor,rowTexts,totals,buildPrintHTML,autoCheck,closeMonth,workdays,splitByMonth,nameKey,render,overviewRows,holInfo,offRun,pickDays,buRule};
+})();
+</script>
+
+<script id="smart-cls-newform-warning-js" data-smq-ok>
+/* Báo cáo trực: cảnh báo khi form còn hiển thị phiếu đã lưu của người trực trước mà chưa bấm "Phiếu mới". */
+(function(){
+  'use strict';
+  if(window.__SMQ_CLS_NEWFORM_WARN__)return; window.__SMQ_CLS_NEWFORM_WARN__=true;
+  var editingId=null,touched=false,lastId='',focusToast=false,changeToast=false,timer=null;
+  var MSG_HINT='Hãy bấm "Phiếu mới" — form đang hiển thị dữ liệu phiếu đã lưu của người trực trước.';
+  var MSG_TOUCHED='Bạn chưa bấm "Phiếu mới"! Dữ liệu đang sửa sẽ ghi đè lên phiếu của người trực trước.';
+  function root(){return document.getElementById('view-reports-cls');}
+  function draftSaved(){
+    try{var d=state&&state.clsDraft;return !!(d&&d.id&&Array.isArray(state.clsReports)&&state.clsReports.some(function(x){return x&&String(x.id)===String(d.id);}));}catch(e){return false;}
+  }
+  /* Phiếu đã lưu đang hiện trên form và KHÔNG phải do người dùng chủ động bấm "Sửa" */
+  function stale(){return draftSaved()&&String(state.clsDraft.id)!==String(editingId);}
+  function paint(){
+    var r=root();if(!r)return;
+    var cur=document.getElementById('cls-newform-warn');
+    var id=(state&&state.clsDraft&&state.clsDraft.id)||'';
+    if(id!==lastId){lastId=id;touched=false;focusToast=false;changeToast=false;}
+    if(!stale()){if(cur)cur.remove();return;}
+    var body=r.querySelector('.card-body');if(!body)return;
+    var msg=touched?MSG_TOUCHED:MSG_HINT;
+    if(!cur||cur.parentNode!==body){
+      if(cur)cur.remove();
+      cur=document.createElement('div');cur.id='cls-newform-warn';cur.setAttribute('role','alert');
+      cur.style.cssText='position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #dc2626;border-left-width:5px;border-radius:8px;background:rgba(220,38,38,.08);color:#dc2626;font-weight:700;line-height:1.4';
+      body.insertBefore(cur,body.firstChild);
+    }
+    var html='<span style="font-size:18px;line-height:1">❗</span><span>'+msg+'</span>';
+    if(cur.getAttribute('data-msg')!==msg){cur.innerHTML=html;cur.setAttribute('data-msg',msg);}
+  }
+  function schedule(){clearTimeout(timer);timer=setTimeout(paint,30);}
+  function inForm(t){
+    var r=root();
+    if(!r||!r.classList.contains('active')||!t||!r.contains(t))return false;
+    if(!/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName))return false;
+    if(t.type==='file'||(t.id&&/^cls-filter/.test(t.id)))return false;
+    return !t.closest('#cls-newform-warn');
+  }
+  function say(type,title,msg){try{if(typeof toast==='function')toast(type,title,msg);}catch(e){}}
+  document.addEventListener('click',function(e){
+    var t=e.target&&e.target.closest?e.target:null;if(!t)return;
+    var ed=t.closest('[data-final-edit]');if(ed)editingId=ed.getAttribute('data-final-edit');
+    if(t.closest('#cls-new-final')){editingId=null;touched=false;}
+    if(t.closest('#cls-save-final'))touched=false;
+    schedule();
+  },true);
+  document.addEventListener('focusin',function(e){
+    if(!inForm(e.target)||!stale())return;
+    paint();
+    if(!focusToast){focusToast=true;say('danger','Hãy bấm Phiếu mới','Form đang hiển thị dữ liệu của người trực trước.');}
+  },true);
+  function onEdit(e){
+    if(e.isTrusted===false||!inForm(e.target)||!stale())return;
+    touched=true;paint();
+    if(!changeToast){changeToast=true;say('danger','Bạn chưa bấm Phiếu mới','Hãy bấm "Phiếu mới" trước khi nhập dữ liệu của ca trực mới.');}
+  }
+  document.addEventListener('input',onEdit,true);
+  document.addEventListener('change',onEdit,true);
+  /* form được vẽ lại (Phiếu mới / Sửa / Lưu / mở màn hình) -> cập nhật cảnh báo, tự ẩn khi đã bấm Phiếu mới */
+  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+  var prev=window.renderReportsCLS;
+  if(typeof prev==='function')window.renderReportsCLS=function(){var out=prev.apply(this,arguments);try{paint();}catch(e){}return out;};
+  schedule();
 })();
 </script>
