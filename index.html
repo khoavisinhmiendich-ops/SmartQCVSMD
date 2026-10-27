@@ -1397,6 +1397,17 @@ async function initCloud(){
     const {data:{session}}=await supabaseClient.auth.getSession();
     cloudUser=session?.user||null;
     cloudReady=!!cloudUser;
+    /* Phiên đăng nhập bị hết hạn / đăng xuất ở nơi khác: không để app tưởng vẫn đang đồng bộ.
+       Dữ liệu vẫn lưu trên máy, được đánh dấu "chưa đẩy lên cloud" và sẽ tự gộp + đẩy lên khi đăng nhập lại. */
+    try{
+      supabaseClient.auth.onAuthStateChange((ev)=>{
+        if(ev==='SIGNED_OUT' && cloudUser && !window.__cloudManualSignOut){
+          cloudUser=null; cloudReady=false; cloudMarkOfflineEdit();
+          try{ updateCloudIndicator(); }catch(e){}
+          try{ toast('warning','Phiên đăng nhập Supabase đã hết','Dữ liệu vẫn được lưu trên máy. Vào Hệ thống → Dữ liệu → Đăng nhập cloud để đẩy dữ liệu lên Supabase.'); }catch(e){}
+        }
+      });
+    }catch(e){}
     if(cloudUser) await subscribeCloudState();
     return cloudReady;
   }catch(e){ console.error('Supabase init error',e); cloudReady=false; return false; }
@@ -1568,6 +1579,28 @@ function cloudSaveSyncSnap(){
     }catch(e){ console.warn('Không lưu được mốc đồng bộ',e); }
   },1500);
 }
+/* Hóa chất MD: mỗi (máy | xét nghiệm | ngày) chỉ được có MỘT bản ghi (chemicalGet lấy bản đầu tiên tìm thấy).
+   Nếu hai máy cùng tạo bản ghi cho cùng ngày thì mã khác nhau -> sau khi gộp có 2 bản, bản nhập sau (của máy này) bị ẩn.
+   Gộp về 1 bản: giữ giá trị không rỗng; khi cùng có giá trị thì ưu tiên bản đứng sau (= bản từ máy này, được nối vào cuối). */
+function cloudDedupeChemicalMD(arr){
+  if(!Array.isArray(arr)) return arr;
+  const keyOf=r=>(r&&typeof r==='object'&&r.date)?[r.machine,r.testId,r.date].join('|'):null;
+  const nonEmpty=v=>{ if(v===undefined||v===null) return false; if(Array.isArray(v)) return v.length>0; if(typeof v==='object') return Object.keys(v).some(k=>nonEmpty(v[k])); return String(v).trim()!==''; };
+  const first=new Map(), out=[]; let dup=0;
+  arr.forEach(r=>{
+    const k=keyOf(r); if(k===null){ out.push(r); return; }
+    const f=first.get(k); if(!f){ first.set(k,r); out.push(r); return; }
+    dup++;
+    Object.keys(r).forEach(p=>{
+      if(p==='id') return;
+      const v=r[p]; if(!nonEmpty(v)) return;
+      if(p==='aux' && f.aux && typeof f.aux==='object' && typeof v==='object'){ Object.keys(v).forEach(a=>{ if(nonEmpty(v[a])) f.aux[a]=v[a]; }); return; }
+      if(p==='lotHistory' && Array.isArray(f.lotHistory) && Array.isArray(v)){ if(v.length>=f.lotHistory.length) f.lotHistory=v; return; }
+      f[p]=v;
+    });
+  });
+  return dup?out:arr;
+}
 /* Gộp dữ liệu trình duyệt (localSt) vào bản cloud vừa tải (remoteSt). Trả về {state, rep}. */
 function cloudMergeLocalFirst(localSt,remoteSt){
   const rep={added:0,updated:0,renamed:0,dedup:0,kv:0,droppedDeleted:0,keptRemote:0,items:[],conflicts:[]};
@@ -1643,6 +1676,7 @@ function cloudMergeLocalFirst(localSt,remoteSt){
     if(known!==undefined){ if(sh(lh)===known) return; out[k]=lv; rep.kv++; return; }
     if(offline){ out[k]=lv; rep.kv++; }
   });
+  try{ out.chemicalMD=cloudDedupeChemicalMD(out.chemicalMD); }catch(e){ console.warn('Gộp Hóa chất MD trùng ngày',e); }
   /* Bộ đếm mã phiếu: luôn lấy số lớn nhất để không cấp trùng mã. */
   out.meta=Object.assign({},out.meta||{},{lastId:maxN});
   return {state:out,rep:rep};
@@ -1970,7 +2004,8 @@ async function cloudSignIn(email,password){
   return cloudUser;
 }
 async function cloudSignOut(){
-  if(supabaseClient) await supabaseClient.auth.signOut();
+  window.__cloudManualSignOut=true;
+  try{ if(supabaseClient) await supabaseClient.auth.signOut(); } finally { window.__cloudManualSignOut=false; }
   cloudUser=null; cloudReady=false;
   if(cloudSubscription && supabaseClient){ try{await supabaseClient.removeChannel(cloudSubscription);}catch(e){} }
   if(cloudRecordsChannel && supabaseClient){ try{await supabaseClient.removeChannel(cloudRecordsChannel);}catch(e){} }
@@ -7262,8 +7297,8 @@ function allergenSheetRefresh(kind){
     put('closing',c.closing);put('usage',c.usage);
     const we=tr.querySelector('[data-chem-calc="warning"]');
     if(we){we.className=(we.classList.contains('chem-added-warning')?'chem-added-warning ':'chem-warning ')+(c.active?w.cls:'zero');we.textContent=c.active?w.label:'0';}
-    const anti=tr.querySelector('[data-chem-calc="anti-ccd"]');if(anti)anti.textContent=(c.usage||0)>0?'Có Anti CCD':'0';
-    const sel=tr.querySelector('select[data-chem-calc="note"]');if(sel&&document.activeElement!==sel)sel.value=(c.usage||0)>0?(r.note==='2'?'2':'1'):'';
+    const anti=tr.querySelector('[data-chem-calc="anti-ccd"]');if(anti&&anti.tagName!=='SELECT')anti.textContent=(c.usage||0)>0?'Có Anti CCD':'0';
+    const sel=tr.querySelector('select[data-chem-calc="note"]');if(sel&&document.activeElement!==sel){sel.value=(c.usage||0)>0?(r.note==='2'?'2':'1'):'';Array.prototype.forEach.call(sel.options,function(o){o.defaultSelected=o.selected;});}
   });
 }
 
@@ -7275,9 +7310,10 @@ function renderChemicalAllergen(){
     const calc=allergenSheetCalc('allergen_shared',date),warn=chemicalWarning(calc.remain,10,20);
     const active=calc.active,execute=calc.usage||0;
     const noteVal=execute>0?(r.note==='2'?'2':'1'):'';
-    rows+=`<tr data-chem-allergen-date="${date}"><td class="chem-date">${d}/${pad(ym.month)}/${ym.year}</td><td>${chemicalInput('allergen_shared','shared',date,'openingStock',r.openingStock,'number','step="any" min="0" placeholder="0"')}</td><td><span class="chem-auto-value${calc.closing===null?' pending':''}" data-chem-calc="closing">${calc.closing===null?'—':calc.closing}</span></td><td>${chemicalInput('allergen_shared','shared',date,'receive',r.receive,'number','step="any" min="0" placeholder="0"')}</td><td><span class="chem-auto-value${calc.usage===null?' pending':''}" data-chem-calc="usage">${calc.usage===null?'—':calc.usage}</span></td><td><span class="chem-warning ${active?warn.cls:'zero'}" data-chem-calc="warning">${active?warn.label:'0'}</span></td><td><span class="chem-auto-text" data-chem-calc="anti-ccd">${execute>0?'Có Anti CCD':'0'}</span></td><td class="chem-lot-cell"><input class="chem-input" value="${escapeHtml(r.lot||'')}" placeholder="Thêm LOT" onchange="chemicalSet('allergen_shared','shared','${date}','lot',this.value)"><button class="chem-mini-btn" type="button" onclick="chemicalAddLotAllergen('${date}')">+ Thêm LOT mới</button>${chemicalLotHistoryText(r)}</td><td class="chem-lot-cell"><input class="chem-input" type="date" value="${escapeHtml(r.lotDate||'')}" onchange="chemicalSet('allergen_shared','shared','${date}','lotDate',this.value)"><button class="chem-mini-btn" type="button" onclick="chemicalAddDateAllergen('${date}')">+ Thêm DATE mới</button></td><td><select class="chem-input" data-chem-calc="note" onchange="chemicalSet('allergen_shared','shared','${date}','note',this.value)"><option value="">—</option><option value="1" ${noteVal==='1'?'selected':''}>1. Hoạt động bình thường</option><option value="2" ${noteVal==='2'?'selected':''}>2. Lỗi</option></select></td></tr>`;
+    rows+=`<tr data-chem-allergen-date="${date}"><td class="chem-date">${d}/${pad(ym.month)}/${ym.year}</td><td>${chemicalInput('allergen_shared','shared',date,'openingStock',r.openingStock,'number','step="any" min="0" placeholder="0"')}</td><td><span class="chem-auto-value${calc.closing===null?' pending':''}" data-chem-calc="closing">${calc.closing===null?'—':calc.closing}</span></td><td>${chemicalInput('allergen_shared','shared',date,'receive',r.receive,'number','step="any" min="0" placeholder="0"')}</td><td><span class="chem-auto-value${calc.usage===null?' pending':''}" data-chem-calc="usage">${calc.usage===null?'—':calc.usage}</span></td><td><span class="chem-warning ${active?warn.cls:'zero'}" data-chem-calc="warning">${active?warn.label:'0'}</span></td><td><select class="chem-input" data-chem-anti="1" onchange="chemicalSet('allergen_shared','shared','${date}','antiCcdSel',this.value)"><option value="1" ${r.antiCcdSel==='2'?'':'selected'}>1. 0</option><option value="2" ${r.antiCcdSel==='2'?'selected':''}>2. Có Anti CCD</option></select></td><td class="chem-lot-cell"><input class="chem-input" data-chem-lot="1" value="${escapeHtml(r.lot||'')}" placeholder="Thêm LOT" onchange="chemicalSet('allergen_shared','shared','${date}','lot',this.value)"><button class="chem-mini-btn" type="button" onclick="chemicalAddLotAllergen('${date}')">+ Thêm LOT mới</button><button class="chem-lot-month-hint" type="button" hidden onclick="allergenLotMonthApply('allergen_shared','${date}')">Tạo giống LOT, DATE cho tháng</button>${chemicalLotHistoryText(r)}</td><td class="chem-lot-cell"><input class="chem-input" data-chem-lotdate="1" type="date" value="${escapeHtml(r.lotDate||'')}" onchange="chemicalSet('allergen_shared','shared','${date}','lotDate',this.value)"><button class="chem-mini-btn" type="button" onclick="chemicalAddDateAllergen('${date}')">+ Thêm DATE mới</button></td><td><select class="chem-input" data-chem-calc="note" onchange="chemicalSet('allergen_shared','shared','${date}','note',this.value)"><option value="">—</option><option value="1" ${noteVal==='1'?'selected':''}>1. Hoạt động bình thường</option><option value="2" ${noteVal==='2'?'selected':''}>2. Lỗi</option></select></td></tr>`;
   }
   el.innerHTML=`<div class="card"><div class="card-head"><div><h3>108 dị nguyên</h3><span class="hint">Hóa chất dùng chung cho toàn bộ 108 dị nguyên; chỉ 1 sổ theo dõi theo ngày.</span></div><span class="tag">Hóa chất dùng chung</span></div><div class="card-body">${chemicalYearMonthControls('allergen')}<div class="chem-legend"><span class="pill pass"><span class="dot"></span> OK</span><span class="pill warning"><span class="dot"></span> Sắp hết</span><span class="pill danger"><span class="dot"></span> Nguy hiểm</span></div></div></div><div class="card chem-table-card"><div class="card-head"><div><h3>Sổ theo dõi hóa chất dùng chung — 108 dị nguyên</h3><span class="hint">Chỉ nhập Đầu ngày và Nhận. Cuối ngày = Đầu ngày của ngày kế tiếp; Thực hiện = Đầu ngày + Nhận − Cuối ngày. Khi nhập Đầu ngày hôm sau, Cuối ngày và Thực hiện của hôm trước tự động cập nhật.</span></div></div><div class="chem-table-wrap"><table class="chem-table chem-allergen-shared-table"><thead><tr><th>Ngày</th><th>Đầu ngày</th><th>Cuối ngày</th><th>Nhận</th><th>Thực hiện</th><th>Cảnh báo</th><th>Anti CCD</th><th>LOT</th><th>DATE</th><th>Ghi chú</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  try{ if(typeof allergenLotMonthRefresh==='function') allergenLotMonthRefresh('allergen_shared'); }catch(e){}
 }
 </script>
 <style id="smart-chemical-md-style">
@@ -11817,9 +11853,10 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
     const el=document.getElementById('view-chemical-allergen53');if(!el)return;ensureAddedState();const ym=state.chemicalMDView.allergen53,days=chemicalDaysInMonth(ym.year,ym.month);let rows='';
     for(let d=1;d<=days;d++){
       const dt=date(ym.year,ym.month,d),r=chemicalGet('allergen53','shared',dt,false)||{},calc=allergenSheetCalc('allergen53',dt),w=warn(calc.remain,10,20),active=calc.active,execute=calc.usage||0,noteVal=execute>0?(r.note==='2'?'2':'1'):'';
-      rows+='<tr data-chem-allergen53-date="'+dt+'"><td class="chem-added-day chem-fixed-date"><b>'+fmtDMY(dt)+'</b></td><td>'+addedInput('allergen53','shared',dt,'openingStock',r.openingStock)+'</td><td><b class="chem-added-auto'+(calc.closing===null?' pending':'')+'" data-chem-calc="closing">'+(calc.closing===null?'—':calc.closing)+'</b></td><td>'+addedInput('allergen53','shared',dt,'receive',r.receive)+'</td><td><b class="chem-added-auto'+(calc.usage===null?' pending':'')+'" data-chem-calc="usage">'+(calc.usage===null?'—':calc.usage)+'</b></td><td><em data-chem-calc="warning" class="chem-added-warning '+(active?w.cls:'zero')+'">'+(active?w.label:'0')+'</em></td><td><span class="chem-auto-text chem-added-auto" data-chem-calc="anti-ccd">'+(execute>0?'Có Anti CCD':'0')+'</span></td><td class="chem-lot-cell"><input class="chem-input" value="'+esc(r.lot||'')+'" placeholder="Thêm LOT" onchange="chemicalSet(\'allergen53\',\'shared\',\''+dt+'\',\'lot\',this.value)"><button class="chem-mini-btn" type="button" onclick="chemicalAddLotAllergen53(\''+dt+'\')">+ Thêm LOT mới</button>'+chemicalLotHistoryText53(r)+'</td><td class="chem-lot-cell"><input class="chem-input" type="date" value="'+esc(r.lotDate||'')+'" onchange="chemicalSet(\'allergen53\',\'shared\',\''+dt+'\',\'lotDate\',this.value)"><button class="chem-mini-btn" type="button" onclick="chemicalAddDateAllergen53(\''+dt+'\')">+ Thêm DATE mới</button></td><td><select class="chem-input" data-chem-calc="note" onchange="chemicalSet(\'allergen53\',\'shared\',\''+dt+'\',\'note\',this.value)"><option value="">—</option><option value="1" '+(noteVal==='1'?'selected':'')+'>1. Hoạt động bình thường</option><option value="2" '+(noteVal==='2'?'selected':'')+'>2. Lỗi</option></select></td></tr>';
+      rows+='<tr data-chem-allergen53-date="'+dt+'"><td class="chem-added-day chem-fixed-date"><b>'+fmtDMY(dt)+'</b></td><td>'+addedInput('allergen53','shared',dt,'openingStock',r.openingStock)+'</td><td><b class="chem-added-auto'+(calc.closing===null?' pending':'')+'" data-chem-calc="closing">'+(calc.closing===null?'—':calc.closing)+'</b></td><td>'+addedInput('allergen53','shared',dt,'receive',r.receive)+'</td><td><b class="chem-added-auto'+(calc.usage===null?' pending':'')+'" data-chem-calc="usage">'+(calc.usage===null?'—':calc.usage)+'</b></td><td><em data-chem-calc="warning" class="chem-added-warning '+(active?w.cls:'zero')+'">'+(active?w.label:'0')+'</em></td><td><span class="chem-auto-text chem-added-auto" data-chem-calc="anti-ccd">'+(execute>0?'Có Anti CCD':'0')+'</span></td><td class="chem-lot-cell"><input class="chem-input" data-chem-lot="1" value="'+esc(r.lot||'')+'" placeholder="Thêm LOT" onchange="chemicalSet(\'allergen53\',\'shared\',\''+dt+'\',\'lot\',this.value)"><button class="chem-mini-btn" type="button" onclick="chemicalAddLotAllergen53(\''+dt+'\')">+ Thêm LOT mới</button><button class="chem-lot-month-hint" type="button" hidden onclick="allergenLotMonthApply(\'allergen53\',\''+dt+'\')">Tạo giống LOT, DATE cho tháng</button>'+chemicalLotHistoryText53(r)+'</td><td class="chem-lot-cell"><input class="chem-input" data-chem-lotdate="1" type="date" value="'+esc(r.lotDate||'')+'" onchange="chemicalSet(\'allergen53\',\'shared\',\''+dt+'\',\'lotDate\',this.value)"><button class="chem-mini-btn" type="button" onclick="chemicalAddDateAllergen53(\''+dt+'\')">+ Thêm DATE mới</button></td><td><select class="chem-input" data-chem-calc="note" onchange="chemicalSet(\'allergen53\',\'shared\',\''+dt+'\',\'note\',this.value)"><option value="">—</option><option value="1" '+(noteVal==='1'?'selected':'')+'>1. Hoạt động bình thường</option><option value="2" '+(noteVal==='2'?'selected':'')+'>2. Lỗi</option></select></td></tr>';
     }
     el.innerHTML='<div class="card"><div class="card-head"><div><h3>53 dị nguyên</h3><span class="hint">Hóa chất dùng chung cho bộ 53 dị nguyên; áp dụng cùng nội dung, giao diện và công thức Đầu ngày / Cuối ngày như 108 dị nguyên.</span></div><span class="tag">53 dị nguyên</span></div><div class="card-body">'+ymControls('allergen53')+'<div class="chem-added-count">Danh mục: 53 dị nguyên · theo dõi 1 sổ dùng chung theo ngày</div></div></div><div class="card chem-table-card"><div class="card-head"><div><h3>Sổ theo dõi hóa chất dùng chung — 53 dị nguyên</h3><span class="hint">Chỉ áp dụng cho module 53 dị nguyên; không dùng chung dữ liệu với 108 dị nguyên.</span></div></div><div class="chem-table-wrap"><table class="chem-added-shared-table chem-added-allergen53-table"><thead><tr><th>Ngày</th><th>Đầu ngày</th><th>Cuối ngày</th><th>Nhận</th><th>Thực hiện</th><th>Cảnh báo</th><th>Anti CCD</th><th>LOT</th><th>DATE</th><th>Ghi chú</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    try{ if(typeof allergenLotMonthRefresh==='function') allergenLotMonthRefresh('allergen53'); }catch(e){}
   }
 
   function rapidWaterChemicalTests(){
@@ -11874,7 +11911,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
     if(machine==='allergen_shared'||machine==='allergen53'){
       const r=chemicalGet(machine,testId,dt,true);r[key]=value;
       if(key==='openingStock'||key==='receive'){allergenSheetSyncDay(machine,dt);allergenSheetSyncDay(machine,allergenSheetPrevDate(dt));}
-      queueSave();allergenSheetRefresh(machine);return;
+      queueSave();allergenSheetRefresh(machine);if((key==='lot'||key==='lotDate')&&typeof allergenLotMonthRefresh==='function'){try{allergenLotMonthRefresh(machine);}catch(e){}}return;
     }
     if(machine==='helminth'||machine==='rapidwater'||machine==='allergen53'){
       const r=chemicalGet(machine,testId,dt,true);r[key]=value;
@@ -11969,6 +12006,108 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   @media(max-width:760px){.smq-grid{grid-template-columns:1fr}.smq-grid .span2{grid-column:auto}}
   @media print{.smq-print-table{font-size:8.5pt}.smq-print-table th,.smq-print-table td{padding:3px 2px}}
 </style>
+<script id="smart-qc-allergen-anti-lot-month-20261027">
+(function(){
+  'use strict';
+  if(window.__SMQ_ALLERGEN_LOT_MONTH__) return; window.__SMQ_ALLERGEN_LOT_MONTH__=true;
+  var ATTR={allergen_shared:'data-chem-allergen-date',allergen53:'data-chem-allergen53-date'};
+  var VIEW={allergen_shared:'view-chemical-allergen',allergen53:'view-chemical-allergen53'};
+  var css=document.createElement('style');css.id='smart-qc-allergen-lot-month-style';
+  css.textContent='.chem-lot-cell .chem-lot-month-hint{display:block;width:100%;margin:4px 0 0;padding:2px 4px;border:0;background:transparent;color:var(--primary-dark,#0f5f8f);font-size:10.5px;font-weight:700;line-height:1.25;text-align:center;text-decoration:underline;cursor:pointer}.chem-lot-cell .chem-lot-month-hint[hidden]{display:none!important}.chem-lot-cell .chem-lot-month-hint:hover{color:var(--primary,#1677b3)}';
+  document.head.appendChild(css);
+  function hasTxt(v){return v!==undefined&&v!==null&&String(v).trim()!=='';}
+  function rowsOf(kind){var v=document.getElementById(VIEW[kind]);return v?Array.prototype.slice.call(v.querySelectorAll('tr['+ATTR[kind]+']')):[];}
+  /* Dòng chữ chỉ hiện ở ô nhập ĐẦU TIÊN của tháng (tháng đó mới có đúng 1 ngày có LOT/DATE).
+     Sau khi tạo giống hoặc khi đã có nhiều ngày có LOT/DATE thì tự ẩn; các ô vẫn sửa trực tiếp được. */
+  window.allergenLotMonthRefresh=function(kind){
+    var rows=rowsOf(kind);if(!rows.length)return;
+    var filled=[];
+    rows.forEach(function(tr){
+      var r=chemicalGet(kind,'shared',tr.getAttribute(ATTR[kind]),false)||{};
+      if(hasTxt(r.lot)||hasTxt(r.lotDate))filled.push(tr);
+    });
+    rows.forEach(function(tr){var b=tr.querySelector('.chem-lot-month-hint');if(b)b.hidden=!(filled.length===1&&filled[0]===tr);});
+  };
+  window.allergenLotMonthApply=function(kind,dt){
+    var src=chemicalGet(kind,'shared',dt,false);if(!src)return;
+    var lot=hasTxt(src.lot)?String(src.lot):'',ld=hasTxt(src.lotDate)?String(src.lotDate):'';
+    if(!lot&&!ld){try{toast('warning','Chưa có LOT / DATE','Hãy nhập LOT hoặc DATE trước khi tạo giống cho tháng.');}catch(e){}return;}
+    var p=String(dt).split('-'),y=Number(p[0]),m=Number(p[1]),n=chemicalDaysInMonth(y,m);
+    for(var d=1;d<=n;d++){
+      var date=chemicalDate(y,m,d);if(date===dt)continue;
+      var r=chemicalGet(kind,'shared',date,true);
+      /* Không ghi đè ngày đã có LOT/DATE khác (lô mới được nhập trực tiếp). */
+      if(lot&&!hasTxt(r.lot))r.lot=lot;
+      if(ld&&!hasTxt(r.lotDate))r.lotDate=ld;
+    }
+    queueSave();
+    rowsOf(kind).forEach(function(tr){
+      var r=chemicalGet(kind,'shared',tr.getAttribute(ATTR[kind]),false)||{};
+      var li=tr.querySelector('input[data-chem-lot]'),di=tr.querySelector('input[data-chem-lotdate]');
+      if(li&&li.value!==String(r.lot||'')){li.value=r.lot||'';li.defaultValue=li.value;}
+      if(di&&di.value!==String(r.lotDate||'')){di.value=r.lotDate||'';di.defaultValue=di.value;}
+    });
+    window.allergenLotMonthRefresh(kind);
+    try{toast('pass','Đã tạo giống LOT, DATE cho tháng '+String(m).padStart(2,'0')+'/'+y,'Các ô vẫn sửa trực tiếp được khi trong tháng có lô mới.');}catch(e){}
+  };
+  /* LOT/DATE đổi ở một ngày -> tự chạy sang các ngày SAU trong tháng đang mang đúng giá trị cũ
+     (ngày trống bỏ qua; gặp ngày có lô khác thì dừng, không ghi đè). */
+  function carryForward(kind,dt,key,prevVal,newVal){
+    var r=chemicalGet(kind,'shared',dt,false);if(!r)return;
+    var last=key+'Last';
+    var base=hasTxt(prevVal)?String(prevVal):(hasTxt(r[last])?String(r[last]):'');
+    if(!hasTxt(newVal)){ if(hasTxt(prevVal))r[last]=String(prevVal); return; }   /* đang xóa để gõ lại: nhớ giá trị cũ, chưa chạy sang ngày sau */
+    if(!base||base===String(newVal))return;
+    var p=String(dt).split('-'),y=Number(p[0]),m=Number(p[1]),n=chemicalDaysInMonth(y,m),changed=false;
+    for(var d=Number(p[2])+1;d<=n;d++){
+      var rr=chemicalGet(kind,'shared',chemicalDate(y,m,d),false);
+      if(!rr||!hasTxt(rr[key]))continue;
+      if(String(rr[key])!==base)break;
+      rr[key]=String(newVal);changed=true;
+    }
+    if(changed){
+      queueSave();
+      var attr=key==='lot'?'input[data-chem-lot]':'input[data-chem-lotdate]';
+      rowsOf(kind).forEach(function(tr){
+        var rr=chemicalGet(kind,'shared',tr.getAttribute(ATTR[kind]),false)||{},inp=tr.querySelector(attr);
+        if(inp&&inp!==document.activeElement&&inp.value!==String(rr[key]||'')){inp.value=rr[key]||'';inp.defaultValue=inp.value;}
+      });
+    }
+  }
+  var _set=window.chemicalSet;
+  if(typeof _set==='function'){
+    window.chemicalSet=function(machine,testId,dt,key,value){
+      if((machine==='allergen_shared'||machine==='allergen53')&&(key==='lot'||key==='lotDate')){
+        var r0=chemicalGet(machine,testId,dt,false),prev=r0?r0[key]:'';
+        var out=_set.apply(this,arguments);
+        try{carryForward(machine,dt,key,prev,value);}catch(e){console.warn('carryForward',e);}
+        return out;
+      }
+      return _set.apply(this,arguments);
+    };
+  }
+  /* "+ Thêm LOT/DATE mới": nhớ lô cũ để lô mới nhập xong tự chạy sang các ngày sau đang mang lô cũ */
+  function wrapAdd(name,kind){
+    var f=window[name];if(typeof f!=='function')return;
+    window[name]=function(dt){
+      try{var r=chemicalGet(kind,'shared',dt,false);if(r){if(hasTxt(r.lot))r.lotLast=String(r.lot);if(hasTxt(r.lotDate))r.lotDateLast=String(r.lotDate);}}catch(e){}
+      return f.apply(this,arguments);
+    };
+  }
+  wrapAdd('chemicalAddLotAllergen','allergen_shared');wrapAdd('chemicalAddDateAllergen','allergen_shared');
+  wrapAdd('chemicalAddLotAllergen53','allergen53');wrapAdd('chemicalAddDateAllergen53','allergen53');
+  /* Màn hình Hóa chất lưu ngay khi nhập nhưng không vẽ lại ô -> giá trị luôn khác giá trị lúc vẽ (defaultValue).
+     cloudViewHasUnsaved() hiểu nhầm là "đang nhập dở" nên không vẽ lại màn hình sau khi đồng bộ cloud.
+     Đánh dấu ô đã lưu sau mỗi lần chốt giá trị (chạy sau onchange của chính ô đó). */
+  document.addEventListener('change',function(e){
+    try{
+      var t=e.target;if(!t||!t.closest||!t.closest('[id^="view-chemical-"]'))return;
+      if(t.tagName==='SELECT'){Array.prototype.forEach.call(t.options,function(o){o.defaultSelected=o.selected;});}
+      else if(t.tagName==='INPUT'&&t.type!=='checkbox'&&t.type!=='radio'&&t.type!=='file'){t.defaultValue=t.value;}
+    }catch(err){}
+  },false);
+})();
+</script>
 <script id="smart-qc-dye-media-extension">
 (function(){
   'use strict';
@@ -13617,7 +13756,7 @@ body{margin:0}
   }
   function mkInput(ctx,key,ph){
     const i=document.createElement('input');i.type='text';i.className='chem-input smqx-input';i.autocomplete='off';i.placeholder=ph||'';
-    i.value=getVal(ctx,key);
+    i.value=getVal(ctx,key);i.defaultValue=i.value;
     i.addEventListener('change',()=>setVal(ctx,key,i.value));
     return i;
   }
@@ -15902,25 +16041,36 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   }
   function buCellHTML(r,t){
     const items=(r.bu||[]).concat(r.buOut||[]).sort((a,b)=>a.from.localeCompare(b.from));
-    if(!items.length)return '<td class="ds-c ds-none">'+NONE+'</td>';
+    if(!items.length)return '<td class="ds-c ds-none ds-gs ds-t-leave">'+NONE+'</td>';
     const lines=[];
     items.forEach(x=>{
       if(x.sel&&x.duty)lines.push(buSelectHTML(r,x));
       else leaveLines([x]).forEach(s=>lines.push(esc(s)));
     });
-    return '<td class="ds-c">'+lines.join('<br>')+'</td>';
+    return '<td class="ds-c ds-gs ds-t-leave">'+lines.join('<br>')+'</td>';
   }
   function summaryTable(rows){
     const nl=t=>esc(t).replace(/\n/g,'<br>');
-    const cell=t=>'<td class="ds-c'+(t===NONE?' ds-none':'')+'">'+nl(t)+'</td>';
+    const cell=(t,cls)=>'<td class="ds-c'+(t===NONE?' ds-none':'')+(cls?' '+cls:'')+'">'+nl(t)+'</td>';
     const body=rows.map((r,i)=>{
       const t=rowTexts(r);
+      /* Ngày làm ngoài giờ: ghi kèm Thứ 7 / CN sau ngày, giống cột Ngày trực (chỉ màn hình chính) */
+      const ot=r.ot.length?r.ot.map(x=>dutyLabel(x)).join('\n'):NONE;
       return '<tr><td class="ds-c">'+(i+1)+'</td><td class="ds-name">'+esc(r.name)+(r.extra?' <span class="hint">(ngoài danh sách)</span>':'')+'</td>'
-        +cell(t.duty)+cell(t.ot)+cell(t.dutyWd)+cell(t.dutyWe)+cell(t.otN)+buCellHTML(r,t)+cell(t.phep)+'</tr>';
+        +cell(t.duty,'ds-gs ds-t-duty')+cell(t.dutyWd,'ds-gs ds-t-duty')+cell(t.dutyWe,'ds-t-duty')
+        +cell(ot,'ds-gs ds-t-ot')+cell(t.otN,'ds-gs ds-t-ot')+buCellHTML(r,t)+cell(t.phep,'ds-gs ds-t-leave')+'</tr>';
     }).join('');
     const tt=totals(rows);
-    return '<div class="table-wrap"><table class="ds-table ds-sum"><thead><tr>'+[0,1,2,3].map(i=>'<th rowspan="2">'+esc(HEADERS[i])+'</th>').join('')+'<th colspan="2">'+esc(GROUP)+'</th>'+[6,7,8].map(i=>'<th rowspan="2">'+esc(HEADERS[i])+'</th>').join('')+'</tr><tr><th>'+esc(HEADERS[4])+'</th><th>'+esc(HEADERS[5])+'</th></tr></thead><tbody>'+body
-      +'<tr class="ds-total"><td colspan="4" class="ds-c">TỔNG CỘNG</td><td class="ds-c">'+esc(tt.dutyWd)+'</td><td class="ds-c">'+esc(tt.dutyWe)+'</td><td class="ds-c">'+esc(tt.otN)+'</td><td class="ds-c">'+esc(tt.bu)+'</td><td class="ds-c">'+esc(tt.phep)+'</td></tr>'
+    return '<div class="table-wrap"><table class="ds-table ds-sum"><thead><tr>'
+      +'<th rowspan="2">'+esc(HEADERS[0])+'</th><th rowspan="2">'+esc(HEADERS[1])+'</th>'
+      +'<th rowspan="2" class="ds-gs ds-h-duty">'+esc(HEADERS[2])+'</th>'
+      +'<th colspan="2" class="ds-gs ds-h-duty">'+esc(GROUP)+'</th>'
+      +'<th rowspan="2" class="ds-gs ds-h-ot">'+esc(HEADERS[3])+'</th>'
+      +'<th rowspan="2" class="ds-gs ds-h-ot">'+esc(HEADERS[6])+'</th>'
+      +'<th rowspan="2" class="ds-gs ds-h-leave">'+esc(HEADERS[7])+'</th>'
+      +'<th rowspan="2" class="ds-gs ds-h-leave">'+esc(HEADERS[8])+'</th>'
+      +'</tr><tr><th class="ds-gs ds-h-duty">'+esc(HEADERS[4])+'</th><th class="ds-h-duty">'+esc(HEADERS[5])+'</th></tr></thead><tbody>'+body
+      +'<tr class="ds-total"><td colspan="3" class="ds-c">TỔNG CỘNG</td><td class="ds-c ds-gs">'+esc(tt.dutyWd)+'</td><td class="ds-c">'+esc(tt.dutyWe)+'</td><td class="ds-c ds-gs"></td><td class="ds-c ds-gs">'+esc(tt.otN)+'</td><td class="ds-c ds-gs">'+esc(tt.bu)+'</td><td class="ds-c ds-gs">'+esc(tt.phep)+'</td></tr>'
       +'</tbody></table></div>';
   }
   /* ---------- Tổng xem: bảng thu gọn (chỉ hiện sau khi đã chốt tháng) ---------- */
@@ -15949,9 +16099,9 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     return ['TỔNG CỘNG','',cntText(s.wd),cntText(s.we),cntText(s.le),cntText(s.tet),cntText(s.otN),cntText(s.sat),cntText(s.sun),cntText(s.bu)];
   }
   const OV_NOTE='Ghi chú: mỗi ngày trực chỉ tính vào 1 nhóm theo thứ tự ưu tiên Tết → Lễ → Thứ 7 & CN → Ngày thường; ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.';
-  let ovOpen=false;
+  let ovOpen=false,ovPreview=false;
   function ovHTML(y,m,data){
-    const ov=overviewRows(data.rows),tt=ovTotals(ov),c=data.closed;
+    const ov=overviewRows(data.rows),tt=ovTotals(ov),c=data.closed,pv=!c;
     const nl=t=>esc(t).replace(/\n/g,'<br>');
     const cell=t=>'<td class="ds-c'+(t===NONE?' ds-none':'')+'">'+nl(t)+'</td>';
     const body=ov.map((o,i)=>{
@@ -15965,14 +16115,14 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     const when=t&&!isNaN(t)?pad(t.getHours())+':'+pad(t.getMinutes())+' '+pad(t.getDate())+'/'+pad(t.getMonth()+1)+'/'+t.getFullYear():'';
     const closeIcon=(typeof svgIcon==='function')?svgIcon('<path d="M6 6l12 12M18 6L6 18"/>',17):'✕';
     return '<div class="modal-backdrop" data-ov-bg="1"><div class="modal wide ds-ov-modal">'
-      +'<div class="modal-head"><h3>TỔNG XEM — '+esc(monthTitle(y,m))+'</h3><button type="button" class="close-x" data-ov-act="close" title="Đóng">'+closeIcon+'</button></div>'
+      +'<div class="modal-head"><h3>'+(pv?'XEM TRƯỚC TỔNG XEM — ':'TỔNG XEM — ')+esc(monthTitle(y,m))+'</h3><button type="button" class="close-x" data-ov-act="close" title="Đóng">'+closeIcon+'</button></div>'
       +'<div class="modal-body">'
-      +'<div class="hint" style="margin-bottom:10px">Bảng thu gọn từ dữ liệu đã chốt'+(when?' lúc '+esc(when):'')+' · '+ov.length+' nhân viên'+(data.stale?' · <b>Dữ liệu nguồn đã thay đổi sau khi chốt — đóng bảng và bấm “Cập nhật dữ liệu”.</b>':'')+'</div>'
+      +'<div class="hint" style="margin-bottom:10px">'+(pv?'Bản xem trước từ dữ liệu hiện tại — tháng này chưa chốt':'Bảng thu gọn từ dữ liệu đã chốt'+(when?' lúc '+esc(when):''))+' · '+ov.length+' nhân viên'+(data.stale?' · <b>Dữ liệu nguồn đã thay đổi sau khi chốt — đóng bảng và bấm “Cập nhật dữ liệu”.</b>':'')+'</div>'
       +'<div class="table-wrap"><table class="ds-ov-table"><thead><tr><th rowspan="2">STT</th><th rowspan="2">Họ và tên nhân viên</th><th colspan="4">Tổng hợp trực</th><th colspan="3">Tổng hợp ngoài giờ</th><th rowspan="2">Nghỉ bù (thứ – ngày)</th></tr>'
       +'<tr><th>Ngày thường</th><th>Thứ 7 &amp; CN</th><th>Lễ</th><th>Tết</th><th>Số ngày</th><th>Thứ 7</th><th>Chủ nhật</th></tr></thead><tbody>'+body+total+'</tbody></table></div>'
       +'<div class="hint" style="margin-top:8px;font-style:italic">'+esc(OV_NOTE)+'</div>'
       +'</div>'
-      +'<div class="modal-foot"><button type="button" class="btn primary" data-ov-act="excel">Xuất Excel</button><button type="button" class="btn ghost" data-ov-act="close">Đóng</button></div>'
+      +'<div class="modal-foot">'+(pv?'':'<button type="button" class="btn primary" data-ov-act="excel">Xuất Excel</button>')+'<button type="button" class="btn ghost" data-ov-act="close">Đóng</button></div>'
       +'</div></div>';
   }
   function mountOverview(data){
@@ -15980,16 +16130,24 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     if(!root){root=document.createElement('div');root.id='ds-ov-root';document.body.appendChild(root);root.addEventListener('click',ovClick);}
     root.innerHTML=ovHTML(ui.y,ui.m,data);
   }
-  function closeOverview(){ovOpen=false;const r=document.getElementById('ds-ov-root');if(r)r.innerHTML='';}
+  function closeOverview(){ovOpen=false;ovPreview=false;const r=document.getElementById('ds-ov-root');if(r)r.innerHTML='';}
   function openOverview(){
     const data=dataFor(ui.y,ui.m);
     if(!data.closed){toast2('warning','Chưa chốt tháng','Hãy bấm “Chốt tháng ngay” trước khi xem Tổng xem.');return;}
-    ovOpen=true;mountOverview(data);
+    ovPreview=false;ovOpen=true;mountOverview(data);
+  }
+  /* Xem trước nội dung Tổng xem từ dữ liệu hiện tại, trước khi bấm “Chốt tháng ngay” (không chốt, không lưu gì) */
+  function openPreview(){
+    const data=dataFor(ui.y,ui.m);
+    if(data.closed)return openOverview();
+    if(!hasAnyData(data.live)){toast2('warning','Chưa có dữ liệu','Tháng '+pad(ui.m)+'/'+ui.y+' chưa có dữ liệu trực, ngoài giờ, nghỉ bù hoặc nghỉ phép.');return;}
+    ovPreview=true;ovOpen=true;mountOverview(data);
   }
   function refreshOverview(){
     if(!ovOpen)return;
     const data=dataFor(ui.y,ui.m);
-    if(!data.closed){closeOverview();return;}
+    if(data.closed)ovPreview=false;
+    if(!data.closed){if(ovPreview){mountOverview(data);return;}closeOverview();return;}
     mountOverview(data);
   }
   function ovClick(e){
@@ -16101,6 +16259,58 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
         return '<tr><td class="ds-c">'+mm+'/'+yy+'</td><td class="ds-c">'+esc(when)+'</td><td class="ds-c">'+(c.auto?'Tự động':'Thủ công')+'</td><td class="ds-c"><button type="button" class="btn ghost sm" data-ds-act="open-month" data-ym="'+k+'">Xem</button></td></tr>';}).join('')
       +'</tbody></table></div>';
   }
+  /* ---------- cảnh báo kiểm tra số liệu: đỏ “Cần kiểm tra lại” / xanh “Dữ liệu đã chính xác hoàn toàn” ---------- */
+  function checkData(y,m,data){
+    const ym=ymKey(y,m),list=[],known=new Set(staffList().map(nameKey));
+    const reports=hasState()&&Array.isArray(state.clsReports)?state.clsReports:[];
+    const WK=['chu nhat','thu 2','thu 3','thu 4','thu 5','thu 6','thu 7'],WKV=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+    const ohNames=s=>String(s==null?'':s).split(/\s*[,;\n]\s*/).map(x=>x.trim()).filter(x=>!IGNORE_NAMES.has(nameKey(x)));
+    const dutyBy=new Map();let badDate=0;
+    reports.forEach(r=>{
+      if(!r)return;
+      const staff=String(r.staff==null?'':r.staff).trim(),ons=ohNames(r.outsideHours),dt=normDate(r.date);
+      if(!dt){if(!IGNORE_NAMES.has(nameKey(staff))||ons.length)badDate++;return;}
+      if(dt.slice(0,7)!==ym)return;
+      const lab=toVN(dt),w=parseISO(dt).getDay(),sk=nameKey(staff),pre='Phiếu trực ngày '+lab+': ';
+      if(IGNORE_NAMES.has(sk))list.push(pre+'chưa có người trực.');
+      else{
+        if(!known.has(sk))list.push(pre+'người trực “'+staff+'” không có trong danh sách nhân viên.');
+        if(!dutyBy.has(dt))dutyBy.set(dt,new Map());dutyBy.get(dt).set(sk,staff);
+      }
+      const wk=nameKey(r.weekday),wi=wk==='cn'?0:WK.indexOf(wk);
+      if(wk&&wi>=0&&wi!==w)list.push(pre+'ghi “'+String(r.weekday).trim()+'” nhưng ngày này là '+WKV[w]+'.');
+      ons.forEach(n=>{if(!known.has(nameKey(n)))list.push(pre+'người làm ngoài giờ “'+n+'” không có trong danh sách nhân viên.');});
+      if(ons.length&&w!==0&&w!==6)list.push(pre+'có ghi ngoài giờ vào '+WKV[w]+' nhưng bảng chỉ tính Thứ 7 và Chủ nhật nên mục này không được tính.');
+    });
+    dutyBy.forEach((mp,dt)=>{if(mp.size>1)list.push('Ngày '+toVN(dt)+' có nhiều hơn một người trực: '+[...mp.values()].join(', ')+'.');});
+    if(badDate)list.push(badDate+' phiếu trực có ngày để trống hoặc sai định dạng nên không được tính vào bảng.');
+    const d0=ds(),buBy=new Map(),seen=new Set();
+    (data.rows||[]).forEach(r=>buBy.set(nameKey(r.name),new Set((r.bu||[]).map(x=>x.from))));
+    ((d0&&d0.leaves)||[]).filter(l=>l&&l.type==='phep'&&l.from&&String(l.from).slice(0,7)===ym).forEach(l=>{
+      const to=l.to||l.from,k=nameKey(l.name),pre='Nghỉ phép của '+l.name+' ('+toVN(l.from)+(to!==l.from?' – '+toVN(to):'')+'): ';
+      if(!parseISO(l.from)||!parseISO(to)||to<l.from){list.push(pre+'khoảng ngày không hợp lệ.');return;}
+      if(!known.has(k))list.push(pre+'nhân viên không có trong danh sách.');
+      const wd=workdayList(l.from,to),days=+l.days;
+      if(!(days>0))list.push(pre+'số ngày không hợp lệ.');
+      else if(wd.length&&days>wd.length+1e-9)list.push(pre+'số ngày ('+fmtN(days)+') lớn hơn số ngày làm việc trong khoảng ngày ('+wd.length+').');
+      wd.forEach(x=>{
+        const key=k+'|'+x;
+        if(seen.has(key))list.push('Nghỉ phép của '+l.name+' bị nhập trùng ngày '+toVN(x)+'.');
+        seen.add(key);
+        if(buBy.has(k)&&buBy.get(k).has(x))list.push('Nghỉ phép của '+l.name+' trùng ngày '+toVN(x)+' với ngày nghỉ bù.');
+      });
+    });
+    if(data.stale)list.push('Dữ liệu nguồn đã thay đổi sau khi chốt tháng — bấm “Cập nhật dữ liệu” để đồng bộ.');
+    return {issues:[...new Set(list)],hasData:hasAnyData(data.live||[])||hasAnyData(data.rows||[])};
+  }
+  function checkHTML(y,m,data){
+    const res=checkData(y,m,data),n=res.issues.length;
+    if(n){
+      const MAX=8,li=res.issues.slice(0,MAX).map(t=>'<li>'+esc(t)+'</li>').join('')+(n>MAX?'<li>… và '+(n-MAX)+' mục khác.</li>':'');
+      return '<div class="ds-check ds-check-bad" role="alert"><div class="ds-check-title">⚠ Cần kiểm tra lại</div><ul>'+li+'</ul></div>';
+    }
+    return res.hasData?'<div class="ds-check ds-check-ok" role="status"><div class="ds-check-title">✔ Dữ liệu đã chính xác hoàn toàn</div></div>':'';
+  }
   function render(){
     const el=ensureShell();if(!el)return;
     initUI();autoCheck();
@@ -16119,7 +16329,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       +'<div class="card-body">'
       +'<div class="ds-toolbar"><label class="field" style="margin:0"><span class="fl-label">Tháng</span><input type="month" id="ds_month" value="'+ymKey(ui.y,ui.m)+'" style="min-width:150px"></label>'
       +'<div class="ds-status">'+statusHTML(ui.y,ui.m,data)+'</div>'
-      +'<div class="btn-row ds-actions"><button type="button" class="btn primary" data-ds-act="pdf">In / Xuất PDF</button><button type="button" class="btn" data-ds-act="word">Xuất Word</button><button type="button" class="btn" data-ds-act="excel">Xuất Excel</button><button type="button" class="btn ghost" data-ds-act="close-now">'+(data.closed?'Cập nhật dữ liệu':'Chốt tháng ngay')+'</button>'+(data.closed?'<button type="button" class="btn" data-ds-act="overview">Tổng xem</button>':'')+'</div></div>'
+      +'<div class="btn-row ds-actions"><button type="button" class="btn primary" data-ds-act="pdf">In / Xuất PDF</button><button type="button" class="btn" data-ds-act="word">Xuất Word</button><button type="button" class="btn" data-ds-act="excel">Xuất Excel</button>'+(data.closed?'':'<button type="button" class="btn" data-ds-act="preview">Xem trước Tổng xem</button>')+'<button type="button" class="btn ghost" data-ds-act="close-now">'+(data.closed?'Cập nhật dữ liệu':'Chốt tháng ngay')+'</button>'+(data.closed?'<button type="button" class="btn" data-ds-act="overview">Tổng xem</button>':'')+'</div></div>'
+      +checkHTML(ui.y,ui.m,data)
       +summaryTable(data.rows)
       +'</div></div>'
       +'<div class="card" style="margin-top:14px"><div class="card-head"><div><h3>Nghỉ phép</h3><span class="hint">Chọn nhân viên và khoảng ngày — hệ thống tự cộng dồn vào bảng tổng hợp</span></div></div>'
@@ -16182,6 +16393,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     if(act==='open-month'){const m=/^(\d{4})-(\d{2})$/.exec(b.dataset.ym||'');if(m){ui.y=+m[1];ui.m=+m[2];render();window.scrollTo(0,0);}return;}
     if(act==='close-now')return closeNow();
     if(act==='overview')return openOverview();
+    if(act==='preview')return openPreview();
     if(act==='pdf')return doExport('pdf');
     if(act==='word')return doExport('word');
     if(act==='excel')return doExport('excel');
@@ -16346,6 +16558,20 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     +'#view-duty-summary .ds-bu-sel{width:auto;min-width:0;max-width:100%;padding:4px 8px;font-size:12.5px}'
     +'#view-duty-summary .ds-none{color:var(--text-muted);font-style:italic}'
     +'#view-duty-summary .ds-total td{font-weight:700;background:rgba(100,116,139,.08)}'
+    +'#view-duty-summary .ds-sum{border-collapse:collapse;border:1px solid rgba(100,116,139,.45)}'
+    +'#view-duty-summary .ds-sum th,#view-duty-summary .ds-sum td{border:1px solid rgba(100,116,139,.28)}'
+    +'#view-duty-summary .ds-sum thead th{background:linear-gradient(rgba(100,116,139,.12),rgba(100,116,139,.12)),var(--surface)}'
+    +'#view-duty-summary .ds-sum .ds-gs{border-left:2px solid rgba(100,116,139,.6)}'
+    +'#view-duty-summary .ds-sum thead th.ds-h-duty{background:linear-gradient(rgba(37,99,235,.13),rgba(37,99,235,.13)),var(--surface)}'
+    +'#view-duty-summary .ds-sum thead th.ds-h-ot{background:linear-gradient(rgba(217,119,6,.15),rgba(217,119,6,.15)),var(--surface)}'
+    +'#view-duty-summary .ds-sum thead th.ds-h-leave{background:linear-gradient(rgba(22,163,74,.14),rgba(22,163,74,.14)),var(--surface)}'
+    +'#view-duty-summary .ds-sum thead th{z-index:3}'
+    +'#view-duty-summary .ds-sum thead tr:first-child th{top:0;height:38px;box-sizing:border-box}'
+    +'#view-duty-summary .ds-sum thead tr:nth-child(2) th{top:37px}'
+    +'#view-duty-summary .ds-sum td.ds-t-duty{background:rgba(37,99,235,.045)}'
+    +'#view-duty-summary .ds-sum td.ds-t-ot{background:rgba(217,119,6,.055)}'
+    +'#view-duty-summary .ds-sum td.ds-t-leave{background:rgba(22,163,74,.05)}'
+    +'#view-duty-summary .ds-sum tbody tr:hover td{filter:brightness(.97)}'
     +'#ds-ov-root .ds-ov-modal{max-width:1180px}'
     +'#ds-ov-root .table-wrap{max-height:62vh}'
     +'#ds-ov-root .ds-ov-table{width:100%;min-width:940px;font-size:12.5px}'
@@ -16357,6 +16583,12 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     +'#ds-ov-root .ds-ov-table .ds-none{color:var(--text-muted);font-style:italic}'
     +'#ds-ov-root .ds-ov-table .ds-total td{font-weight:700;background:rgba(100,116,139,.08)}'
     +'#ds-ov-root .ds-ov-table thead th[colspan]{border-bottom:1px solid rgba(100,116,139,.25)}'
+    +'#view-duty-summary .ds-check{margin:0 0 12px;padding:10px 14px;border-radius:8px;border:1px solid;border-left-width:5px;line-height:1.45}'
+    +'#view-duty-summary .ds-check-title{font-weight:700}'
+    +'#view-duty-summary .ds-check ul{margin:6px 0 0 18px;padding:0;font-size:12.5px}'
+    +'#view-duty-summary .ds-check-bad{background:rgba(220,38,38,.08);border-color:#dc2626;color:#dc2626}'
+    +'#view-duty-summary .ds-check-bad ul{color:var(--text)}'
+    +'#view-duty-summary .ds-check-ok{background:rgba(22,163,74,.10);border-color:#16a34a;color:#15803d}'
     +'@media(max-width:700px){#view-duty-summary .ds-actions{justify-content:flex-start}}';
   document.head.appendChild(css);
 
