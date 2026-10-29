@@ -10534,7 +10534,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   const compLabel=iso=>{const d=compDate(iso);return d?COMP_WD[d.getDay()]+' - '+String(iso).split('-').reverse().join('/'):String(iso||'');};
   function compOptions(iso){
     let o=[];try{if(window.SMART_DUTY_BU&&typeof window.SMART_DUTY_BU.options==='function')o=(window.SMART_DUTY_BU.options(iso)||[]).slice();}catch(e){}
-    if(!o.length){const b=compDate(iso);if(b)for(let i=2;i<=6;i++){const x=new Date(b);x.setDate(x.getDate()+i);o.push(compIso(x));}}
+    if(!o.length){const b=compDate(iso);if(b)for(let i=3;i<=6;i++){const x=new Date(b);x.setDate(x.getDate()+i);o.push(compIso(x));}}
     return o;
   }
   function compDefault(iso,staff,opts){
@@ -15846,9 +15846,10 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       return out;
     }
     const base=weekDays(dutyISO);if(!base.length)return [];
-    const out=base.filter(x=>!isOffDay(x));
+    /* trực Thứ 7: chỉ được nghỉ bù Thứ 3 – Thứ 6 (base[0] là Thứ 2 → bỏ), bổ sung Thứ 3 – Thứ 6 kế tiếp nếu trùng ngày Lễ/Tết */
+    const out=base.slice(1).filter(x=>!isOffDay(x));
     let cur=addDaysISO(base[4],1),g=0;
-    while(out.length<5&&g++<60){if(!isOffDay(cur))out.push(cur);cur=addDaysISO(cur,1);}
+    while(out.length<4&&g++<60){const wd=parseISO(cur).getDay();if(!isOffDay(cur)&&wd!==1)out.push(cur);cur=addDaysISO(cur,1);}
     return out;
   }
   /* Quy tắc: trực Chủ nhật nghỉ bù Thứ 2, trực Thứ 2 nghỉ bù Thứ 3, ... trực Thứ 5 nghỉ bù Thứ 6 (1 ngày hôm sau);
@@ -16205,10 +16206,10 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     return '<span class="ds-chip">Đang theo dõi — hệ thống tự chốt vào ngày cuối tháng ('+lastTxt+')</span>';
   }
   const WDN=['CN','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
-  /* ô Nghỉ bù: mỗi ngày một dòng; ca trực Thứ 7 có thanh chọn ngày nghỉ bù (Thứ 2 – Thứ 6) */
+  /* ô Nghỉ bù: mỗi ngày một dòng; ca trực Thứ 7 lấy ngày nghỉ bù (Thứ 3 – Thứ 6) từ Báo cáo trực CLS */
   function buSelectHTML(r,x){
     const ymC=ymKey(ui.y,ui.m),hl=holInfo(x.duty);
-    return '<select class="ds-bu-sel" data-ds-bu="1" data-name="'+esc(r.name)+'" data-duty="'+esc(x.duty)+'" title="Trực '+(hl?hl.k:'Thứ 7')+' ngày '+esc(toVN(x.duty))+' — chọn ngày nghỉ bù'+(hl?'':' (Thứ 2 – Thứ 6)')+'">'
+    return '<select class="ds-bu-sel" data-ds-bu="1" data-name="'+esc(r.name)+'" data-duty="'+esc(x.duty)+'" title="Trực '+(hl?hl.k:'Thứ 7')+' ngày '+esc(toVN(x.duty))+' — chọn ngày nghỉ bù'+(hl?'':' (Thứ 3 – Thứ 6)')+'">'
       +pickDays(x.duty).map(o=>{
         const lab=WDN[parseISO(o).getDay()]+' - '+(o.slice(0,7)===ymC?dd(o):dd(o)+'/'+o.slice(5,7));
         return '<option value="'+o+'"'+(o===x.from?' selected':'')+'>'+lab+'</option>';
