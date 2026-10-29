@@ -15829,7 +15829,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   /* ---------- nghỉ bù tự động theo ngày trực ---------- */
   const dd=iso=>String(iso||'').slice(8,10);
   const addDaysISO=(iso,n)=>{const a=parseISO(iso);if(!a)return '';a.setDate(a.getDate()+n);return toISO(a);};
-  /* 5 ngày làm việc Thứ 2 – Thứ 6 dùng cho thanh chọn nghỉ bù khi trực Thứ 7:
+  /* 4 ngày làm việc Thứ 3 – Thứ 6 dùng cho thanh chọn nghỉ bù khi trực Thứ 7:
      tuần làm việc ngay sau ngày trực (Thứ 2 = ngày trực + 2) */
   function weekDays(dutyISO){
     const a=parseISO(dutyISO);if(!a)return [];
@@ -15837,7 +15837,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     return [0,1,2,3,4].map(i=>addDaysISO(mon,i));
   }
   /* các ngày có thể chọn làm ngày nghỉ bù:
-     - trực Thứ 7: Thứ 2 – Thứ 6 tuần sau (bỏ ngày Lễ/Tết, bổ sung ngày làm việc kế tiếp cho đủ 5 ngày);
+     - trực Thứ 7: Thứ 3 – Thứ 6 tuần sau (bỏ ngày Lễ/Tết, bổ sung ngày làm việc kế tiếp cho đủ 4 ngày);
      - trực Lễ/Tết dài ngày: 10 ngày làm việc đầu tiên sau kỳ nghỉ. */
   function pickDays(dutyISO){
     if(holInfo(dutyISO)){
@@ -15853,7 +15853,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   }
   /* Quy tắc: trực Chủ nhật nghỉ bù Thứ 2, trực Thứ 2 nghỉ bù Thứ 3, ... trực Thứ 5 nghỉ bù Thứ 6 (1 ngày hôm sau);
      trực Thứ 6 không nghỉ bù;
-     trực Thứ 7 được nghỉ bù 1 ngày tự chọn trong Thứ 2 – Thứ 6 (mặc định Thứ 3 tuần sau).
+     trực Thứ 7 được nghỉ bù 1 ngày tự chọn trong Thứ 3 – Thứ 6 (mặc định Thứ 3 tuần sau).
      Trực ngày Lễ/Tết: nghỉ ngắn ngày → nghỉ bù vào ngày làm việc ngay sau đó;
      nghỉ dài ngày (từ LONG_MIN ngày liên tục) → tự chọn ngày nghỉ bù linh hoạt.
      Ngày nghỉ bù không bao giờ rơi vào ngày Lễ/Tết/ngày nghỉ hoán đổi (tự dời sang ngày làm việc kế tiếp). */
