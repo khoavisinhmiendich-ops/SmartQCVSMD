@@ -15713,9 +15713,12 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   const ymKey=(y,m)=>y+'-'+pad(m);
   function nameKey(s){
     return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase()
-      .replace(/\([^)]*\)/g,' ').replace(/^\s*(tk|ktvtk|ktv|nv|bs|ths|cn|ds)\.\s*/,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+      .replace(/\([^)]*\)/g,' ').replace(/^\s*(tk|ktvtk|ktv|nv|bs|ths|cnxn|cn|ds)\.\s*/,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
   }
   const IGNORE_NAMES=new Set(['','khong','none','khong co','k','x']);
+  /* Ô "Ngoài giờ" của Báo cáo trực lưu dạng "tên chọn trong danh sách, tên nhập tay"; tên nhập tay có thể ghi nhiều người
+     bằng dấu phẩy, chấm phẩy, xuống dòng, "+", "&", "/", "và"/"and" → tách đủ từng người để không bị thiếu. */
+  const splitNames=s=>String(s==null?'':s).split(/\s*(?:[,;\n\r+&\/]|\s+và\s+|\s+and\s+)\s*/i).map(x=>x.trim()).filter(Boolean);
   function toast2(kind,title,msg){try{if(typeof toast==='function')toast(kind,title,msg);}catch(e){}}
   function save(){try{if(typeof queueSave==='function')queueSave();}catch(e){console.warn('duty save',e);}}
 
@@ -15954,7 +15957,13 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
         const rowD=pick(r.staff);if(rowD)rowD.duty.add(d);
         const wk=parseISO(d).getDay();
         if(wk===0||wk===6){
-          String(r.outsideHours==null?'':r.outsideHours).split(/\s*[,;\n]\s*/).forEach(n=>{const rw=pick(n);if(rw)rw.ot.add(d);});
+          /* những người làm ngoài giờ (đã tách đủ từng tên, loại trùng) */
+          const outRows=[];
+          splitNames(r.outsideHours).forEach(n=>{const rw=pick(n);if(rw&&outRows.indexOf(rw)<0)outRows.push(rw);});
+          outRows.forEach(rw=>rw.ot.add(d));
+          /* TH1: 1 người trực + 1 người làm ngoài giờ → người trực CŨNG được tính thêm ngày làm ngoài giờ (hiển thị ngày trực + ngoài giờ).
+             TH2: 1 người trực + từ 2 người làm ngoài giờ → người trực chỉ tính trực, không cộng ngoài giờ. */
+          if(rowD&&outRows.filter(x=>x!==rowD).length===1)rowD.ot.add(d);
         }
       }
       if(!ignored&&(buIn||(inYm&&isPick))){
@@ -16040,16 +16049,18 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     const TD='border:1px solid #333;padding:4px 6px;vertical-align:middle;font-size:10pt;color:#111;';
     const TH='border:1px solid #333;padding:5px 6px;vertical-align:middle;text-align:center;font-weight:700;font-size:10pt;background:#EAF3FB;color:#111;text-transform:none;letter-spacing:0;';
     const nl=t=>esc(t).replace(/\n/g,'<br>');
-    const W=['4%','15%','17%','15%','7%','7%','8%','14%','13%'];
+    const W=['4%','15%','17%','7%','7%','15%','8%','14%','13%'];
+    /* thứ tự cột khi in: STT | Họ tên | Ngày trực | Tổng hợp trực (Ngày thường, Thứ 7 & CN) | Ngày làm ngoài giờ | Tổng hợp ngoài giờ | Nghỉ bù | Nghỉ phép */
+    const PH=[HEADERS[0],HEADERS[1],HEADERS[2],HEADERS[4],HEADERS[5],HEADERS[3],HEADERS[6],HEADERS[7],HEADERS[8]];
     const body=rows.map((r,i)=>{
       const t=rowTexts(r);
       return '<tr>'
         +'<td class="center" style="'+TD+'text-align:center;">'+(i+1)+'</td>'
         +'<td style="'+TD+'text-align:left;font-weight:600;">'+esc(r.name)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.duty)+'</td>'
-        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.ot)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.dutyWd)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.dutyWe)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.ot)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.otN)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.bu)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.phep)+'</td>'
@@ -16057,9 +16068,10 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     }).join('');
     const tt=totals(rows);
     const totalRow='<tr>'
-      +'<td colspan="4" class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">TỔNG CỘNG</td>'
+      +'<td colspan="3" class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">TỔNG CỘNG</td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.dutyWd)+'</td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.dutyWe)+'</td>'
+      +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;"></td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.otN)+'</td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.bu)+'</td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.phep)+'</td>'
@@ -16074,8 +16086,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       +'<h2 style="text-align:center;font-size:12.5pt;font-weight:400;margin:0 0 10px;">'+monthTitle(y,m)+'</h2>'
       +'<table style="width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #333;">'
       +'<colgroup>'+W.map(w=>'<col style="width:'+w+'">').join('')+'</colgroup>'
-      +'<thead><tr>'+HEADERS.map((h,i)=>i===4?'<th colspan="2" style="'+TH+'">'+esc(GROUP)+'</th>':(i===5?'':'<th style="border:none;background:#fff;padding:0;"></th>')).join('')+'</tr>'
-      +'<tr>'+HEADERS.map(h=>'<th style="'+TH+'">'+esc(h)+'</th>').join('')+'</tr></thead>'
+      +'<thead><tr>'+PH.map((h,i)=>i===3?'<th colspan="2" style="'+TH+'">'+esc(GROUP)+'</th>':(i===4?'':'<th style="border:none;background:#fff;padding:0;"></th>')).join('')+'</tr>'
+      +'<tr>'+PH.map(h=>'<th style="'+TH+'">'+esc(h)+'</th>').join('')+'</tr></thead>'
       +'<tbody>'+body+totalRow+'</tbody></table>'
       +'<p style="font-size:9.5pt;font-style:italic;margin:6px 0 0;">Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.</p>'
       +'<table class="no-border word-no-border" style="width:100%;border-collapse:collapse;border:none;margin-top:18px;page-break-inside:avoid;"><tr>'
@@ -16098,14 +16110,14 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       ['BỘ Y TẾ'],['BỆNH VIỆN PHONG – DA LIỄU TW QUY HÒA'],['KHOA VI SINH – MIỄN DỊCH'],[],
       ['TỔNG HỢP TRỰC & NGOÀI GIỜ'],[monthTitle(y,m)],[]
     ];
-    const data=rows.map((r,i)=>{const t=rowTexts(r);return [i+1,r.name,t.duty,t.ot,t.dutyWd,t.dutyWe,t.otN,t.bu,t.phep];});
-    const totalLine=['TỔNG CỘNG','','','',tt.dutyWd,tt.dutyWe,tt.otN,tt.bu,tt.phep];
-    const HDR1=['STT','Họ và tên nhân viên','Ngày trực','Ngày làm ngoài giờ',GROUP,'','Tổng hợp ngoài giờ','Nghỉ bù','Nghỉ phép'];
-    const HDR2=['','','','',HEADERS[4],HEADERS[5],'','',''];
+    const data=rows.map((r,i)=>{const t=rowTexts(r);return [i+1,r.name,t.duty,t.dutyWd,t.dutyWe,t.ot,t.otN,t.bu,t.phep];});
+    const totalLine=['TỔNG CỘNG','','',tt.dutyWd,tt.dutyWe,'',tt.otN,tt.bu,tt.phep];
+    const HDR1=['STT','Họ và tên nhân viên','Ngày trực',GROUP,'','Ngày làm ngoài giờ','Tổng hợp ngoài giờ','Nghỉ bù','Nghỉ phép'];
+    const HDR2=['','','',HEADERS[4],HEADERS[5],'','','',''];
     if(window.ExcelJS){
       const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();
       const ws=wb.addWorksheet('T'+pad(m)+'-'+y,{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3}}});
-      [6,28,20,20,14,14,18,18,18].forEach((w,i)=>{ws.getColumn(i+1).width=w;});
+      [6,28,20,14,14,20,18,18,18].forEach((w,i)=>{ws.getColumn(i+1).width=w;});
       const font=(o)=>Object.assign({name:'Times New Roman',size:11},o||{});
       const thin={style:'thin',color:{argb:'FF333333'}};
       const border={top:thin,left:thin,bottom:thin,right:thin};
@@ -16116,8 +16128,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       const hr=ws.addRow(HDR1),hr2=ws.addRow(HDR2);
       hr.height=30;
       [hr,hr2].forEach(row=>row.eachCell({includeEmpty:true},c=>{c.font=font({bold:true});c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF3FB'}};}));
-      [1,2,3,4,7,8,9].forEach(c=>ws.mergeCells(hr.number,c,hr2.number,c));
-      ws.mergeCells(hr.number,5,hr.number,6);
+      [1,2,3,6,7,8,9].forEach(c=>ws.mergeCells(hr.number,c,hr2.number,c));
+      ws.mergeCells(hr.number,4,hr.number,5);
       data.forEach(arr=>{
         const r=ws.addRow(arr);
         r.eachCell({includeEmpty:true},(c,col)=>{
@@ -16128,7 +16140,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       });
       const tr=ws.addRow(totalLine);
       const trNum=tr.number;
-      ws.mergeCells(trNum,1,trNum,4);
+      ws.mergeCells(trNum,1,trNum,3);
       tr.eachCell({includeEmpty:true},(c,col)=>{
         c.font=font({bold:true});c.border=border;
         c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF5F5F5'}};
@@ -16153,8 +16165,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     if(window.XLSX){
       const aoa=[...lines,HDR1,HDR2,...data,totalLine,[],['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.'],[],['','','','','','','Ngày lập: '+todayVN()],['','Người lập biểu','','','','','Trưởng khoa'],['','(Ký, ghi rõ họ tên)','','','','','(Ký, ghi rõ họ tên)']];
       const ws=XLSX.utils.aoa_to_sheet(aoa);
-      ws['!cols']=[6,28,20,20,14,14,18,18,18].map(w=>({wch:w}));
-      ws['!merges']=[[1,2,3,4,7,8,9].map(c=>({s:{r:7,c:c-1},e:{r:8,c:c-1}}))][0].concat([{s:{r:7,c:4},e:{r:7,c:5}}]);
+      ws['!cols']=[6,28,20,14,14,20,18,18,18].map(w=>({wch:w}));
+      ws['!merges']=[[1,2,3,6,7,8,9].map(c=>({s:{r:7,c:c-1},e:{r:8,c:c-1}}))][0].concat([{s:{r:7,c:3},e:{r:7,c:4}}]);
       const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'T'+pad(m)+'-'+y);
       XLSX.writeFile(wb,fileName);return;
     }
@@ -16444,7 +16456,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     const ym=ymKey(y,m),list=[],known=new Set(staffList().map(nameKey));
     const reports=hasState()&&Array.isArray(state.clsReports)?state.clsReports:[];
     const WK=['chu nhat','thu 2','thu 3','thu 4','thu 5','thu 6','thu 7'],WKV=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
-    const ohNames=s=>String(s==null?'':s).split(/\s*[,;\n]\s*/).map(x=>x.trim()).filter(x=>!IGNORE_NAMES.has(nameKey(x)));
+    const ohNames=s=>splitNames(s).filter(x=>!IGNORE_NAMES.has(nameKey(x)));
     const dutyBy=new Map();let badDate=0;
     reports.forEach(r=>{
       if(!r)return;
