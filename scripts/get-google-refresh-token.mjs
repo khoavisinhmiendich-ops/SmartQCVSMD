@@ -1,18 +1,16 @@
-// Lấy refresh token Google Drive bằng device flow
-const clientId = process.env.GOOGLE_CLIENT_ID;
-const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const clientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
+const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
 if (!clientId || !clientSecret) {
   console.error('Thiếu GOOGLE_CLIENT_ID hoặc GOOGLE_CLIENT_SECRET');
   process.exit(1);
 }
 
-const form = (o) => new URLSearchParams(o);
 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
 
 const dcRes = await fetch('https://oauth2.googleapis.com/device/code', {
   method: 'POST',
   headers,
-  body: form({ client_id: clientId, scope: 'https://www.googleapis.com/auth/drive.file' }),
+  body: new URLSearchParams({ client_id: clientId, scope: 'https://www.googleapis.com/auth/drive.file' }),
 });
 const dc = await dcRes.json();
 if (!dcRes.ok) {
@@ -22,16 +20,17 @@ if (!dcRes.ok) {
 
 console.log('\n1) Mở link:', dc.verification_url);
 console.log('2) Nhập mã :', dc.user_code);
-console.log('3) Đăng nhập đúng tài khoản Google rồi bấm Cho phép.\nĐang chờ...\n');
+console.log('3) Đăng nhập đúng tài khoản Google sẽ chứa file sao lưu, rồi bấm Cho phép.');
+console.log('Đang chờ bạn cho phép...\n');
 
-let wait = (dc.interval || 5) * 1000;
+let waitMs = (dc.interval || 5) * 1000;
 const deadline = Date.now() + dc.expires_in * 1000;
 while (Date.now() < deadline) {
-  await new Promise((r) => setTimeout(r, wait));
+  await new Promise((r) => setTimeout(r, waitMs));
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers,
-    body: form({
+    body: new URLSearchParams({
       client_id: clientId,
       client_secret: clientSecret,
       device_code: dc.device_code,
@@ -44,9 +43,9 @@ while (Date.now() < deadline) {
     process.exit(0);
   }
   if (t.error === 'authorization_pending') continue;
-  if (t.error === 'slow_down') { wait += 5000; continue; }
+  if (t.error === 'slow_down') { waitMs += 5000; continue; }
   console.error('Lỗi:', t.error, t.error_description || '');
   process.exit(1);
 }
-console.error('Hết thời gian chờ, chạy lại script.');
+console.error('Hết thời gian chờ, hãy chạy lại script.');
 process.exit(1);
