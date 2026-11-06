@@ -2766,9 +2766,19 @@ function openReagentLotHistoryModal(testId,machineId,level){
     </tbody></table></div><div class="btn-row" style="margin-top:12px;"><button class="btn ghost" onclick="closeModal()">Đóng</button></div>`;
   showModal('Lịch sử LOT hóa chất · Level '+level,body,'wide');
 }
-function computeRange(mean,sd){
+/* Khoảng chấp nhận tính RIÊNG theo từng máy (từ Mean/SD của chính máy đó):
+   - Beckman Coulter UniCel DxI 800: Mean ± 2SD.
+   - YHLO iFlash 9000 và máy khác: giữ nguyên công thức cũ Mean ± 3SD. */
+function qcRangeFactor(machineId){
+  const m=(machineId&&Array.isArray(state&&state.machines))?byId(state.machines,machineId):null;
+  const n=String((m&&((m.name||'')+' '+(m.model||'')))||'');
+  if(/DxI\s*800/i.test(n)) return 2;
+  return 3;
+}
+function computeRange(mean,sd,machineId){
   if(mean===undefined||mean===null||mean===''||isNaN(mean)||sd===undefined||sd===null||sd===''||isNaN(sd)) return '—';
-  return round(mean-3*sd,4)+' – '+round(mean+3*sd,4);
+  const k=qcRangeFactor(machineId);
+  return round(mean-k*sd,4)+' – '+round(mean+k*sd,4);
 }
 function seriesFor(testId,machineId,lotId,level){
   return state.results.filter(r=>r.testId===testId&&r.machineId===machineId&&r.lotId===lotId&&r.level===level)
@@ -4375,7 +4385,7 @@ function reagentRowHtml(test, machineId, level){
     <td>L${level}</td>
     <td><input id="rc_${rid}_mean" type="number" step="any" value="${hasCfg?cfg.mean:''}" placeholder="—" style="width:82px;" ${hasCfg?'':'disabled'}></td>
     <td><input id="rc_${rid}_sd" type="number" step="any" value="${hasCfg?cfg.sd:''}" placeholder="—" style="width:76px;" ${hasCfg?'':'disabled'}></td>
-    <td class="mono" id="rc_${rid}_range">${hasCfg?computeRange(cfg.mean,cfg.sd):'—'}</td>
+    <td class="mono" id="rc_${rid}_range">${hasCfg?computeRange(cfg.mean,cfg.sd,machineId):'—'}</td>
     <td>${escapeHtml(test.unit)||'—'}</td>
     <td style="white-space:nowrap;">${hasCfg?`<button class="btn primary sm" onclick="saveReagentRow('${test.id}','${machineId}',${level})">Lưu</button> <button class="btn ghost sm" onclick="openReagentLotModal('${test.id}','${machineId}',${level},false)">Sửa</button> <button class="btn ghost sm" onclick="openReagentLotModal('${test.id}','${machineId}',${level},true)">+ Thêm LOT mới</button> <button class="btn ghost sm" onclick="openReagentLotHistoryModal('${test.id}','${machineId}',${level})">Lịch sử</button>`:`<button class="btn ghost sm" onclick="openReagentLotModal('${test.id}','${machineId}',${level},true)">+ Thêm LOT mới</button>`}</td>
   </tr>`;
@@ -4428,7 +4438,7 @@ function testCfgSummaryHtml(testId){
   const cfgs=state.configs.filter(c=>c.testId===testId);
   if(!cfgs.length) return `<div class="tbl-empty" style="padding:16px 0;">Chưa có cấu hình Mean/SD</div>`;
   return `<div class="table-wrap"><table><thead><tr><th>Level</th><th>Lot hóa chất</th><th>Mean</th><th>1SD</th><th>Khoảng chấp nhận</th></tr></thead><tbody>
-    ${cfgs.map(c=>`<tr><td>L${c.level}</td><td>${escapeHtml(c.reagentLot)||'—'}</td><td class="mono">${c.mean}</td><td class="mono">${c.sd}</td><td class="mono">${computeRange(c.mean,c.sd)}</td></tr>`).join('')}
+    ${cfgs.map(c=>`<tr><td>L${c.level}</td><td>${escapeHtml(c.reagentLot)||'—'}</td><td class="mono">${c.mean}</td><td class="mono">${c.sd}</td><td class="mono">${computeRange(c.mean,c.sd,c.machineId)}</td></tr>`).join('')}
   </tbody></table></div>`;
 }
 function submitTest(ev, testId){
@@ -17563,19 +17573,4 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       try{ res=CHK[name].apply(self,args); }catch(e){ console.warn('[dup]',name,e); }
       if(res&&res.lines&&res.lines.length){
         if(!confirmDup(res.title,res.lines)){
-          try{ var ev=args[0]; if(ev&&typeof ev.preventDefault==='function') ev.preventDefault(); }catch(e){}
-          return false;
-        }
-      }
-      return f.apply(self,args);
-    };
-    w.__dupw=true; w.__orig=f; window[name]=w;
-  }
-  function applyAll(){ Object.keys(CHK).forEach(guard); }
-  applyAll();
-  /* Một số hàm được định nghĩa lại muộn hơn -> kiểm tra và gắn lại trong ~40 giây đầu. */
-  var tries=0, iv=setInterval(function(){ applyAll(); if(++tries>40) clearInterval(iv); },1000);
-  window.addEventListener('load',function(){ setTimeout(applyAll,500); });
-})();
-
-</script>
+          try{ var ev=args[0]; if(ev&&typeof ev.preventDefault==='function') ev.prev
