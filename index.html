@@ -681,6 +681,7 @@ table.catalog-table th:nth-child(4),table.catalog-table td:nth-child(4){width:15
 table.catalog-table th:nth-child(5),table.catalog-table td:nth-child(5){width:150px;text-align:left;}
 table.catalog-table th:nth-child(6),table.catalog-table td:nth-child(6){width:150px;text-align:left;}
 table.catalog-table td.mono{text-align:left;}
+table.catalog-table th:nth-child(7),table.catalog-table td:nth-child(7){width:90px;text-align:center;}
 table.lot-rapid-table{table-layout:fixed;min-width:980px;}
 table.lot-rapid-table th,table.lot-rapid-table td{vertical-align:middle;}
 table.lot-rapid-table th:nth-child(1),table.lot-rapid-table td:nth-child(1){width:270px;}
@@ -1154,47 +1155,64 @@ input, select, textarea, button, option, table, th, td, label, span, div, p, h1,
 /* Quy tắc Times New Roman toàn cục dùng !important nên cần chỉ định riêng cho 2 lời chào */
 body .vsmd-hello,body .vsmd-hello *,body .vsmd-dash-greet .vsmd-g-text,body .vsmd-dash-greet .vsmd-g-text *{font-family:'Choco cooky','Segoe UI',system-ui,sans-serif!important;font-weight:400;}
 .vsmd-g-word{display:inline-block;white-space:nowrap;}
-.vsmd-g-l{display:inline-block;opacity:0;color:var(--primary);transform-origin:50% 80%;
-  animation:vsmdPop .75s cubic-bezier(.34,1.56,.64,1) forwards,vsmdWave 3.4s ease-in-out infinite,vsmdHue 7s ease-in-out infinite;
-  animation-delay:calc(var(--i)*60ms),calc(var(--i)*60ms + 1100ms),calc(var(--i)*-210ms);}
-@keyframes vsmdPop{0%{opacity:0;transform:translateY(-.9em) scale(.5) rotate(-12deg);}60%{opacity:1;}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}}
-@keyframes vsmdWave{0%,100%{transform:translateY(0);}50%{transform:translateY(-.14em);}}
-@keyframes vsmdHue{0%,100%{color:var(--primary);}50%{color:var(--accent);}}
+/* Hiệu ứng chữ: hiện dần theo từng ký tự (mờ → nét, trượt nhẹ lên), sau đó có vệt sáng lướt qua chữ theo chu kỳ */
+.vsmd-g-l{display:inline-block;opacity:0;color:var(--primary);
+  animation:vsmdIn .95s cubic-bezier(.22,1,.36,1) forwards,vsmdShine 7s ease-in-out infinite;
+  animation-delay:calc(var(--i)*34ms),calc(var(--i)*75ms + 1.8s);}
+@keyframes vsmdIn{from{opacity:0;transform:translateY(.5em);filter:blur(7px);}to{opacity:1;transform:none;filter:blur(0);}}
+@keyframes vsmdShine{0%,16%,100%{color:var(--primary);}8%{color:var(--accent);}}
 
 /* Màn hình đăng nhập: nằm ngay phía trên thẻ đăng nhập, không làm xê dịch thẻ */
 .vsmd-hello{position:absolute;left:50%;bottom:calc(100% + 30px);transform:translateX(-50%);width:max-content;max-width:min(94vw,640px);
-  text-align:center;pointer-events:none;font-size:clamp(25px,5.4vw,40px);line-height:1.22;text-wrap:balance;
-  text-shadow:0 2px 14px rgba(14,107,168,.16);}
-[data-theme="dark"] .vsmd-hello,[data-theme="dark"] .vsmd-dash-greet{text-shadow:0 2px 14px rgba(0,0,0,.45);}
+  text-align:center;pointer-events:none;font-size:clamp(24px,4.8vw,35px);line-height:1.25;letter-spacing:.012em;text-wrap:balance;}
+.vsmd-hello::before{content:"";position:absolute;inset:-26px -70px -22px;z-index:-1;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(20,150,190,.20),rgba(20,150,190,0));filter:blur(14px);opacity:0;
+  animation:vsmdGlowIn 1.8s ease-out .3s forwards,vsmdGlow 7s ease-in-out 2.1s infinite alternate;}
+@keyframes vsmdGlowIn{to{opacity:.9;}}
+@keyframes vsmdGlow{from{transform:scale(.96);opacity:.7;}to{transform:scale(1.04);opacity:1;}}
 .vsmd-hello-text{display:block;}
-.vsmd-hello-line{display:block;width:min(52%,260px);height:12px;margin:6px auto 0;overflow:visible;}
-.vsmd-hello-line path{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;vector-effect:non-scaling-stroke;
-  stroke-dasharray:1;stroke-dashoffset:1;animation:vsmdDraw 1.4s ease-out 1.2s forwards;opacity:.85;}
-@keyframes vsmdDraw{to{stroke-dashoffset:0;}}
-.vsmd-spark{position:absolute;width:22px;height:22px;opacity:0;animation:vsmdTwinkle 2.6s ease-in-out infinite;}
-.vsmd-spark path{fill:var(--accent);}
-.vsmd-spark.s1{left:-14px;top:-8px;animation-delay:.9s;}
-.vsmd-spark.s2{right:-12px;top:4px;width:16px;height:16px;animation-delay:1.6s;}
-.vsmd-spark.s3{right:14%;bottom:-6px;width:13px;height:13px;animation-delay:2.1s;}
-@keyframes vsmdTwinkle{0%,100%{opacity:0;transform:scale(.3) rotate(0);}50%{opacity:1;transform:scale(1) rotate(90deg);}}
+/* Đường đua nhỏ dưới dòng chào: xe đang chạy về phía cờ đích */
+.vsmd-hello-line{display:block;position:relative;width:min(60%,310px);height:28px;margin:8px auto 0;opacity:0;animation:vsmdFade .8s ease-out 1s forwards;}
+@keyframes vsmdFade{to{opacity:1;}}
+.vsmd-road{position:absolute;left:0;right:0;bottom:4px;height:2px;border-radius:2px;transform-origin:left;transform:scaleX(0);
+  background:linear-gradient(90deg,rgba(0,0,0,0),var(--primary) 14%,var(--accent) 86%,var(--primary));animation:vsmdRoad 1.2s cubic-bezier(.22,1,.36,1) 1s forwards;}
+@keyframes vsmdRoad{to{transform:scaleX(1);}}
+.vsmd-car{position:absolute;bottom:6px;left:0;width:38px;height:18px;color:var(--primary);opacity:0;overflow:visible;
+  animation:vsmdDrive 8s cubic-bezier(.3,.55,.35,1) 1.9s infinite;}
+@keyframes vsmdDrive{
+  0%{left:0;opacity:0;}
+  7%{left:5%;opacity:1;}
+  72%{left:calc(100% - 84px);opacity:1;}
+  94%{left:calc(100% - 66px);opacity:1;}
+  100%{left:calc(100% - 62px);opacity:0;}}
+.vsmd-car svg{display:block;width:100%;height:100%;overflow:visible;animation:vsmdBump .42s ease-in-out infinite alternate;}
+@keyframes vsmdBump{from{transform:translateY(0);}to{transform:translateY(-.7px);}}
+.vsmd-wheel{transform-box:fill-box;transform-origin:center;animation:vsmdWheel .45s linear infinite;}
+@keyframes vsmdWheel{to{transform:rotate(360deg);}}
+.vsmd-spd{animation:vsmdSpd .5s ease-in-out infinite alternate;}
+@keyframes vsmdSpd{from{opacity:.15;transform:translateX(2px);}to{opacity:.7;transform:translateX(-2px);}}
+.vsmd-flag{position:absolute;right:0;bottom:6px;width:16px;height:21px;overflow:visible;}
+.vsmd-flag-cloth{transform-box:fill-box;transform-origin:left center;animation:vsmdFlag 1.5s ease-in-out infinite;}
+@keyframes vsmdFlag{0%,100%{transform:scaleX(1) skewY(0);}50%{transform:scaleX(.88) skewY(-4deg);}}
+[data-theme="dark"] .vsmd-hello::before{background:radial-gradient(closest-side,rgba(60,180,220,.22),rgba(60,180,220,0));}
 
 /* Dashboard: dòng chào theo giờ, nằm phía trên hàng thẻ KPI */
-.vsmd-dash-greet{display:none;align-items:center;gap:12px;margin:0 0 14px;font-size:clamp(22px,3.6vw,31px);line-height:1.2;text-shadow:0 2px 10px rgba(14,107,168,.12);}
+.vsmd-dash-greet{display:none;align-items:center;gap:14px;margin:0 0 14px;font-size:clamp(21px,3.2vw,28px);line-height:1.2;letter-spacing:.01em;}
 .vsmd-dash-greet.show{display:flex;}
-.vsmd-g-iconwrap{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--primary-tint);
-  border:1px solid var(--border);animation:vsmdBob 3.6s ease-in-out infinite;}
-.vsmd-g-icon{width:30px;height:30px;overflow:visible;}
-@keyframes vsmdBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
-.vsmd-rays{transform-box:fill-box;transform-origin:center;animation:vsmdSpin 16s linear infinite;}
+.vsmd-g-iconwrap{position:relative;flex:none;width:44px;height:44px;border-radius:13px;display:grid;place-items:center;color:var(--primary);
+  background:linear-gradient(145deg,var(--primary-tint),var(--surface));border:1px solid var(--border);box-shadow:0 1px 2px rgba(15,40,70,.06),0 6px 16px -8px rgba(14,107,168,.35);
+  opacity:0;transform:scale(.82);animation:vsmdChip .8s cubic-bezier(.22,1,.36,1) .05s forwards;}
+@keyframes vsmdChip{to{opacity:1;transform:none;}}
+.vsmd-g-icon{width:24px;height:24px;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.vsmd-rays{transform-box:fill-box;transform-origin:center;animation:vsmdSpin 28s linear infinite;}
 @keyframes vsmdSpin{to{transform:rotate(360deg);}}
-.vsmd-core{transform-box:fill-box;transform-origin:center;animation:vsmdPulse 2.6s ease-in-out infinite;}
-@keyframes vsmdPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
-.vsmd-star{transform-box:fill-box;transform-origin:center;animation:vsmdStar 2.2s ease-in-out infinite;}
-.vsmd-star.b{animation-delay:.7s;}.vsmd-star.c{animation-delay:1.3s;}
-@keyframes vsmdStar{0%,100%{opacity:.25;transform:scale(.6);}50%{opacity:1;transform:scale(1.15);}}
-.vsmd-moon{transform-box:fill-box;transform-origin:center;animation:vsmdSway 5s ease-in-out infinite;}
-@keyframes vsmdSway{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);}}
-@media (max-width:600px){.vsmd-g-iconwrap{width:40px;height:40px;}.vsmd-g-icon{width:26px;height:26px;}}
+.vsmd-core{transform-box:fill-box;transform-origin:center;animation:vsmdBreathe 4.5s ease-in-out infinite;}
+@keyframes vsmdBreathe{0%,100%{opacity:1;}50%{opacity:.55;}}
+.vsmd-twinkle{animation:vsmdTw 3.6s ease-in-out infinite;}
+.vsmd-twinkle.b{animation-delay:1.2s;}
+@keyframes vsmdTw{0%,100%{opacity:1;}50%{opacity:.3;}}
+@media (max-width:600px){.vsmd-g-iconwrap{width:40px;height:40px;border-radius:12px;}.vsmd-g-icon{width:22px;height:22px;}}
+@media (prefers-reduced-motion:reduce){.vsmd-g-l{animation:none;opacity:1;}.vsmd-hello-line{animation:none;opacity:1;}.vsmd-road{animation:none;transform:none;}.vsmd-car{animation:none;opacity:1;left:calc(100% - 84px);}.vsmd-car svg,.vsmd-wheel,.vsmd-spd,.vsmd-flag-cloth{animation:none;}.vsmd-g-iconwrap{animation:none;opacity:1;transform:none;}}
 @media print{.vsmd-hello,.vsmd-dash-greet{display:none!important;}}
 </style>
 </head>
@@ -1424,7 +1442,25 @@ function cloudCanon(v){
 }
 /* Supabase (jsonb) trả payload với thứ tự khóa khác bản đã gửi -> hash phải chuẩn hóa thứ tự khóa,
    nếu không bản lưu của chính máy này bị nhận nhầm là "cập nhật từ thiết bị khác". */
-function cloudHash(obj){ try{return JSON.stringify(cloudCanon(obj));}catch(e){return '';} }
+/* Người đăng nhập (currentUser/currentRole) là thông tin RIÊNG của từng máy/tab: không đồng bộ qua cloud, không tính vào mã băm,
+   và luôn được giữ nguyên sau khi nhận dữ liệu từ máy khác -> hai người đăng nhập cùng lúc không ghi đè tên của nhau. */
+function vsmdNoIdentity(o){
+  if(o && typeof o==='object' && !Array.isArray(o)){
+    if('currentUser' in o || 'currentRole' in o){ const c=Object.assign({},o); delete c.currentUser; delete c.currentRole; return c; }
+    if(o.settings && typeof o.settings==='object' && ('currentUser' in o.settings || 'currentRole' in o.settings)){ const c=Object.assign({},o); c.settings=vsmdNoIdentity(o.settings); return c; }
+  }
+  return o;
+}
+function vsmdKeepIdentity(key,payload){
+  const id=window.__vsmdIdentity;
+  if(key==='settings' && id && payload && typeof payload==='object') return Object.assign({},payload,{currentUser:id.user,currentRole:id.role});
+  return payload;
+}
+function vsmdRestoreIdentity(){
+  try{ const id=window.__vsmdIdentity; if(id && state && state.settings && (state.settings.currentUser!==id.user || state.settings.currentRole!==id.role)){ state.settings.currentUser=id.user; state.settings.currentRole=id.role; } }catch(e){}
+}
+setInterval(vsmdRestoreIdentity,1000);
+function cloudHash(obj){ try{return JSON.stringify(cloudCanon(vsmdNoIdentity(obj)));}catch(e){return '';} }
 let cloudPersistSeq=0, lastLocalEditTs=0, pendingCloudRemote=null, pendingCloudTimer=null;
 ['input','keydown','change','paste','compositionstart','compositionupdate'].forEach(ev=>{
   try{ document.addEventListener(ev,()=>{ lastLocalEditTs=Date.now(); },true); }catch(e){}
@@ -1542,7 +1578,7 @@ function cloudExplode(st){
   });
   Object.keys(st).forEach(k=>{
     if(CLOUD_RECORD_COLLECTIONS.includes(k) || k===CLOUD_ORDER_KEY || st[k]===undefined) return;
-    rows.set('_kv|'+k,{collection:'_kv',record_id:k,payload:st[k],hash:cloudHash(st[k])});
+    rows.set('_kv|'+k,{collection:'_kv',record_id:k,payload:vsmdNoIdentity(st[k]),hash:cloudHash(st[k])});
   });
   rows.set('_kv|'+CLOUD_ORDER_KEY,{collection:'_kv',record_id:CLOUD_ORDER_KEY,payload:order,hash:cloudHash(order)});
   return {rows,order};
@@ -1583,7 +1619,7 @@ async function cloudLoadLegacy(){
   return null;
 }
 async function cloudPersistLegacy(){
-  const payload=JSON.parse(JSON.stringify(state));
+  const payload=vsmdNoIdentity(JSON.parse(JSON.stringify(state)));
   const hash=cloudHash(payload);
   const {error}=await supabaseClient.from('smartqc_shared_state').upsert({workspace_id:cloudWorkspaceId(),payload,updated_at:new Date().toISOString()},{onConflict:'workspace_id'});
   if(error) throw error;
@@ -1815,6 +1851,7 @@ async function cloudSyncAfterLogin(localSt){
       state=merged;
     }else if(localSt){ state=localSt; }
     else return false;
+    vsmdRestoreIdentity();
     migrateState();
     await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
     let pushed=false;
@@ -1994,7 +2031,7 @@ async function cloudApplyPending(){
       if(r.record_id==='clsDraft' && onCls) return;
       const lh=cloudLocalHashOf('_kv',r.record_id);
       if(lh!==undefined && lh!==cloudSnap.get(key)) return; /* máy này đang có thay đổi chưa lưu ở mục này -> giữ bản đang nhập */
-      if(r.deleted){ delete state[r.record_id]; cloudSnap.delete(key); } else { state[r.record_id]=r.payload; cloudSnap.set(key,h); }
+      if(r.deleted){ delete state[r.record_id]; cloudSnap.delete(key); } else { state[r.record_id]=vsmdKeepIdentity(r.record_id,r.payload); cloudSnap.set(key,h); }
       changed=true; return;
     }
     const c=r.collection; if(!CLOUD_RECORD_COLLECTIONS.includes(c)) return;
@@ -2071,7 +2108,7 @@ async function applyCloudRemote(remote,h,notify){
   }
   /* Ghi nhớ vị trí cuộn để vẽ lại xong không bị nhảy về đầu trang. */
   const sx=window.scrollX, sy=window.scrollY;
-  state=remote;
+  state=remote; vsmdRestoreIdentity();
   if(localClsDraft) state.clsDraft=localClsDraft;
   migrateState(); lastCloudHash=h;
   await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
@@ -2161,6 +2198,131 @@ async function saveCloudConfig(url,key,workspace){
   localStorage.setItem(CLOUD_WORKSPACE_KEY,(workspace||'smartqc-qyh-shared').trim()||'smartqc-qyh-shared');
   cloudConfig={url:cleanUrl,key:cleanKey,workspace:(workspace||'smartqc-qyh-shared').trim()||'smartqc-qyh-shared'};
   await initCloud();
+}
+/* ====================================================================================================
+   SAO LƯU GOOGLE DRIVE — mục xem trạng thái + hướng dẫn (Hệ thống → Dữ liệu).
+   Việc sao lưu KHÔNG chạy trong app: GitHub Actions tự chạy hằng tuần (đọc Supabase → nén/mã hóa → Google Drive)
+   và ghi kết quả vào bảng smartqc_backup_status; app chỉ ĐỌC bảng đó để hiển thị lần sao lưu gần nhất.
+   ==================================================================================================== */
+const DRIVE_BACKUP_SQL=`-- Bảng trạng thái sao lưu Google Drive (chạy 1 lần trong Supabase → SQL Editor)
+create table if not exists public.smartqc_backup_status (
+  id text primary key,
+  payload jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table public.smartqc_backup_status enable row level security;
+revoke all on table public.smartqc_backup_status from anon, authenticated;
+grant select on table public.smartqc_backup_status to authenticated;
+drop policy if exists smartqc_backup_status_read on public.smartqc_backup_status;
+create policy smartqc_backup_status_read on public.smartqc_backup_status
+  for select to authenticated using (true);
+
+-- CHỈ cần phần dưới nếu tác vụ sao lưu đăng nhập bằng email/mật khẩu (không dùng khóa service_role).
+-- Thay backup@example.com bằng email của tài khoản sao lưu:
+grant insert, update on table public.smartqc_backup_status to authenticated;
+drop policy if exists smartqc_backup_status_ins on public.smartqc_backup_status;
+create policy smartqc_backup_status_ins on public.smartqc_backup_status
+  for insert to authenticated with check ((auth.jwt() ->> 'email') = 'backup@example.com');
+drop policy if exists smartqc_backup_status_upd on public.smartqc_backup_status;
+create policy smartqc_backup_status_upd on public.smartqc_backup_status
+  for update to authenticated using ((auth.jwt() ->> 'email') = 'backup@example.com')
+  with check ((auth.jwt() ->> 'email') = 'backup@example.com');`;
+function dbFmtTime(iso){const d=new Date(iso);return isNaN(d.getTime())?'—':d.toLocaleString('vi-VN');}
+function dbAgeText(iso){const t=new Date(iso).getTime();if(isNaN(t))return '';const d=Math.floor((Date.now()-t)/864e5);return d<=0?'hôm nay':d+' ngày trước';}
+function dbSize(n){n=Number(n);if(!isFinite(n)||n<=0)return '—';return n>=1048576?(n/1048576).toFixed(2)+' MB':Math.max(1,Math.round(n/1024))+' KB';}
+function dbNum(n){n=Number(n);return isFinite(n)?n.toLocaleString('vi-VN'):'—';}
+async function driveBackupFetch(){
+  if(!cloudConfig||!supabaseClient)return {state:'noconfig'};
+  if(!cloudUser)return {state:'nologin'};
+  try{
+    const res=await Promise.race([
+      supabaseClient.from('smartqc_backup_status').select('payload,updated_at').eq('id','drive').maybeSingle(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('Hết thời gian chờ Supabase')),15000))
+    ]);
+    if(res.error){
+      const c=String(res.error.code||''),m=String(res.error.message||'');
+      if(c==='PGRST205'||c==='42P01'||/does not exist|schema cache|Could not find the table/i.test(m))return {state:'notable'};
+      return {state:'error',message:m};
+    }
+    if(!res.data||!res.data.payload)return {state:'empty'};
+    return {state:'data',payload:res.data.payload,updatedAt:res.data.updated_at};
+  }catch(e){return {state:'error',message:(e&&e.message)||String(e)};}
+}
+function driveBackupStatusHtml(r){
+  const card=(bg,col,title,body)=>`<div class="card" style="background:${bg};border:none;"><div class="card-body" style="padding:12px 14px;font-size:12.8px;line-height:1.65;"><b style="color:${col};">${title}</b>${body?'<div style="margin-top:6px;color:var(--text);">'+body+'</div>':''}</div></div>`;
+  if(r.state==='noconfig')return card('var(--surface-2)','var(--text)','Máy này chưa kết nối Supabase','Vào <b>Hệ thống → Đồng bộ Supabase → Thiết lập</b> để xem được trạng thái sao lưu.');
+  if(r.state==='nologin')return card('var(--surface-2)','var(--text)','Chưa đăng nhập cloud','Đăng nhập cloud (<b>Hệ thống → Đồng bộ Supabase</b>) rồi bấm “Làm mới trạng thái”.');
+  if(r.state==='notable')return card('var(--warning-bg)','var(--warning)','Chưa tạo bảng trạng thái trong Supabase','Chạy đoạn SQL ở mục <b>3</b> bên dưới một lần. Việc sao lưu vẫn chạy bình thường nếu đã thiết lập GitHub; bảng này chỉ để app hiển thị trạng thái.');
+  if(r.state==='empty')return card('var(--warning-bg)','var(--warning)','Chưa có thông tin sao lưu','Tác vụ sao lưu chưa chạy lần nào, hoặc đang dùng phiên bản script cũ chưa ghi trạng thái. Vào GitHub → <b>Actions → Run workflow</b> để chạy thử.');
+  if(r.state==='error')return card('var(--danger-bg)','var(--danger)','Không đọc được trạng thái',escapeHtml(r.message||''));
+  const p=r.payload||{},iv=Number(p.intervalDays)||7,t=p.lastSuccessAt?new Date(p.lastSuccessAt).getTime():NaN,age=isNaN(t)?null:(Date.now()-t)/864e5;
+  let bg,col,title;
+  if(p.ok===false){bg='var(--danger-bg)';col='var(--danger)';title='✗ Lần chạy gần nhất THẤT BẠI';}
+  else if(age===null){bg='var(--danger-bg)';col='var(--danger)';title='✗ Chưa có bản sao lưu thành công';}
+  else if(age<=iv+2){bg='var(--success-bg)';col='var(--success)';title='✓ Đang hoạt động bình thường';}
+  else if(age<=2*iv+2){bg='var(--warning-bg)';col='var(--warning)';title='⚠ Trễ lịch sao lưu';}
+  else{bg='var(--danger-bg)';col='var(--danger)';title='✗ Đã lâu không có bản sao lưu mới';}
+  const row=(k,v)=>`<div style="display:flex;gap:10px;margin-top:4px;"><span style="min-width:190px;color:var(--text-muted);">${k}</span><span style="flex:1;word-break:break-word;">${v}</span></div>`;
+  let body=row('Sao lưu thành công gần nhất',p.lastSuccessAt?escapeHtml(dbFmtTime(p.lastSuccessAt))+' ('+escapeHtml(dbAgeText(p.lastSuccessAt))+')':'—')
+    +row('Lần chạy gần nhất',p.lastRunAt?escapeHtml(dbFmtTime(p.lastRunAt)):'—')
+    +row('Tệp trên Drive',escapeHtml(p.file||'—')+(p.sizeBytes?' · '+escapeHtml(dbSize(p.sizeBytes)):''))
+    +row('Số dòng đã sao lưu',dbNum(p.records)+(p.live!=null?' (đang dùng '+dbNum(p.live)+')':''))
+    +row('Mã hóa',p.encrypted===false?'<b style="color:var(--warning);">Không — nên đặt BACKUP_PASSPHRASE</b>':'Có (AES-256)')
+    +row('Thư mục Drive',escapeHtml(p.folder||'SMART VSMD Backup'))
+    +row('Đang giữ',p.keptCount!=null?dbNum(p.keptCount)+' bản'+(p.keep?' (gần nhất '+dbNum(p.keep.recent)+' bản + cuối mỗi tháng trong '+dbNum(p.keep.months)+' tháng)':''):'—');
+  if(p.ok===false&&p.error)body+=`<div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--danger);color:var(--danger);">${escapeHtml(String(p.error))}</div>`;
+  return card(bg,col,title,body);
+}
+async function loadDriveBackupStatus(){
+  const box=document.getElementById('dbStatus');if(!box)return;
+  box.innerHTML='<div style="font-size:12.8px;color:var(--text-muted);padding:8px 2px;">Đang tải trạng thái…</div>';
+  const r=await driveBackupFetch();
+  const b2=document.getElementById('dbStatus');if(b2)b2.innerHTML=driveBackupStatusHtml(r);
+}
+function copyDriveBackupSql(){
+  const done=()=>toast('pass','Đã sao chép','Dán vào Supabase → SQL Editor rồi bấm Run.');
+  const fb=()=>{try{const ta=document.createElement('textarea');ta.value=DRIVE_BACKUP_SQL;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}catch(e){toast('warning','Không sao chép được','Hãy bôi đen đoạn SQL và sao chép thủ công.');}};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(DRIVE_BACKUP_SQL).then(done,fb);return;}}catch(e){}
+  fb();
+}
+function openDriveBackup(){
+  const pre='background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.55;overflow:auto;white-space:pre;margin:8px 0;font-family:Consolas,Menlo,monospace;';
+  const sec=(n,t,b,open)=>`<details ${open?'open':''} style="border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin-top:8px;"><summary style="cursor:pointer;font-weight:700;font-size:13px;">${n}. ${t}</summary><div style="font-size:12.5px;line-height:1.7;color:var(--text);margin-top:8px;">${b}</div></details>`;
+  const th='padding:5px 8px;border:1px solid var(--border);text-align:left;vertical-align:top;';
+  const secrets=[['SUPABASE_URL','Địa chỉ dự án Supabase (https://xxxx.supabase.co)'],['SUPABASE_ANON_KEY + SUPABASE_EMAIL + SUPABASE_PASSWORD','Khuyên dùng: khóa anon và tài khoản riêng dành cho sao lưu (để trống SUPABASE_SERVICE_ROLE_KEY)'],['SUPABASE_SERVICE_ROLE_KEY','Chỉ dùng khi không dùng tài khoản riêng; khóa toàn quyền, chỉ để trong GitHub Secrets'],['GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN','Quyền truy cập Google Drive (loại OAuth client “TVs and Limited Input devices”, quyền drive.file)'],['BACKUP_PASSPHRASE','Mật khẩu mã hóa file sao lưu (nên đặt, cất kỹ ở nơi khác)'],['SUPABASE_WORKSPACE_ID','Không bắt buộc: tên workspace nếu chỉ sao lưu một workspace']].map(x=>`<tr><td style="${th}"><code>${x[0]}</code></td><td style="${th}">${x[1]}</td></tr>`).join('');
+  showModal('Sao lưu Google Drive',`
+    <div style="font-size:12.5px;color:var(--text-muted);line-height:1.65;margin-bottom:10px;">Mỗi tuần (mặc định <b>02:00 sáng Chủ nhật</b>, giờ Việt Nam) GitHub tự đọc toàn bộ dữ liệu trên Supabase, nén (và mã hóa), tải lên thư mục <b>“SMART VSMD Backup”</b> trong Google Drive, kiểm tra lại tệp rồi dọn bản cũ. <b>Chỉ đọc</b> Supabase — không xóa, không sửa dữ liệu. App chỉ hiển thị kết quả bên dưới.</div>
+    <div id="dbStatus"></div>
+    <div class="btn-row" style="margin:10px 0 4px;"><button class="btn ghost sm" onclick="loadDriveBackupStatus()">Làm mới trạng thái</button><button class="btn ghost sm" onclick="closeModal()">Đóng</button></div>
+    ${sec(1,'Thiết lập lần đầu (làm một lần)',`
+      <b>Đưa file vào kho GitHub</b> (giữ nguyên tên và đường dẫn): <code>.github/workflows/backup-drive.yml</code>, <code>scripts/lib.mjs</code>, <code>scripts/backup-to-drive.mjs</code>, <code>scripts/restore-from-backup.mjs</code>, <code>scripts/get-google-refresh-token.mjs</code>. <b>Không</b> chặn thư mục <code>scripts</code> trong <code>.vercelignore</code> (đang chứa <code>build-config.mjs</code> của Vercel).<br>
+      <b>Google:</b> tạo dự án Google Cloud → bật <b>Google Drive API</b> → màn hình đồng ý OAuth, quyền <code>drive.file</code>, chuyển sang <b>In production</b> (để “Testing” thì mã chỉ sống 7 ngày) → tạo OAuth client loại <b>TVs and Limited Input devices</b> → chạy một lần <code>node scripts/get-google-refresh-token.mjs</code> trên máy tính để lấy refresh token.<br>
+      <b>GitHub:</b> Settings → Secrets and variables → Actions → thêm các secret sau:
+      <table style="border-collapse:collapse;width:100%;margin-top:6px;font-size:12px;">${secrets}</table>
+      <b>Chạy thử:</b> tab <b>Actions → “Sao luu SMART VSMD len Google Drive” → Run workflow</b>. Có dấu ✓ và thấy thư mục trong Drive là đạt. Sau đó đối chiếu số dòng với <code>select count(*) from public.smartqc_records;</code> trong Supabase — hai số phải bằng nhau.`,false)}
+    ${sec(2,'Cách hoạt động và các cơ chế an toàn',`
+      • Giữ <b>8 bản gần nhất</b> và <b>bản cuối mỗi tháng</b> trong 12 tháng. Mỗi bản sau nén khoảng 1 MB.<br>
+      • Chỉ dọn bản cũ <b>sau khi</b> bản mới đã tải lên và kiểm tra kích thước + MD5 khớp.<br>
+      • Số dòng giảm hơn 50% so với lần trước: vẫn lưu bản mới nhưng <b>không xóa bản cũ</b> và báo lỗi (GitHub gửi email).<br>
+      • Bảng dữ liệu chính trả về 0 dòng (ví dụ quyền bị chặn): <b>không tạo bản sao lưu rỗng</b>, báo lỗi.<br>
+      • Đang có người nhập dữ liệu giữa lúc đọc: tự đọc lại tối đa 3 lần. Lỗi mạng tạm thời: tự thử lại.<br>
+      • Đây là <b>ảnh chụp theo thời điểm</b>: dữ liệu nhập sau lần chạy gần nhất chưa có trong bản sao lưu.<br>
+      • Khi app xóa một bản ghi, nội dung trên Supabase bị xóa; bản trên Drive là nơi duy nhất còn giữ lại nội dung đó.`,false)}
+    ${sec(3,'Bảng trạng thái trong Supabase (để app hiển thị phần trạng thái ở trên)',`
+      Chạy đoạn SQL dưới đây <b>một lần</b> trong Supabase → SQL Editor. Nếu tác vụ sao lưu dùng tài khoản email/mật khẩu, hãy thay <code>backup@example.com</code> bằng email tài khoản đó.
+      <div class="btn-row" style="margin:6px 0 0;"><button class="btn ghost sm" onclick="copyDriveBackupSql()">Sao chép SQL</button></div>
+      <div style="${pre}">${escapeHtml(DRIVE_BACKUP_SQL)}</div>`,false)}
+    ${sec(4,'Khôi phục từ một bản sao lưu',`
+      Tải tệp từ Drive về máy, rồi trên máy tính có Node.js 18 trở lên:
+      <div style="${pre}">BACKUP_PASSPHRASE='mật-khẩu-của-bạn' node scripts/restore-from-backup.mjs tep.json.gz.enc --out tep.json</div>
+      Muốn nạp lại vào Supabase: thêm <code>--import</code> (xem trước, chưa ghi gì), rồi <code>--import --yes</code> để thực hiện. Việc nạp lại chỉ ghi đè/thêm theo khóa <code>workspace_id + collection + record_id</code>, <b>không xóa</b> dòng nào đang có. Nên thử giải mã một bản thật ngay sau khi thiết lập để chắc mật khẩu đúng.`,false)}
+    ${sec(5,'Lưu ý an toàn',`
+      • Khóa <code>service_role</code>/mật khẩu tài khoản sao lưu chỉ để trong <b>GitHub Secrets</b>, tuyệt đối không dán vào app hay file web. Nên để kho GitHub ở chế độ Private.<br>
+      • Mã truy cập Google bị thu hồi/hết hạn (đổi mật khẩu Google, gỡ quyền ứng dụng, để “Testing”): tác vụ báo lỗi <code>refresh token</code>; lấy lại mã ở bước 1 rồi cập nhật secret.<br>
+      • Mất <code>BACKUP_PASSPHRASE</code> thì không giải mã được các bản đã mã hóa.<br>
+      • Xóa thư mục “SMART VSMD Backup” trong Drive là mất bản sao lưu.`,false)}
+  `,'wide');
+  loadDriveBackupStatus();
 }
 function openCloudSetup(){
   const cfg=cloudConfig||{};
@@ -2438,6 +2600,7 @@ function migrateState(){
   if(!Array.isArray(state.rapidWaterLots)) state.rapidWaterLots=[];
   const ensureCatalog=(names,category,prefix,method)=>{
     names.forEach(name=>{
+      if(Array.isArray(state.rapidWaterDeletedTests) && state.rapidWaterDeletedTests.includes(category+'|'+String(name).trim().toLowerCase())) return;
       if(!state.rapidWaterTests.some(t=>t.name===name && t.category===category)){
         state.rapidWaterTests.push({
           id:uid(prefix), name, category,
@@ -2700,9 +2863,19 @@ function openReagentLotHistoryModal(testId,machineId,level){
     </tbody></table></div><div class="btn-row" style="margin-top:12px;"><button class="btn ghost" onclick="closeModal()">Đóng</button></div>`;
   showModal('Lịch sử LOT hóa chất · Level '+level,body,'wide');
 }
-function computeRange(mean,sd){
+/* Khoảng chấp nhận tính RIÊNG theo từng máy (từ Mean/SD của chính máy đó):
+   - Beckman Coulter UniCel DxI 800: Mean ± 2SD.
+   - YHLO iFlash 9000 và máy khác: giữ nguyên công thức cũ Mean ± 3SD. */
+function qcRangeFactor(machineId){
+  const m=(machineId&&Array.isArray(state&&state.machines))?byId(state.machines,machineId):null;
+  const n=String((m&&((m.name||'')+' '+(m.model||'')))||'');
+  if(/DxI\s*800/i.test(n)) return 2;
+  return 3;
+}
+function computeRange(mean,sd,machineId){
   if(mean===undefined||mean===null||mean===''||isNaN(mean)||sd===undefined||sd===null||sd===''||isNaN(sd)) return '—';
-  return round(mean-3*sd,4)+' – '+round(mean+3*sd,4);
+  const k=qcRangeFactor(machineId);
+  return round(mean-k*sd,4)+' – '+round(mean+k*sd,4);
 }
 function seriesFor(testId,machineId,lotId,level){
   return state.results.filter(r=>r.testId===testId&&r.machineId===machineId&&r.lotId===lotId&&r.level===level)
@@ -3831,7 +4004,8 @@ function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[i
 
 /* ===== Sửa / Xóa kết quả QC từ Biểu đồ QC ===== */
 function qcSyncAlert(r){
-  const idx=state.alerts.findIndex(a=>a.resultId===r.id), a=idx>=0?state.alerts[idx]:null;
+  const a=qcAlertForResult(r), idx=a?state.alerts.indexOf(a):-1;
+  if(a && a.resultId!==r.id) a.resultId=r.id;   /* nối lại liên kết cảnh báo ↔ kết quả nếu mã đã bị đổi (đồng bộ cloud) */
   if(r.status==='pass'){ if(a && !a.handling) state.alerts.splice(idx,1); return; }
   const test=byId(state.tests,r.testId), machine=byId(state.machines,r.machineId), lot=byId(state.lots,r.lotId);
   if(!a){
@@ -3938,6 +4112,33 @@ function deleteQCResult(resultId){
   toast('pass','Đã xóa kết quả QC','Biểu đồ và Westgard đã được cập nhật.');
 }
 
+/* Quy trình xử lý QC không đạt đã hoàn tất → hiển thị lại nội dung đã nhập (chỉ xem), không bắt nhập lại. */
+/* Tìm cảnh báo của 1 kết quả QC: ưu tiên theo resultId (ưu tiên bản đã xử lý nếu có nhiều bản trùng);
+   nếu liên kết resultId bị lệch (mã bị đổi khi đồng bộ) thì khớp theo xét nghiệm + máy + level + thời gian + giá trị. */
+function qcAlertForResult(r){
+  if(!r) return null;
+  const list=Array.isArray(state.alerts)?state.alerts:[];
+  let pool=list.filter(a=>a.resultId===r.id);
+  if(!pool.some(a=>a.handling) && r.date){
+    const t=byId(state.tests,r.testId), m=byId(state.machines,r.machineId), key=r.date+' '+r.time;
+    const fb=list.filter(a=>a.severity==='reject' && a.time===key && String(a.level)===String(r.level) && Number(a.value)===Number(r.value)
+      && (!t||a.testName===t.name) && (!m||a.machineName===m.name)
+      && !state.results.some(x=>x.id===a.resultId && x.id!==r.id));
+    pool=pool.concat(fb.filter(a=>!pool.includes(a)));
+  }
+  return pool.find(a=>a.handling)||pool[0]||null;
+}
+function qcHandledAlert(resultId){const r=state.results.find(x=>x.id===resultId);const a=qcAlertForResult(r||{id:resultId});return a&&a.handling?a:null;}
+function qcHandlingSummaryHtml(a){
+  const h=a&&a.handling;if(!h)return '';
+  const when=h.datetime?new Date(h.datetime).toLocaleString('vi-VN'):'—';
+  const row=(k,v)=>`<div style="margin-top:5px;"><b>${k}:</b> ${escapeHtml(v==null||String(v).trim()===''?'—':String(v))}</div>`;
+  return `<div class="card" style="background:var(--success-bg);border:none;margin-top:14px;"><div class="card-body" style="padding:12px 14px;font-size:12.8px;">`
+    +`<b style="color:var(--success);">✓ Quy trình xử lý QC không đạt — đã hoàn tất</b>`
+    +row('Nguyên nhân',h.cause)+row('Hành động khắc phục',h.action)+row('Kết quả chạy lại',h.rerunValue)+row('Nhận xét',h.comment)
+    +row('Người thực hiện',h.performedBy)+row('Người xem xét',h.reviewedBy)+row('Ngày giờ xử lý',when)
+    +`</div></div>`;
+}
 function openResultDetail(resultId){
   const r=state.results.find(x=>x.id===resultId); if(!r) return;
   const test=byId(state.tests,r.testId), machine=byId(state.machines,r.machineId), lot=byId(state.lots,r.lotId);
@@ -3957,7 +4158,7 @@ function openResultDetail(resultId){
       <tr><td style="color:var(--text-muted);padding:5px 0;">Westgard</td><td style="text-align:right;">${r.violations.join(', ')||'Không vi phạm'}</td></tr>
       <tr><td style="color:var(--text-muted);padding:5px 0;">Người thực hiện</td><td style="text-align:right;">${escapeHtml(r.user)}</td></tr>
     </table>
-    ${r.status==='reject'?`<button class="btn danger" style="margin-top:14px;width:100%;justify-content:center;" onclick="closeModal();openHandlingModal((state.alerts.find(a=>a.resultId==='${r.id}')||{}).id)">Mở quy trình xử lý QC không đạt</button>`:''}
+    ${r.status==='reject'?(qcHandledAlert(r.id)?qcHandlingSummaryHtml(qcHandledAlert(r.id)):`<button class="btn danger" style="margin-top:14px;width:100%;justify-content:center;" onclick="closeModal();openHandlingModal((qcAlertForResult(state.results.find(x=>x.id==='${r.id}'))||{}).id)">Mở quy trình xử lý QC không đạt</button>`):''}
   `);
 }
 
@@ -4110,8 +4311,8 @@ function renderTests(){
     return `<tr>
       <td><b>${escapeHtml(t.name)}</b></td><td class="mono">${escapeHtml(t.code)}</td><td>${escapeHtml(t.unit)||'—'}</td>
       <td>${escapeHtml(t.method)||'—'}</td><td class="mono">${t.TEa?t.TEa+'%':'—'}</td>
-      <td>${cfgs.map(c=>`<span class="tag" style="margin:1px;">L${c.level}: ${c.mean}±${c.sd}</span>`).join(' ')||'<span class="tag">Chưa có</span>'}</td>
-      <td><button class="btn ghost sm" onclick="openTestModal('${t.id}')">Sửa</button></td>
+      <td>${cfgs.map(c=>`<span class="tag" style="margin:1px;">L${c.level}: ${escapeHtml(meanWithOp(c))}±${c.sd}</span>`).join(' ')||'<span class="tag">Chưa có</span>'}</td>
+      <td style="white-space:nowrap"><button class="btn ghost sm" onclick="openTestModal('${t.id}')">Sửa</button> <button class="btn danger sm" onclick="deleteTest('${t.id}')" title="Xóa xét nghiệm">Xóa</button></td>
     </tr>`;
   };
   el.innerHTML=`
@@ -4145,13 +4346,14 @@ function renderTests(){
         </div>
       </div>
       <div class="table-wrap"><table class="catalog-table">
-        <thead><tr><th>STT</th><th>Tên xét nghiệm</th><th>Mã</th><th>Phương pháp</th><th>Đơn vị/Kết quả</th><th>Chứng</th></tr></thead>
+        <thead><tr><th>STT</th><th>Tên xét nghiệm</th><th>Mã</th><th>Phương pháp</th><th>Đơn vị/Kết quả</th><th>Chứng</th><th></th></tr></thead>
         <tbody>
           ${state.rapidWaterTests.filter(t=>t.category==='Test nhanh').map((t,i)=>`
             <tr>
               <td class="mono">${i+1}</td><td><b>${escapeHtml(t.name)}</b></td>
               <td class="mono">${escapeHtml(t.code)}</td><td>${escapeHtml(t.method)}</td><td>${escapeHtml(t.unit)}</td>
               <td><span class="tag">Âm</span> <span class="tag">Dương</span></td>
+              <td><button class="btn danger sm" onclick="deleteRapidWaterTest('${t.id}')" title="Xóa xét nghiệm">Xóa</button></td>
             </tr>`).join('')}
         </tbody>
       </table></div>
@@ -4169,13 +4371,14 @@ function renderTests(){
         </div>
       </div>
       <div class="table-wrap"><table class="catalog-table">
-        <thead><tr><th>STT</th><th>Tên xét nghiệm</th><th>Mã</th><th>Phương pháp</th><th>Đơn vị/Kết quả</th><th>Chứng</th></tr></thead>
+        <thead><tr><th>STT</th><th>Tên xét nghiệm</th><th>Mã</th><th>Phương pháp</th><th>Đơn vị/Kết quả</th><th>Chứng</th><th></th></tr></thead>
         <tbody>
           ${state.rapidWaterTests.filter(t=>t.category==='Test nước').map((t,i)=>`
             <tr>
               <td class="mono">${i+1}</td><td><b>${escapeHtml(t.name)}</b></td>
               <td class="mono">${escapeHtml(t.code)}</td><td>${escapeHtml(t.method)}</td><td>${escapeHtml(t.unit)}</td>
               <td><span class="tag">Âm</span> <span class="tag">Dương</span></td>
+              <td><button class="btn danger sm" onclick="deleteRapidWaterTest('${t.id}')" title="Xóa xét nghiệm">Xóa</button></td>
             </tr>`).join('')}
         </tbody>
       </table></div>
@@ -4234,6 +4437,7 @@ function submitRapidWaterTest(ev,category){
   const prefix=category==='Test nước'?'WT':'RT';
   const item={id:uid(prefix),name,category,code,method,unit};
   state.rapidWaterTests.push(item);
+  if(Array.isArray(state.rapidWaterDeletedTests)) state.rapidWaterDeletedTests=state.rapidWaterDeletedTests.filter(k=>k!==category+'|'+name.toLowerCase());
   state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Thêm xét nghiệm Test nhanh / Test nước',detail:`${category} · ${name}`});
   queueSave();
   closeModal();
@@ -4279,7 +4483,7 @@ function reagentRowHtml(test, machineId, level){
     <td>L${level}</td>
     <td><input id="rc_${rid}_mean" ${meanIsText?'type="text" autocomplete="off"':'type="number" step="any"'} value="${hasCfg?escapeHtml(meanWithOp(cfg)):''}" placeholder="—" style="width:82px;" ${hasCfg?'':'disabled'}></td>
     <td><input id="rc_${rid}_sd" type="number" step="any" value="${hasCfg?cfg.sd:''}" placeholder="—" style="width:76px;" ${hasCfg?'':'disabled'}></td>
-    <td class="mono" id="rc_${rid}_range">${hasCfg?computeRange(cfg.mean,cfg.sd):'—'}</td>
+    <td class="mono" id="rc_${rid}_range">${hasCfg?computeRange(cfg.mean,cfg.sd,machineId):'—'}</td>
     <td>${escapeHtml(test.unit)||'—'}</td>
     <td style="white-space:nowrap;">${hasCfg?`<button class="btn primary sm" onclick="saveReagentRow('${test.id}','${machineId}',${level})">Lưu</button> <button class="btn ghost sm" onclick="openReagentLotModal('${test.id}','${machineId}',${level},false)">Sửa</button> <button class="btn ghost sm" onclick="openReagentLotModal('${test.id}','${machineId}',${level},true)">+ Thêm LOT mới</button> <button class="btn ghost sm" onclick="openReagentLotHistoryModal('${test.id}','${machineId}',${level})">Lịch sử</button>`:`<button class="btn ghost sm" onclick="openReagentLotModal('${test.id}','${machineId}',${level},true)">+ Thêm LOT mới</button>`}</td>
   </tr>`;
@@ -4335,7 +4539,7 @@ function testCfgSummaryHtml(testId){
   const cfgs=state.configs.filter(c=>c.testId===testId);
   if(!cfgs.length) return `<div class="tbl-empty" style="padding:16px 0;">Chưa có cấu hình Mean/SD</div>`;
   return `<div class="table-wrap"><table><thead><tr><th>Level</th><th>Lot hóa chất</th><th>Mean</th><th>1SD</th><th>Khoảng chấp nhận</th></tr></thead><tbody>
-    ${cfgs.map(c=>`<tr><td>L${c.level}</td><td>${escapeHtml(c.reagentLot)||'—'}</td><td class="mono">${escapeHtml(meanWithOp(c))}</td><td class="mono">${c.sd}</td><td class="mono">${computeRange(c.mean,c.sd)}</td></tr>`).join('')}
+    ${cfgs.map(c=>`<tr><td>L${c.level}</td><td>${escapeHtml(c.reagentLot)||'—'}</td><td class="mono">${escapeHtml(meanWithOp(c))}</td><td class="mono">${c.sd}</td><td class="mono">${computeRange(c.mean,c.sd,c.machineId)}</td></tr>`).join('')}
   </tbody></table></div>`;
 }
 function submitTest(ev, testId){
@@ -4352,6 +4556,35 @@ function submitTest(ev, testId){
   renderTests();
   toast('pass','Đã lưu','Danh mục xét nghiệm đã được cập nhật.');
   return false;
+}
+
+/* ---- Xóa xét nghiệm (danh mục máy / Test nhanh / Test nước) ----
+   Chỉ gỡ xét nghiệm khỏi danh mục; dữ liệu đã nhập trước đó vẫn được giữ lại trong hệ thống. */
+function deleteTest(testId){
+  const idx=state.tests.findIndex(x=>x.id===testId); if(idx<0) return;
+  const t=state.tests[idx];
+  const nRes=(state.results||[]).filter(r=>r.testId===testId).length;
+  if(!confirm('Xóa xét nghiệm "'+t.name+'" khỏi danh mục?'+(nRes?'\nĐã có '+nRes+' kết quả QC của xét nghiệm này; dữ liệu đã nhập vẫn được giữ lại trong hệ thống.':''))) return;
+  state.tests.splice(idx,1);
+  state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Xóa xét nghiệm',detail:t.name});
+  queueSave();
+  renderTests();
+  toast('pass','Đã xóa xét nghiệm',t.name);
+}
+function deleteRapidWaterTest(testId){
+  if(!Array.isArray(state.rapidWaterTests)) return;
+  const idx=state.rapidWaterTests.findIndex(x=>x.id===testId); if(idx<0) return;
+  const t=state.rapidWaterTests[idx];
+  const nRes=(state.rapidWaterResults||[]).filter(r=>r.testId===testId).length;
+  if(!confirm('Xóa xét nghiệm "'+t.name+'" ('+t.category+') khỏi danh mục?'+(nRes?'\nĐã có '+nRes+' phiếu QC của xét nghiệm này; dữ liệu đã nhập vẫn được giữ lại trong hệ thống.':''))) return;
+  state.rapidWaterTests.splice(idx,1);
+  if(!Array.isArray(state.rapidWaterDeletedTests)) state.rapidWaterDeletedTests=[];
+  const tomb=t.category+'|'+String(t.name||'').trim().toLowerCase();
+  if(!state.rapidWaterDeletedTests.includes(tomb)) state.rapidWaterDeletedTests.push(tomb);
+  state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Xóa xét nghiệm Test nhanh / Test nước',detail:`${t.category} · ${t.name}`});
+  queueSave();
+  renderTests();
+  toast('pass','Đã xóa xét nghiệm',`${t.name} · ${t.category}`);
 }
 
 /* =====================================================================
@@ -4727,7 +4960,7 @@ function renderSystem(){
           <div class="row"><div><div class="t">Chế độ hiển thị</div><div class="d">Light Mode / Dark Mode</div></div>
             <div class="toggle-mode"><button class="${state.settings.theme==='light'?'on':''}" onclick="setTheme('light')">${svgIcon('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',13)} Sáng</button><button class="${state.settings.theme==='dark'?'on':''}" onclick="setTheme('dark')">${svgIcon('<path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/>',13)} Tối</button></div>
           </div>
-          <div class="row"><div><div class="t">Người dùng hiện tại</div><div class="d">${escapeHtml(state.settings.currentUser||'—')} · ${escapeHtml(state.settings.currentRole||'')}</div></div>
+          <div class="row"><div><div class="t">Người dùng hiện tại</div><div class="d" id="vsmdOnlineUsers">${typeof vsmdOnlineUsersHtml==='function'?vsmdOnlineUsersHtml():escapeHtml(state.settings.currentUser||'—')+' · '+escapeHtml(state.settings.currentRole||'')}</div></div>
             <button class="btn ghost sm" onclick="doLogout()">Đăng xuất</button></div>
         </div>
       </div>
@@ -4736,6 +4969,7 @@ function renderSystem(){
         <div class="card-body settings-list">
           <div class="row"><div><div class="t">Lưu trữ tự động</div><div class="d">Mọi thao tác được lưu lại ngay; khi kết nối Supabase, dữ liệu tự đồng bộ lâu dài giữa máy tính và điện thoại</div></div><span class="pill pass"><span class="dot"></span>Đang bật</span></div>
           <div class="row"><div><div class="t">Đồng bộ Supabase</div><div class="d">${escapeHtml(cloudStatusText())}</div></div><button class="btn ghost sm" onclick="openCloudSetup()">Thiết lập</button></div>
+          <div class="row"><div><div class="t">Sao lưu Google Drive</div><div class="d">Tự động sao lưu hằng tuần toàn bộ dữ liệu từ Supabase lên Google Drive (chạy trên GitHub). Xem lần sao lưu gần nhất và hướng dẫn thiết lập</div></div><button class="btn ghost sm" onclick="openDriveBackup()">Xem</button></div>
           <div class="row"><div><div class="t">Cài ứng dụng SMART VSMD</div><div class="d">Cài biểu tượng SMART VSMD lên màn hình chính điện thoại hoặc máy tính như một ứng dụng</div></div><button class="btn ghost sm" onclick="installPWA()">Cài ứng dụng</button></div>
           <div class="row"><div><div class="t">Tổng số bản ghi QC</div><div class="d">Toàn bộ lịch sử đã lưu</div></div><b class="mono">${state.results.length}</b></div>
           <div class="row"><div><div class="t">Khôi phục danh mục gốc</div><div class="d">Xoá toàn bộ QC/cảnh báo hiện tại và khôi phục danh mục máy/xét nghiệm ban đầu (theo hồ sơ máy)</div></div>
@@ -5008,6 +5242,7 @@ async function doLogin(){
   state.settings=state.settings||{};
   state.settings.currentUser=user;
   state.settings.currentRole=role;
+  window.__vsmdIdentity={user:user,role:role};
   try{ state.audit=Array.isArray(state.audit)?state.audit:[]; state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:user,action:'Đăng nhập',detail:'Vai trò: '+(role||'—')}); }catch(e){ console.warn('[SMART VSMD] Audit login:',e); }
   const loginScreen=document.getElementById('loginScreen');
   const app=document.getElementById('app');
@@ -5025,6 +5260,7 @@ async function doLogin(){
 }
 function doLogout(){
   try{ if(state&&state.settings&&state.settings.currentUser){ state.audit=Array.isArray(state.audit)?state.audit:[]; state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Đăng xuất',detail:'Vai trò: '+(state.settings.currentRole||'—')}); queueSave(); } }catch(e){ console.warn('[SMART VSMD] Audit logout:',e); }
+  window.__vsmdIdentity=null;
   document.getElementById('app').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   resetPassKeyGate();
@@ -5189,7 +5425,7 @@ function drawLJChart(canvasId,testId,machineId,filterDays){
   const rows=qcFixSeries(testId,machineId,filterDays||0);
   const test=byId(state.tests,testId),machine=byId(state.machines,machineId);
   const host=document.createElement('div');host.id=canvasId;old.replaceWith(host);
-  qcRenderSvgHost(canvasId,rows,{title:(test?.name||'Biểu đồ QC')+' · Levey–Jennings',subtitle:(machine?.name||'—')+' · '+rows.length+' điểm'});
+  qcRenderSvgHost(canvasId,rows,{title:(test?.name||'Biểu đồ QC')+' · Levey–Jennings',subtitle:(machine?.name||'—')+' · '+rows.length+' điểm',showHandled:true});
 }
 function renderChartView(){
   const el=document.getElementById('view-chart');
@@ -5295,7 +5531,16 @@ function qcBuildSvg(rows,opts={}){
   if(!clean.length)return '';
   const keys=[...new Set(clean.map(qcFixSortKey))];
   const x=i=>keys.length===1?L+pw/2:L+(i/(keys.length-1))*pw;
-  const maxAbs=Math.max(4,...clean.map(r=>Math.abs(Number(r.z)||0)+.45));
+  /* Điểm QC không đạt ĐÃ xử lý: đường biểu đồ đi qua KQ chạy lại; điểm không đạt ban đầu vẫn giữ (mờ, nét đứt) */
+  const handled=new Map();
+  if(opts.showHandled)clean.forEach(r=>{
+    if(r.status!=='reject')return;
+    const a=qcHandledAlert(r.id),rv=a&&a.handling?parseFloat(a.handling.rerunValue):NaN,sdv=Number(r.sd);
+    if(!a||!isFinite(rv)||!(sdv>0))return;
+    handled.set(r.id,{a,rv,z:round((rv-Number(r.mean))/sdv,2)});
+  });
+  const zLine=r=>handled.has(r.id)?handled.get(r.id).z:(Number(r.z)||0);
+  const maxAbs=Math.max(4,...clean.map(r=>Math.max(Math.abs(Number(r.z)||0),Math.abs(zLine(r)))+.45));
   const lim=Math.max(4,Math.ceil(maxAbs));
   const y=v=>T+(lim-v)/(2*lim)*ph;
   const parts=[`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Biểu đồ Levey–Jennings QC theo Z-score" preserveAspectRatio="xMidYMid meet">`,`<rect width="${W}" height="${H}" fill="${c.surface}"/>`];
@@ -5314,15 +5559,30 @@ function qcBuildSvg(rows,opts={}){
   const lineColors=[c.primary,c.accent,'#7C5CC4','#B4740E'];
   levels.forEach((lvl,li)=>{
     const map=new Map(clean.filter(r=>String(r.level)===lvl).map(r=>[qcFixSortKey(r),r]));
-    const pts=keys.map((k,i)=>map.has(k)?`${x(i).toFixed(2)},${y(Number(map.get(k).z)||0).toFixed(2)}`:null).filter(Boolean);
+    const pts=keys.map((k,i)=>map.has(k)?`${x(i).toFixed(2)},${y(zLine(map.get(k))).toFixed(2)}`:null).filter(Boolean);
     if(pts.length>1)parts.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="${lineColors[li%lineColors.length]}" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round" opacity=".98"/>`);
+  });
+  clean.forEach(r=>{
+    const h=handled.get(r.id);if(!h)return;
+    const xx=x(keys.indexOf(qcFixSortKey(r)));
+    parts.push(`<line x1="${xx.toFixed(2)}" y1="${y(Number(r.z)||0).toFixed(2)}" x2="${xx.toFixed(2)}" y2="${y(h.z).toFixed(2)}" stroke="${c.success}" stroke-width="2" stroke-dasharray="4 4" opacity=".9"/>`);
   });
   clean.forEach(r=>{
     const i=keys.indexOf(qcFixSortKey(r)),xx=x(i),yy=y(Number(r.z)||0),levelIndex=Math.max(0,levels.indexOf(String(r.level))),seriesCol=lineColors[levelIndex%lineColors.length],statusCol=qcStatusColor(r.status,c),edge=i===0?'start':(i===keys.length-1?'end':'middle'),lx=i===0?xx+10:(i===keys.length-1?xx-10:xx),ly=yy<T+30?yy+26:yy-15;
     const tip=`${fmtDMY(r.date)} ${r.time||''} | Level ${r.level} | Kết quả ${r.value} | Mean ${r.mean} | SD ${r.sd} | Z ${Number(r.z)>0?'+':''}${r.z}`;
+    const h=handled.get(r.id);
+    if(h){
+      const hz=h.z,y2=y(hz),rvTxt=String(round(h.rv,4)),ca=Math.abs(hz),rerunStatus=ca<2?'pass':(ca<3?'warning':'reject');
+      const hd=h.a.handling||{},tipH=tip+` | ĐÃ XỬ LÝ: chạy lại ${rvTxt} (Z ${hz>0?'+':''}${hz}) | Nguyên nhân: ${hd.cause||'—'} | Khắc phục: ${hd.action||'—'} | Thực hiện: ${hd.performedBy||'—'} | Xem xét: ${hd.reviewedBy||'—'}`;
+      const below=y2>=yy,lyO=below?(yy<T+30?yy+26:yy-15):(yy+26),lyR=below?(y2+26):(y2<T+30?y2+26:y2-15);
+      parts.push(`<g class="qc-point" tabindex="0" data-result-id="${qcSvgEscape(r.id)}" style="cursor:pointer" opacity=".6"><title>${qcSvgEscape(tipH)}</title><circle cx="${xx.toFixed(2)}" cy="${yy.toFixed(2)}" r="10" fill="${c.surface}" stroke="${seriesCol}" stroke-width="2" stroke-dasharray="3 2"/><circle cx="${xx.toFixed(2)}" cy="${yy.toFixed(2)}" r="4.3" fill="${statusCol}"/><text x="${lx.toFixed(2)}" y="${lyO.toFixed(2)}" text-anchor="${edge}" fill="${c.muted}" font-family="Times New Roman,Times,serif" font-size="11" font-weight="700" paint-order="stroke" stroke="${c.surface}" stroke-width="4.5" stroke-linejoin="round" text-decoration="line-through">${qcSvgEscape(String(r.value))}</text></g>`,
+        `<g class="qc-point" tabindex="0" data-result-id="${qcSvgEscape(r.id)}" style="cursor:pointer"><title>${qcSvgEscape(tipH)}</title><circle cx="${xx.toFixed(2)}" cy="${y2.toFixed(2)}" r="10" fill="${c.surface}" stroke="${c.success}" stroke-width="3"/><circle cx="${xx.toFixed(2)}" cy="${y2.toFixed(2)}" r="4.3" fill="${qcStatusColor(rerunStatus,c)}"/><text x="${lx.toFixed(2)}" y="${lyR.toFixed(2)}" text-anchor="${edge}" fill="${c.text}" font-family="Times New Roman,Times,serif" font-size="11.5" font-weight="700" paint-order="stroke" stroke="${c.surface}" stroke-width="4.5" stroke-linejoin="round">${qcSvgEscape(rvTxt)} ✓</text></g>`);
+      return;
+    }
     parts.push(`<g class="qc-point" tabindex="0" data-result-id="${qcSvgEscape(r.id)}" style="cursor:pointer"><title>${qcSvgEscape(tip)}</title><circle cx="${xx.toFixed(2)}" cy="${yy.toFixed(2)}" r="10" fill="${c.surface}" stroke="${seriesCol}" stroke-width="3"/><circle cx="${xx.toFixed(2)}" cy="${yy.toFixed(2)}" r="4.3" fill="${statusCol}"/><text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" text-anchor="${edge}" fill="${c.text}" font-family="Times New Roman,Times,serif" font-size="11.5" font-weight="700" paint-order="stroke" stroke="${c.surface}" stroke-width="4.5" stroke-linejoin="round">${qcSvgEscape(String(r.value))}</text><text x="${xx.toFixed(2)}" y="${(yy+3.2).toFixed(2)}" text-anchor="middle" fill="${c.surface}" font-family="Times New Roman,Times,serif" font-size="7.2" font-weight="700">L${qcSvgEscape(r.level)}</text></g>`);
   });
   let legendX=L;levels.forEach((lvl,li)=>{const col=lineColors[li%lineColors.length];parts.push(`<line x1="${legendX}" y1="${H-38}" x2="${legendX+24}" y2="${H-38}" stroke="${col}" stroke-width="3.4" stroke-linecap="round"/><circle cx="${legendX+12}" cy="${H-38}" r="3.2" fill="${col}"/><text x="${legendX+31}" y="${H-34}" fill="${c.text}" font-family="Times New Roman,Times,serif" font-size="11" font-weight="600">Level ${qcSvgEscape(lvl)} · đường liên tục theo thời gian</text>`);legendX+=245;});
+  if(handled.size)parts.push(`<text x="${L}" y="${H-52}" fill="${c.muted}" font-family="Times New Roman,Times,serif" font-size="10">○ nét đứt mờ: KQ không đạt ban đầu · ✓ vòng xanh: KQ chạy lại sau khi xử lý · đường biểu đồ đi qua KQ đã xử lý</text>`);
   parts.push(`<text x="${L}" y="24" fill="${c.text}" font-family="Times New Roman,Times,serif" font-size="15" font-weight="700">${qcSvgEscape(opts.title||'QC Levey–Jennings')}</text>`,`<text x="${W-R}" y="24" text-anchor="end" fill="${c.muted}" font-family="Times New Roman,Times,serif" font-size="11">${qcSvgEscape(opts.subtitle||clean.length+' điểm dữ liệu')}</text>`,`<text x="${L}" y="${H-12}" fill="${c.muted}" font-family="Times New Roman,Times,serif" font-size="10">Mỗi Level được nối thành một đường riêng · Điểm cùng thời gian thẳng hàng · Màu tâm điểm thể hiện trạng thái QC</text>`,`</svg>`);
   return parts.join('');
 }
@@ -5339,6 +5599,12 @@ function renderLJPanel(){
 function openHandlingModal(alertId){
   const a=state.alerts.find(x=>x.id===alertId);if(!a){toast('warning','Không tìm thấy cảnh báo','');return;}
   const steps=['Không đạt','Đang xử lý','Chạy lại QC','Đạt → Đóng'];
+  if(a.handling){   /* đã có quy trình xử lý → chỉ hiển thị, không yêu cầu nhập lại */
+    const done=`<div class="wizard-status">${steps.map((s,i)=>`<div class="st-item done"><div class="dot">${i+1}</div><div class="lbl">${s}</div></div>${i<steps.length-1?'<div class="ln"></div>':''}`).join('')}</div>`;
+    const head=`<div class="card" style="background:var(--danger-bg);border:none;margin-bottom:4px;"><div class="card-body" style="padding:12px 14px;font-size:12.8px;"><b style="color:var(--danger);">${escapeHtml(a.testName)} — Level ${a.level}</b><br>${escapeHtml(a.machineName)} · Lot ${escapeHtml(a.lotName)} · KQ ${a.value} (Mean ${a.mean} ± ${a.sd}) · Vi phạm ${escapeHtml(a.rule)}</div></div>`;
+    showModal('Quy trình xử lý QC không đạt',done+head+qcHandlingSummaryHtml(a)+`<div class="btn-row" style="margin-top:14px;"><button type="button" class="btn ghost" onclick="closeModal()">Đóng</button></div>`,'wide');
+    return;
+  }
   const users=state.settings.users.map(u=>`<option ${u===state.settings.currentUser?'selected':''}>${escapeHtml(u)}</option>`).join('');
   const body=`<div class="wizard-status">${steps.map((s,i)=>`<div class="st-item ${i===0?'done':(i===1?'cur':'')}"><div class="dot">${i+1}</div><div class="lbl">${s}</div></div>${i<steps.length-1?'<div class="ln"></div>':''}`).join('')}</div><div class="card" style="background:var(--danger-bg);border:none;margin-bottom:16px;"><div class="card-body" style="padding:12px 14px;font-size:12.8px;"><b style="color:var(--danger);">${escapeHtml(a.testName)} — Level ${a.level}</b><br>${escapeHtml(a.machineName)} · Lot ${escapeHtml(a.lotName)} · KQ ${a.value} (Mean ${a.mean} ± ${a.sd}) · Vi phạm ${escapeHtml(a.rule)}</div></div><form id="handlingForm" onsubmit="return submitHandling(event,'${a.id}')"><label class="field"><span class="fl-label">Nguyên nhân *</span><textarea id="h_cause" required placeholder="VD: Lot QC gần hết hạn, lỗi thao tác, trôi hiệu chuẩn máy…"></textarea></label><label class="field"><span class="fl-label">Hành động khắc phục *</span><textarea id="h_action" required placeholder="VD: Hiệu chuẩn lại máy, thay lot mới, lắc đều QC…"></textarea></label><div class="form-grid"><label class="field"><span class="fl-label">Kết quả chạy lại *</span><input type="number" step="any" id="h_rerun" required placeholder="Giá trị QC sau khi chạy lại"></label><label class="field"><span class="fl-label">Nhận xét</span><input type="text" id="h_comment" placeholder="Đạt / Không đạt"></label><label class="field"><span class="fl-label">Ngày giờ xử lý</span><input type="text" value="${new Date().toLocaleString('vi-VN')}" readonly></label></div><div class="form-grid"><label class="field"><span class="fl-label">Người thực hiện *</span><select id="h_performer" required>${users}</select></label><label class="field"><span class="fl-label">Người xem xét *</span><select id="h_reviewer" required>${users}</select></label></div><p style="font-size:11.5px;color:var(--text-muted);margin:2px 0 14px;">* Không thể đóng cảnh báo nếu chưa điền đầy đủ thông tin xử lý cần thiết.</p><div class="btn-row"><button type="submit" class="btn primary">✓ Hoàn tất & Đóng cảnh báo</button><button type="button" class="btn ghost" onclick="closeModal()">Để sau</button></div></form>`;
   showModal('Quy trình xử lý QC không đạt',body,'wide');
@@ -6762,8 +7028,8 @@ bootApp=function(){virologyEnsureState();_oldBootApp();};
 #view-tests .machine-catalog-table th:nth-child(3),#view-tests .machine-catalog-table td:nth-child(3){width:10%!important;text-align:center!important;}
 #view-tests .machine-catalog-table th:nth-child(4),#view-tests .machine-catalog-table td:nth-child(4){width:22%!important;text-align:left!important;}
 #view-tests .machine-catalog-table th:nth-child(5),#view-tests .machine-catalog-table td:nth-child(5){width:9%!important;text-align:center!important;}
-#view-tests .machine-catalog-table th:nth-child(6),#view-tests .machine-catalog-table td:nth-child(6){width:25%!important;text-align:left!important;}
-#view-tests .machine-catalog-table th:nth-child(7),#view-tests .machine-catalog-table td:nth-child(7){width:8%!important;text-align:center!important;}
+#view-tests .machine-catalog-table th:nth-child(6),#view-tests .machine-catalog-table td:nth-child(6){width:17%!important;text-align:left!important;}
+#view-tests .machine-catalog-table th:nth-child(7),#view-tests .machine-catalog-table td:nth-child(7){width:16%!important;text-align:center!important;}
 #view-tests .machine-catalog-table td:nth-child(6){white-space:normal!important;}
 #view-tests .machine-catalog-table td:nth-child(6) .tag{display:inline-block!important;vertical-align:middle!important;}
 </style>
@@ -7191,7 +7457,21 @@ const CHEMICAL_IFLASH_TESTS=[
   {name:'HCV',unit:'COI'},{name:'PCT',unit:'ng/mL'},{name:'HBeAg',unit:'COI'},{name:'CP_IgM',unit:'COI'},
   {name:'CA 19-9',unit:'U/mL'},{name:'CA 72-4',unit:'U/mL'},{name:'CYFRA 21-1',unit:'ng/mL'},{name:'NT-proBNP',unit:'pg/mL'}
 ];
-const CHEMICAL_DXI_TESTS=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','bHCG','PAPP-A + hCG (Double test)','Tg','Tg-Ab','UE3','AFP + hCG + uE3 (Triple test)'].map(name=>({name,unit:''}));
+const CHEMICAL_DXI_TESTS=['T3','FT4','TSH','HBsAg','HBsAb','Cortisol','hsTroponin I','CA 125','CA 15-3','PSA','AFP','AMH','CEA','bHCG','PAPP-A','Tg','Tg-Ab','UE3'].map(name=>({name,unit:''}));
+/* DxI 800: bỏ các xét nghiệm kết hợp (Double test, Triple test, AFP + hCG + uE3), chỉ giữ PAPP-A.
+   Chỉ lọc khi hiển thị — dữ liệu đã nhập trước đây vẫn được giữ nguyên trong hệ thống. */
+const CHEMICAL_DXI_LEGACY_PAPP=/double\s*test|^\s*PAPP[\s-]*A\s*\+/i;
+function chemicalDxiTidy(list){
+  const isTriple=n=>/triple\s*test/i.test(n)||/^\s*AFP\s*\+\s*h?cg\s*\+\s*u?e3\s*$/i.test(n);
+  const isPlain=n=>/^\s*PAPP[\s-]*A\s*$/i.test(n);
+  const hasPlain=list.some(t=>isPlain(t.name));let usedPapp=false;const out=[];
+  list.forEach(t=>{const n=String(t.name||'');
+    if(isTriple(n))return;
+    if(CHEMICAL_DXI_LEGACY_PAPP.test(n)){if(hasPlain||usedPapp)return;usedPapp=true;out.push(Object.assign({},t,{name:'PAPP-A'}));return;}
+    out.push(t);});
+  return out;
+}
+
 const CHEMICAL_ALLERGENS=Array.from({length:108},(_,i)=>({name:`Dị nguyên ${String(i+1).padStart(3,'0')}`,code:`A${String(i+1).padStart(3,'0')}`}));
 function chemicalEnsureState(){
   if(!state.chemicalMD||!Array.isArray(state.chemicalMD))state.chemicalMD=[];
@@ -7205,6 +7485,8 @@ function chemicalDate(year,month,day){return `${year}-${pad(month)}-${pad(day)}`
 function chemicalGet(machine,testId,date,create=false){
   chemicalEnsureState();
   let r=state.chemicalMD.find(x=>x.machine===machine&&x.testId===testId&&x.date===date);
+  /* Dữ liệu cũ của PAPP-A được nhập dưới tên "PAPP-A + hCG (Double test)" vẫn được đọc/sửa đúng ở mục PAPP-A. */
+  if(!r&&machine==='dxi'&&testId==='PAPP-A')r=state.chemicalMD.find(x=>x.machine==='dxi'&&x.date===date&&CHEMICAL_DXI_LEGACY_PAPP.test(String(x.testId||'')));
   if(!r&&create){
     r={id:uid('CH'),machine,testId,date,stockInput:'',receive:'',execute:'',onMachineInput:'',lot:'',lotDate:'',manufacturer:(machine==='iflash'||machine==='dxi')?'YHLO':'',reportBy:'',aux:{trigger:'',preTrigger:'',wf10x:'',wf1x:'',rvs:''},antiCcd:'',note:'',lotHistory:[]};
     state.chemicalMD.push(r);
@@ -7366,8 +7648,8 @@ function chemicalCatalogTests(machine){
   const re=machine==='iflash'?/iflash\s*9000/i:/dxi\s*800/i;
   const m=state.machines.find(x=>re.test(String(x?.name||''))||re.test(String(x?.model||'')));
   const dynamic=m?state.tests.filter(t=>t&&t.machineId===m.id).map(t=>({name:String(t.name||'').trim(),unit:String(t.unit||'').trim(),sourceTestId:t.id})).filter(t=>t.name):[];
-  if(dynamic.length)return dynamic;
-  return machine==='iflash'?CHEMICAL_IFLASH_TESTS.slice():CHEMICAL_DXI_TESTS.slice();
+  if(dynamic.length)return machine==='iflash'?dynamic:chemicalDxiTidy(dynamic);
+  return machine==='iflash'?CHEMICAL_IFLASH_TESTS.slice():chemicalDxiTidy(CHEMICAL_DXI_TESTS.slice());
 }
 function renderChemicalMD(){
   const el=document.getElementById('view-chemical-md');if(!el)return;chemicalEnsureState();
@@ -12041,6 +12323,55 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
   }
   window.smartAddedSetYM=function(kind,year,month){ensureAddedState();state.chemicalMDView[kind]={year:Number(year),month:Number(month)};if(kind==='allergen53')renderChemicalAllergen53();else if(kind==='helminth')renderChemicalHelminth();else renderChemicalRapidWater();};
 
+  /* ---- Test nhanh & Test nước: LOT / DATE theo từng xét nghiệm, thêm được nhiều LOT/DATE như iFlash 9000 ---- */
+  function rwMetaRecord(year,month,create){
+    chemicalEnsureState();
+    const dt=date(year,month,1);
+    let r=state.chemicalMD.find(x=>x.machine==='rapidwater_month_meta'&&x.testId==='shared'&&x.date===dt);
+    if(!r&&create){
+      r={id:uid('CHM'),machine:'rapidwater_month_meta',testId:'shared',date:dt,stockInput:'',receive:'',execute:'',onMachineInput:'',lot:'',lotDate:'',manufacturer:'',reportBy:'',aux:{},antiCcd:'',note:'',lotHistory:[],byTest:{}};
+      state.chemicalMD.push(r);
+    }
+    if(r&&!r.byTest)r.byTest={};
+    return r;
+  }
+  function rwMetaGet(testName,year,month){
+    const r=rwMetaRecord(year,month,false);
+    return (r&&r.byTest&&r.byTest[testName])||{lot:'',lotDate:'',lotHistory:[]};
+  }
+  function rwMetaTarget(el){
+    return {name:decodeURIComponent(el.getAttribute('data-test')||''),year:Number(el.getAttribute('data-y')),month:Number(el.getAttribute('data-m'))};
+  }
+  window.rwMetaSet=function(el,key){
+    const t=rwMetaTarget(el);if(!t.name)return;
+    const r=rwMetaRecord(t.year,t.month,true);
+    const m=r.byTest[t.name]=r.byTest[t.name]||{lot:'',lotDate:'',lotHistory:[]};
+    if(!Array.isArray(m.lotHistory))m.lotHistory=[];
+    m[key]=el.value;queueSave();
+  };
+  window.rwMetaAdd=function(el){
+    const t=rwMetaTarget(el);if(!t.name)return;
+    const r=rwMetaRecord(t.year,t.month,true);
+    const m=r.byTest[t.name]=r.byTest[t.name]||{lot:'',lotDate:'',lotHistory:[]};
+    if(!Array.isArray(m.lotHistory))m.lotHistory=[];
+    if(m.lot||m.lotDate)m.lotHistory.push({lot:m.lot||'',date:m.lotDate||'',manufacturer:''});
+    m.lot='';m.lotDate='';queueSave();renderChemicalRapidWater();
+  };
+  function rwMetaBlock(tests,ym){
+    let cards='';
+    tests.forEach(t=>{
+      const m=rwMetaGet(t.name,ym.year,ym.month),attr=' data-test="'+esc(encodeURIComponent(t.name))+'" data-y="'+ym.year+'" data-m="'+ym.month+'"';
+      cards+='<div class="chem-test-meta-card"><div class="chem-test-meta-title"><b>'+esc(t.name)+'</b>'+(t.unit?'<small>'+esc(t.unit)+'</small>':'')+'</div>'
+        +'<label>LOT<input class="chem-input chem-meta-input"'+attr+' value="'+esc(m.lot||'')+'" placeholder="Thêm LOT" onchange="rwMetaSet(this,\'lot\')"></label>'
+        +'<button class="chem-mini-btn" type="button"'+attr+' onclick="rwMetaAdd(this)">+ Thêm LOT mới</button>'
+        +'<label>DATE<input class="chem-input chem-meta-input" type="date"'+attr+' value="'+esc(m.lotDate||'')+'" onchange="rwMetaSet(this,\'lotDate\')"></label>'
+        +'<button class="chem-mini-btn" type="button"'+attr+' onclick="rwMetaAdd(this)">+ Thêm DATE mới</button>'
+        +((m.lotHistory&&m.lotHistory.length)?'<div class="chem-test-meta-history">'+chemicalLotHistoryText(m)+'</div>':'')
+        +'</div>';
+    });
+    return '<div class="card chem-month-meta chem-test-meta-monthly"><div class="card-head"><div><h3>LOT / DATE — theo từng xét nghiệm</h3><span class="hint">Đặt ở cuối tháng; mỗi xét nghiệm có LOT, DATE riêng và có thể thêm nhiều LOT/DATE, dùng chung cho toàn bộ tháng '+pad(ym.month)+'/'+ym.year+'</span></div><span class="tag">'+pad(ym.month)+'/'+ym.year+'</span></div><div class="card-body"><div class="chem-test-meta-grid">'+cards+'</div></div></div>';
+  }
+
   function renderMachineLike(kind,title,tests,description,danger,low){
     const el=document.getElementById('view-chemical-'+kind);if(!el)return;ensureAddedState();const ym=state.chemicalMDView[kind],days=chemicalDaysInMonth(ym.year,ym.month);
     let heads='',rows='';
@@ -12061,7 +12392,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
           '</div></td>';
       });rows+='</tr>';
     }
-    el.innerHTML='<div class="card"><div class="card-head"><div><h3>'+title+'</h3><span class="hint">'+description+'</span></div><span class="tag">'+tests.length+' xét nghiệm</span></div><div class="card-body">'+ymControls(kind)+'<div class="chem-legend"><span class="pill pass"><span class="dot"></span> OK</span><span class="pill warning"><span class="dot"></span> Sắp hết</span><span class="pill danger"><span class="dot"></span> Nguy hiểm</span></div></div></div><div class="card chem-table-card"><div class="card-head"><div><h3>Sổ theo dõi hóa chất — '+title+'</h3><span class="hint">Nhận, Đầu ngày, Cuối ngày, Sử dụng và Cảnh báo được tính độc lập theo từng xét nghiệm và từng ngày. Dữ liệu được lưu vào state SMART VSMD.</span></div></div><div class="chem-added-table-wrap"><table class="chem-added-machine-table"><thead><tr><th class="chem-added-day">Ngày</th>'+heads+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    el.innerHTML='<div class="card"><div class="card-head"><div><h3>'+title+'</h3><span class="hint">'+description+'</span></div><span class="tag">'+tests.length+' xét nghiệm</span></div><div class="card-body">'+ymControls(kind)+'<div class="chem-legend"><span class="pill pass"><span class="dot"></span> OK</span><span class="pill warning"><span class="dot"></span> Sắp hết</span><span class="pill danger"><span class="dot"></span> Nguy hiểm</span></div></div></div><div class="card chem-table-card"><div class="card-head"><div><h3>Sổ theo dõi hóa chất — '+title+'</h3><span class="hint">Nhận, Đầu ngày, Cuối ngày, Sử dụng và Cảnh báo được tính độc lập theo từng xét nghiệm và từng ngày. Dữ liệu được lưu vào state SMART VSMD.</span></div></div><div class="chem-added-table-wrap"><table class="chem-added-machine-table"><thead><tr><th class="chem-added-day">Ngày</th>'+heads+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>'+(kind==='rapidwater'?rwMetaBlock(tests,ym):'');
   }
 
   function allergen53Stock(day,y,m){let stock=0;for(let d=1;d<=day;d++){const r=chemicalGet('allergen53','shared',date(y,m,d),false)||{};stock=Math.max(0,stock+(has(r.receive)?num(r.receive):0)-(has(r.execute)?num(r.execute):0));}return stock;}
@@ -16295,10 +16626,10 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   }
 
   /* ---------- HTML cho In / PDF ---------- */
-  function buildFormHTML(F){
-    const CAM="Cambria,'Times New Roman',Georgia,serif",TNR="'Times New Roman',Times,serif",BD='border:0.5pt solid #000;';
+  function buildFormHTML(F,forPrint){
+    const CAM="Cambria,'Times New Roman',Georgia,serif",TNR="'Times New Roman',Times,serif",BD=forPrint?'border:1.5pt solid #000 !important;':'border:0.5pt solid #000;',TH=forPrint?'color:#000!important;text-transform:none!important;letter-spacing:0!important;position:static!important;':'';
     const td=(t,x)=>'<td style="'+BD+'padding:0 1.9mm;text-align:center;vertical-align:middle;line-height:1.08;font-family:'+CAM+';font-size:14pt;'+(x||'')+'">'+esc(t)+'</td>';
-    const th=(t,x,a)=>'<th'+(a||'')+' style="'+BD+'padding:0 1.9mm;text-align:center;vertical-align:middle;line-height:1.1;font-family:'+TNR+';font-size:14pt;font-weight:700;background:#fff;'+(x||'')+'">'+esc(t)+'</th>';
+    const th=(t,x,a)=>'<th'+(a||'')+' style="'+BD+'padding:0 1.9mm;text-align:center;vertical-align:middle;line-height:1.1;font-family:'+TNR+';font-size:14pt;font-weight:700;background:#fff;'+TH+(x||'')+'">'+esc(t)+'</th>';
     const line=(t,x)=>'<div style="text-align:center;font-family:'+TNR+';line-height:1.15;'+x+'">'+t+'</div>';
     const A=F.days.map(d=>{const g=d.we?'background:#BFBFBF;font-weight:700;':'';
       return '<tr>'+td(d.label,g)+td(d.dateText,g)+td(d.dutyShort,g)+td(d.mdShort.join(', '),g)+td(d.vsShort.join(', '),g)+'</tr>';}).join('');
@@ -16381,52 +16712,129 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   }
 
   /* ---------- Excel ---------- */
+  /* ====================================================================================================
+     XUẤT EXCEL: tạo 2 file theo đúng form 2 file mẫu của khoa (giữ nguyên định dạng, chỉ đổ dữ liệu):
+       1) "Excel Lịch trực"  – mẫu LỊCH TRỰC (Bảng trực chuyên môn cơ sở Quy Nhơn): Ngày | Thứ | cột Vi sinh = Trực
+       2) "Excel VS-MD"      – mẫu VI SINH - MIỄN DỊCH: Ngày thường | Thứ 7, CN theo từng nhân viên
+     Mẫu (.xlsx) được nhúng sẵn bên dưới; tháng/năm lấy theo tháng đang chọn (T10 → tháng 10, T11 → tháng 11 ...).
+     ==================================================================================================== */
+  const XL_TPL_LICH="UEsDBBQAAAAIADYIY11Gx01IlQAAAM0AAAAQAAAAZG9jUHJvcHMvYXBwLnhtbE3PTQvCMAwG4L9SdreZih6kDkQ9ip68zy51hbYpbYT67+0EP255ecgboi6JIia2mEXxLuRtMzLHDUDWI/o+y8qhiqHke64x3YGMsRoPpB8eA8OibdeAhTEMOMzit7Dp1C5GZ3XPlkJ3sjpRJsPiWDQ6sScfq9wcChDneiU+ixNLOZcrBf+LU8sVU57mym/8ZAW/B7oXUEsDBBQAAAAIADYIY11XHUu9TAEAAPUCAAARAAAAZG9jUHJvcHMvY29yZS54bWzFkstuwjAQRX8FZW9sJxUPK0SiVKVIpUUifYid5QxgNXEs2zT075u4JBS1m666nDt3zlyNJhaaidLAypQajJNge8ciV5YJPQn2zmmGsRV7KLjt1w5VN7elKbirS7PDmos3vgMcEjLABTieccdxA0S6IwZJnAkmDHBXmhM+Ex1eH0zuYZnAkEMByllM+xQHyfNjb76Y9h7md4tpjM8QD8y52h3q5X8igkJPa49qxxuWA1PYLzhkHc+rv0J9Bwcn59HKzlVVVb+KvK++CcWvy/u1Px+SyjquBNRTVjL3oWEStJtfotlNehskzQiiIYpISkJGRywKN03Yi3znwEWZya3858ThAFGKSJQSyghhdPwtcRswies3y7l1y5Nw/ZGsZjH+qTZGA+/SylIlxDu6soWsjFTNHerdV4gMERmlZMzIkIV00zFbkxcuPzz5BFBLAwQUAAAACAA2CGNd9rDxgh0CAADRCAAAEwAAAHhsL3RoZW1lL3RoZW1lMS54bWzdlcGO2jAQhu99Csv3rglZECDCqipFPazUA23vgzNJvNhOZHt3y9vXOAESkoqqqlRtc8Ez/ub3jGdIlg8/lCQvaKwodUKjuxElqHmZCp0n9NvXzfsZJdaBTkGWGhN6QEsfVu+WsHAFKiQ+XNsFJLRwrlowZrl3g70rK9R+LyuNAudNk7PUwKuXVZKNR6MpUyA0beLN78SXWSY4rkv+rFC7WsSgBOdTt4WoLCUalM/xSwDp6pTkJ4nHCHt0cGm2PGRes49iZ7AVkO6j4481+e6jNOQFZEJH4aFstWRnQLo+l4Wn4Rog3Y9v6Y1rvfEtvQAA576U/tnRDOJR3LAtqF4O5BBP59DlW/pxj4c4xiv9+MLf9/iZp6/07y/8pMfz+Zyf76QF1cvpAD+OIuzwASqk0PvBG8cTfUayUn4exCeTCGa7Br9QrDU+dbx2nWFqzZGCp9JsPBCa62dUE3eoMAPuuQ9GgKSkEo4XG1BCHnyKlPACjEXnm3k8GhYIrZg1PsH3Z7IFbW9HcvtnkewqcSX0G63ikjhrNyq0TbUNIeXWHSQ+2lCkLaVIN94ZjICdx6Iq/JIGxfNObXWC/rkC65clddcirwmdxpPj1UHl3zS+t36pqjShVueUgMz954A7E4a5MtatwRZ1CuGkukNKODTN+0m/TWV2fTmYZcjdLzwX0+/VIoO7fx9mQ5nt8s3/Ob/XhbHO35b1Puwnz+onUEsDBBQAAAAIADYIY12l8JjXfygAANJ4AQAYAAAAeGwvd29ya3NoZWV0cy9zaGVldDEueG1spZ1rc9rI3m+/CpWpmjqnzjMJ3VLfwiRVasAGzEVI3N95EiZ2jWP7sZ2ZPfvTH4ERtnF7GeL9Yu+YRQvx16/Fapru/fs/Vzd/3Z4tl3eV/3y/uLz99O7s7u7644cPt1/Olt9Pb99fXS8vC/Ln1c3307viz5tvH26vb5anX9eNvl98kNWq/vD99Pzy3eff14+lN5U/zy/ulje9q6/LT++qxeNXP+4uzi+XBbn98f376c2/fnlx9c+nd+Jd+UB2/u3sbvXAh8+/X59+W+bLu/H1+kh3o6u0eGB1oIJ92LzE59+/nn9fXt6eX11WbpZ/fnqXiI9+aOPVc9ZPmZwv/7l99O/K7dnVP0fFu/hxcXq7Otj6geOb86/d4sxu78+leCS7+qd+ddEq3uDy5uHRxfLm6v6vm9WJjq66yz/v1ke5O/0jX14sv9wtv26fPbh/u/m/3/+4urhv9nX55+mPi7vV6xWHv7pZP/h3cV6f3l2uSntRHOnqenXU+vLiYvV23lW+rJ7YLg6r43eV/15dfc+/nF4UhRDV6qO/++vmu4+uStY9/bco/GT9Imu6utZ/XF39tXpoddzVpbldn/yqjNenl8XBN2fxrnJaPPr38uFsHv6+b1q5/d9N4R+uy+rAj/9dXoCjdXqKy/nH6e2yeP/T8693Z5/e2W1dHj323jlddZFRW1hcktZykw/1fgX+W1yO8qHiTDbx6i7/Xl5kq1yto1KU73b935V/7g8dvTemqOqP27ur75tXW12wu39XRXXRu8r388v1Q99P/7OJ4pPWUfRy63jTWm5ay2ettX79taNN62intXxv7eut403reKd1/F6K11urTWv1rLVSr7fWm9Z6p7V5Dy+tNo3NprF59rade7213bS2P1U0t2ntdlorvNzbsFTLtFSfvfG92m/Tths3je99277Mm5DPXn+fiy7KxIno2WXf6/XLzInnodsn8KJMnfi52Ikyd0I/63Bin/dfRk+YZ6+/1/Urwyfsz51/GT/hDsp+2V6W+ZPVn3r/ssyfFM/yv8/1k9v73fMb3j69T5b5k9FB+dFl+zJ/Mj4ov9v2Zf6ketb/6Ppv25f5k/pZ+73qV+ZPmmf1p/yYsn2ZP2mf9X96/W37Mn9yN392r/ZRmb+o+lP9PyrzF4lnr79P/qMyf9r+VHu9ff9qfQE+3EvDWloap3enn3+/ufqncm9rj/zj/rD3VrNm9w9sLaV4oeJFbKFXX1aNk80DRVgLen65lsO7mwKfFy9299n/+ouxTtcq88po9U9Trf3+4a44mxX+8GVzlPaTo6x0e4tONsg9R92XUe9l1H8ZDV5G6cto+DLKXkb5PVrLa7By9U3l+seV1q+/SFGtJZXZr78Ip2qrB9asXamv/ukKWOkfr55WPJhUJu11qW1tVOknvUC9k6PtdXx2YskxsBawNrAOsBNgXWA9YH1gA2ApsCGwDFgObARsDGwCbApsBmwObPEy8wkwD6wOrAGsCQxy7SHXHnLtIdcecu0h1x5y7SHXHnLtIdc+nOsPxSfA9mNAbj4GCrv+iY8BubmbCfocKO5I/dbD3alfSVuD4vb2W6WRVLr3j+rauDKaVobj+fauF/q8KF9OBj4wShYFPjGA9YD1gQ2ApcCGwDJgObARsDGwCbApsFnJXvr4Ly6hkbX1p5WpfalcrP6lotp1cc1XOuCkqFW+XhV/rT/RYlG7PKtcnxWtVLX2JfTBVYezSRoEmwSPJHweAmsBawPrADsB1gXWA9YHNgCWAhsCy4DlwEbAxsAmwKbAZsDmwBYSPg+BeWB1YA1gTWCQaw+59pBrD7n2kGsPufaQaw+59pBrD7n24Vw/+TyM7j8Pzfu9Pw3N9tMw2txq1POXrgNrAGsCOwJ2DKwFrA2sA+wEWBdYD1gf2ABYCmwILAOWAxsBGwObAJsCm5VMP2dzYAtgySa8q+9BnjEPrA6sAawJ7AjYMbAWsDawDrATYF1gPWB9YANgKbAhsAxYDmwEbAxsAmwKbAZsDmzxMvOQaw+59pBrD7n2kGsPufaQaw+59pBrD7n2kGsPufaQaw+59pBrH871k4/lOPBt5dPPYVF9+CCOX/mSbT0sjeXqS7ZRth6QVGv1Sr01nhdjkGrxeKW3GoWu/lH/9ZdY6FolXz2tQOsxar91/2g/+CVbHPr278m7UQe9G/XKaGvUWn0/GK3ejahW+qthlK31KsUbUU/P78k56PtziN/vcQZ680jIqUoW+LKzDqwBrAnsCNgxsBawNrAOsBNgXWA9YH1ggw0T1YD0ABsCy4DlwEbAxsAmwKbAZiUTAekBtgizJ13BbLqj/KmpELN5AflC9+x/K3qkjGv/Bm4WvmwcvdS3z9Zf9Eeh6ZN62RhmYaRUtS+V2/U9zoUO0igPEhp8lCwgjEclM/gd0P3Xe7I2rjSKW2YkauvbaFzcqwLncgzn0gLWBtYBdgKsC6wHrA9sACwFNgSWAcufXqOn/RfYGNgE2BTYrGT2pYmvbh6IxBze3gJYkkB2E/9az2ltvrusdFefpsHel9Tp5albJdSvkk3HCn8nCawFrA2sA+wEWBdYD1gf2ABYCmwILAOWAxsBGwObAJsCmwGbA1sY+E4SmAdWB9YA1gQGufaQaw+59pBrD7n2kGsPufaQaw+59pBrH871Ez+xG1V3739CT+zmXhPwSQ+svmHypTHU6s4oTe2q8tfZ1WlILF47wD520nztIMftZFDxSWggdvRa28bpamZKSl37t3J5dr42FVP7HhKT1w/126gVaNh6reFkPRKNVmewfn1RuwxNfL5ymNUv3T/eXp9+WX56d32zvF3e/L1897m/+RA7rwQO2XntzPrfKnfrA0S1y2+VtYZWTe06cKiT1w91dXo+av3WS0a/Za3QL1O6rx0iHf123GuFDKG3x6tvZhnPV/OPocvUf+0Y81Z99FvaqodyNnitcSuv1wPt0n1eNNBu+Fq7fJOpUJKy1xqfnN13y++VP9aBdLXLs8Bx8lcvWLhYo1ev1tl5oNn4Le95skfUT0ahSzT9qX63HunI2qbHfKkU/wkce1YeW7z8S7DVCKoV+iXE/LXGk/PK7Xnwyi3sK+NVv73u6zn5oqwueFNMkleD/+PfzU3tbn0DsVaFp/fLDyL50jmd5P2ToIO/1nD968PYrG5h0f+LQ4doHHAIXfk/f539qAhxf2tcP/h/Qwdt/uQ9Idl8aIXtH1gLWBtYB9gJsC6wHrA+sAGwFNgQWAYsBzYCNgY2ATYFNgM2B7awYP/APLA6sAawJjDItYdce8i1h1x7yLWHXHvItYdce8i1h1z7cK6f2L+7t//VwoC93F/IaCv/bvPIwy+s//4sfv/w9+NTKJ+jHj1HPX1O/flxHjwfWBPYEbBjYC1gbWCdkgW+dDmBdl1gPWB9YANgKbAhsAxYXrLQF4HAxsAmwKbAZnCec2ALYElCcJvw0A20TrBBkMKdbNPtQh/kBFsE2wQ7BE8Idgn2CPYJDgimBIcEM4I5wRHBMcEJwSnBGcE5wQVAnxD0BOsEGwSbBCnxnhLvKfGeEu8p8Z4S7ynxnhLvKfGeEu8p8b5MfFR92QRW86I/rQKrxusXEI8+5+WOC5RPeiIDekcGtk8K2QDB5vYcAj/gPyJ4TLBFsE2ws4VRaAla9clIeWcRGhy2R7BPhx0QTAkOCWZbGJKD7SUL2QHBMcEJwSnBGWVoTrVdEEwSKlGyzX4U+jyvI20gbVL1k23uw6qAtIW0jbSD9ARpF2kPaR/pAGmKdIg0Q5ojHSEdI50gnSKdIZ0jXRD1CVKPtI60gbSJFPuCx77gsS947Ase+4LHvuCxL3jsCx77gse+4LEv+G1fQJ8Qb/GJzUPRY1WIdn2ifJJ+9CSz6xPlk0zIJwA2CR4RPCbYItgm2AkU5ZFPQMsuwR7BPsEBwZTgkGBGMN9CG/IJgGOCE4JTgjM62znBBcEkQfqQfRf0CaINpBj7ZJv7F3xCoE8I9AmBPiHQJwT6hECfEOgTAn1CoE8I9AmBPiHQJwT6hECfEOgTAn1CoE8I9AmBPiHQJwT6hECfEOgTAn1CoE8I9AmBPiHQJwT6hECfEOgTAn1CoE8I9AmBPiHQJ8QePiHf4hPy2U3t78/xrk/IJz4RmDQP/eigHjj2I8OQZBiSDEOSYUgyDEmGIckwNjCuhgxDkmFIMgxJhiHJMCQZhiTDkGQYkgxDkmFIMgxJhiHJMCQZhiTDkGQYEg1DomFINAyJhiHRMCQahkTDkGgYEg1DomFINAyJhiHRMCQahkTDkGgYEg1DomFINAyJhiHRMCQahkTDkGgYEg1DomFINAyJhiHRMCQahkTDkGgYEg1DomFINAyJhiHRMCQahkTDkGgYEg1DomFINAy5h2FEhxpGLB4MY7P+PZYv/9LBl096MgMid7+xiJ4sZtnxifJlopBPlDD0iwg67DG1bBFsE+xsYfAbC2jZJdgj2KcKDQimBIcEM6ptvm2pQz4BcExwQnBKcBaI6iOfgPe5IJgkdFmSbfbj4EYPSBtIm1T9pMy9i4I6AbBFsE2wQ/CEYJdgj2Cf4IBgSnBIMCOYExwRHBOcEJwSnBGcE1wA9AlBT7BOsEGwSZAS7ynxnhLvKfGeEu8p8Z4S7ynxnhLvKfGeEu8f7vTws0kRv0UV4mf3yWe/g/DlkyTMgNS3R5IhVQDYJHhE8Jhgi2CbYGcLQ1shUMsuwR7BPsEBwZTgkGBGMN/CoCrEpAoxqUJMqhCTKsSkCgAXBJME6Tb7qhpUBaINpBj7pMz9C6oQkyrEpAoxqUJMqhCTKsSkCjGpQkyqEJMqxKQKMalCTKoQkyrEpAoxqUJMqhCTKsSkCjGpQkyqEJMqxKQKMalCTKoQkyrEpAoxqUJMqhCTKsSkCjGpQkyqEJMqxKQKMalCTKoQ76EKm/2YpNl/A5gnUxcqYAtm1xZUwBbiXVtQZAuKbEGRLSiyBUW2oMgWFNmCIltQZAuKbEGRLSiyBUW2oMgWFNmCIltQZAuKbEGRLSiyBUW2oMgWFNmCQltQaAsKbUGhLSi0BYW2oHCiQuFEhcKJCoUTFQonKhROVCicqFA4UaFwokLhRIXCiQqFExUKJyoUTlQonKhQOFGhcKJC4USFwokKhRMVCicqFE5UKJyoUDhRoXCiQuFEhcKJCoUTFQonKhROVCicqFA4UaFwokLhRIXCiQqFExUKJyrUHhMV+i0/hdABn7C7PqH3WLdZPik8UaFpogLgER32OHD2j3xC00SFJp/QNFEBZ9ul1+wR7NNhBwRTgkOCGdU237YM+oQmn9DkE5p8QpNPaPIJTRMVGicqiG6z/8JEhcaJCo0TFRonKjT6hEaf0OgTGn1Co09o9AmNPqHRJzT6hEaf0OgTGn1Co09o9AmNPqHRJzT6hEaf0OgTGn1Co09o9AmNPqHRJzT6hEaf0OgTGn1Co09o9AmNPqHRJzT6hEaf0OgTGn1Co0/oPXzCvGU2wwR8wu36hNln6efmSUqEfMKQTxj64YMhnzDkE4Z8wtAPHwz5hKEfPhjyCUM+YcgnDPmEIZ8w5BOGfMKQTxjyCUM+YcgnDPmEIZ8w5BMGfcKgT5SxlkGfINpA2qTqJ2XuX5jNMDSbYWg2w9BshqHZDEOzGYZmMwzNZhiazTA0m2FoNsPQbIah2QxDsxmGZjMMzWYYms0wNJthaDbD0GyGodkMQ7MZhmYzDM1mGJrNMDSbYWg2w9BshqHZDEOzGYZmMwzNZhiazTA0m2FoNsPQbIah2Qyzx2yGPVQV1KOvHmxgVaeo7rqC3WdZp6VFF5YWXVhadGFp0YWlRReWFl1YWnRhadGFpUUXlhZdWFp0YWnRhaVFF5YWXVhadGFp0YWlRReWFl1YWnRhadGFpUUXlhZdWFp0YXHRhcVFFxYXXVhcdGFx0YXFRRf2xf+z7OSYYItgm2CH4AnBLsEewT7BAcGU4JBgRjAnOCI4JjghOCU4IzgnuADoE4KeYJ1gg2CTICXeU+I9Jd5T4j0l3lPiPSXeU+I9Jd5T4j0l3m/v9CoGV3BvcQUXWLEpdreX3D7rwCWbjuzBkT04sgdH9uDIHhzZgyN7cGQPjuzBkT04sgdH9uDIHhzZgyN7cGQPjuzBkT04sgdH9uDIHhzZgyN7cGgPDu3BoT04tAeH9uDQHhzZgyN7cGQPjuzBkT04sgdH9uDIHhzZgyN7cGQPjuzBkT04sgdH9uDIHhzZgyN7cGQPjuzBkT04sgdH9uDIHhzZgyN7cGQPjuzBkT04sgdH9uDIHhzZgyN7cGQPjuzBkT241+1BVt8wKSGrgdWYYndDSlndYzlm+aTgrxy2rxOaldjC0KwEHfaYWrYItgl2tjA0K0EtuwR7BPtUoQHBlOCQYEa1zbctQ7MSBMcEJwSnBGeBrD64Ar3PBcEkocuSbLMf/pUD0gbSJlU/KXMfnpUg2CLYJtgheEKwS7BHsE9wQDAlOCSYEcwJjgiOCU4ITgnOCM4JLgD6hKAnWCfYINgkSIn3lHhPifeUeE+J95R4T4n3lHhPifeUeE+J9w93epiVkOItriACP2AQu5tNls/C9ZjbQ4VWWBBsEjwieEywRbBNsLOFoRUW1LJLsEewT3BAMCU4JJgRzLcw6AqCXEGQKwhyBUGuIMgVAC4IJgnSbfbDKyyQNpBi7JMy9y+4giBXEOQKglxBkCsIcgVBriDIFQS5giBXEOQKglxBkCsIcgVBriDIFQS5giBXEOQKglxBkCsIcgVBriDIFQS5giBXEOQKglxBkCsIcgVBriDIFQS5giBXEOQKglxBkCuIPVxBvsUVZOh7hd2NJMtn4WrMwKEeuYIkV5DkCpJcQZIrSHIFSa4gyRUkuYIkV5DkCpJcQZIrSHIFSa4gyRUkuYIkV5DkCpJcQZIrSHIFSa4g0RUkuoJEV5DoChJdQaIrSHIFSa4gyRUkuYIkV5DkCpJcQZIrSHIFSa4gyRUkuYIkV5DkCpJcQZIrSHIFSa4gyRUkuYIkV5DkCpJcQZIrSHIFSa4gyRUkuYIkV5DkCpJcQZIrSHIFSa4gyRUkuYIkV5B7uMJbdoSUoR0hxe6WkDLaY6WlpC0hJW0JSfCIDnssaUtIgm0ZkSvQlpB0tl16zR7BPh12QDAlOCSYUW1zSVtCEhwTnBCcEpzRJZvT+1xI3BIS6Tb7L8xB4JaQSJsSt4SUtCUkwRbBNsEOwROCXYI9gn2CA4IpwSHBjGBOcERwTHBCcEpwRnBOcCFpS0iCnmCdYINgkyAl3lPiPSXeU+I9Jd5T4j0l3lPiPSXeU+I9Jd4/3OnJFd6yJaSMQ66wuyekjPdYRVk+KbiKcvs6QVeI6fcKMblCTK4QkyvE9HuFmFwhpt8rxOQKMblCTK4QkyvE5AoxuUJMrkB7QhIcE5wQnBKcSdoTkt7ngmCSIN1mP7yKEmkDaZOqn5S5f8EVaE9Igm2CHYInBLsEewT7BAcEU4JDghnBnOCI4JjghOCU4IzgnOBC0p6QBD3BOsEGwSZBSrynxHtKvKfEe0q8p8R7SrynxHtKvKfEe0q8f7jTkyuoN2zgJFVoZcTujpDbZ9EqysChHrkCwCbBI4LHBFsE2wQ7JQyug6CWXYI9gn2CA4IpwSHBjGC+haF1EATHBCcEpwRndLZzgguCSYL0IfvBdRBIG0gx9sk29+EdnJC2kLaRdpCeIO0i7SHtIx0gTZEOkWZIc6QjpGOkE6RTpDOkc6QLiTtCIvVI60gbSJtIsS947Ase+4LHvuCxL3jsCx77gse+4LEveOwLHvuCf/g4gB2c5Ft2hJQ6JBS7W0Jun3XYUsvAwR8phibF0KQYmhRDk2JoUgxNiqFJMTQphibF0KQYmhRDk2JoUgxNiqFJMTQphibF0KQYmhRDk2JoUgxNiqFRMTQqhkbF0KgYGhVDo2LgJpFIW0jbSDtIT5B2kfaQ9pEOkKZIh0gzpDnSEdIx0gnSKdIZ0jnShcRNIpF6pHWkDaRNpNgXPPYFj33BY1/w2Bc89gWPfcFjX/DYFzz2BY99wT98HJBivGWTSPl8p7pCMXZ3iZRmn/WYhn4LQbtEStolkg57TC1bBNsEO5J2iaSWXYI9gn2q0IBgSnBIMKPa5pJ2iSQ4JjghOCU4k7RLJL3PhcRdIumyJNvsv/BbCIO/hTD4WwjcJVLSLpEEWwTbBDsETwh2CfYI9gkOCKYEhwQzgjnBEcExwQnBKcEZwTnBhaRdIgl6gnWCDYJNgpR4T4n3lHhPifeUeE+J95R4T4n3lHhPifeUeP9wp6f5jXKXSPle/Ywt2IAtyN19Istn8YpMS6ssLK2ysLTKwtIqC0urLCytsrD0y0lLqywsrbKwtMrC0ioLS6ssLK2ysLTKwtIqC0urLCzZgiVbsGQLlmzBki1YsgVLqywsrrKwuMrC4ioLi6ssLK6ysLjKwpItWLIFS7ZgyRYs2YIlW7BkC5ZswZItWLIFS7ZgyRYs2YIlW7BkC5ZswZItWLIFS7ZgyRYs2YIlW7BkC5ZswZItWLIFS7ZgyRYs2YIlW7BkC5ZswZItWLIFS7ZgyRYs2YLdwxbc4bag1IMtuJAt7O4UWT6L12Q6sgVHtuDIFhzZgiNbcGQLjmzBkS04sgVHtuDIFhzZgiNbcGQLjmzBkS04sgVHtuDIFhzZgiNbcGQLjmzBoS04tAWHtuDQFhzagkNbKNvqoC4QbSFtI+0gPUHaRdpD2kc6QJoiHSLNkOZIR0jHSCdIp0hnSOdIF0R9gtQjrSNtIG0ixb7gsS947Ase+4LHvuCxL3jsCx77gse+4LEveOwL/qEvmJeVIqq+SSmiakgpdrePjKp7LN2MaPvIiLaPJHhEhz2OaPtIgu0I9iLsRLR9JJ1tl16zR7BPhx0QTAkOCWZU2zyi7SMJjglOCE4JzuiSzel9LiLcPhLpNvvh6QqkDaTNCLePLGlYKZC2kLaRdpCeIO0i7SHtIx0gTZEOkWZIc6QjpGOkE6RTpDOkc6QLoj5B6pHWkTaQNpFiX/DYFzz2BY99wWNf8NgXPPYFj33BY1/w2Bc89gX/0BdIKd6yx2QkQkKxu8dkJPZY31k+Kbi+s4RhoRDw+4fAGT4SCkFCIUgoAHa2MCgU0LJLsEewTxUaEEwJDglmVNs8oj0mCY4JTghOCc4i2mOS3ueCYJIg3WY/vL4TaQNpk6qflLkPz2gQbBFsE+wQPCHYJdgj2Cc4IJgSHBLMCOYERwTHBCcEpwRnBOcEFxHtMUnQE6wTbBBsEqTEe0q8p8R7SrynxHtKvKfEe0q8p8R7SrynxPuHOz3MaERv2WMyKnfBe+IKu3tMls96cTnGyISWY2ybhZZjEGwSPCJ4TLBFsE2wU8Lgcgxq2SXYI9gnOCCYEhwSzAjmWxhajkFwTHBCcEpwRmc7J7ggmCRIH3pDcDkG0gZSjH1S5v4Fe6BdJwm2CXYInhDsEuwR7BMcEEwJDglmBHOCI4JjghOCU4IzgnOCi4h2nSToCdYJNgg2CVLiPSXeU+I9Jd5T4j0l3lPiPSXeU+I9Jd5T4v32To/28JZdJ6MoZA+7u06WzzpwMee2WdAeIrKHiOwhInuIyB4isoeI7CEie4jIHiKyh4jsISJ7iMgeIrKHiOwhInuIyB4isoeI7CEie4jIHiKyh4jsIUJ7iNAeIrSHCO0hQnuI0B5oH0qCLYJtgh2CJwS7BHsE+wQHBFOCQ4IZwZzgiOCY4ITglOCM4JzgIqJ9KAl6gnWCDYJNgpR4T4n3lHhPifeUeE+J95R4T4n3lHhPifeUeL+906M9vGUfyuj5HnyFPezuQxnFe6zTjGCbwAbBJsEjgscEWwTbBDtbGPotJbXsEuwR7BMcEEwJDglmBPOI9qEkOCY4ITglOKOznRNcEEwSpNvsh39LibSBFGOflLl/wRVoH0qCbYIdgicEuwR7BPsEBwRTgkOCGcGc4IjgmOCE4JTgjOCc4CKifSgJeoJ1gg2CTYKUeE+J95R4T4n3lHhPifeUeE+J95R4T4n3lHj/cKcnV1BvcQUV+k3D7j6U5bNwlWb5pLArKHIFRa6gyBUUuYIiV1DkCopcQZErKHIFRa6gyBUUuYIiV1DkCopcQZErKHIFRa6gyBUUuYIiV1DkCgpdQaErKHQFha6g0BUUuoIiV1DkCopcQZErKHIFRa6gyBUUuYIiV1DkCopcQZErKHIFRa6gyBUUuYIiV1DkCopcQZErKHIFRa6gyBUUuYIiV1DkCopcQZErKHIFRa6gyBUUuYIiV1DkCopcQZErKHIFtYcr6Le4gg59r7C7xWT5LFyjuT1U0BU0uYImV9DkCppcQZMraHIFTa6gyRU0uYImV9DkCppcQZMraHIFTa6gyRU0uYImV9DkCppcQZMraHIFja6g0RU0uoJGV9DoChpdQZMraHIFTa6gyRU0uYImV9DkCppcQZMraHIFTa6gyRU0uYImV9DkCppcQZMraHIFTa6gyRU0uYImV9DkCppcQZMraHIFTa6gyRU0uYImV9DkCppcQZMraHIFTa6gyRU0uYLewxXesldkFNorUu7uFVk+SzlafGnIFQy5giFXMOQKhlzBkCsYcgVDrmDIFQy5giFXMOQKhlzBkCsYcgVDrkB7RRIcE5wQnBKc0dnOCS4IJgnSh+yHXcGgKxh0BYOuQHtFEmwRbBPsEDwh2CXYI9gnOCCYEhwSzAjmBEcExwQnBKcEZwTnBBcR7RVJ0BOsE2wQbBKkxHtKvKfEe0q8p8R7SrynxHtKvKfEe0q8p8T7hzs9uYJ9iyvYwPcK0e5OkeWznrjCs3WVtFMkwSbBI4LHBFsE2wQ7Ee0USS27BHsE+wQHBFOCQ4IZwTyinSIJjglOCE4Jzuhs5wQXEe4UifQh+2FXwJ0ikWLskzL3L7gC7RRJsE2wQ/CEYJdgj2Cf4IBgSnBIMCOYExwRHBOcEJwSnBGcE1xEtFMkQU+wTrBBsEmQEu8p8Z4S7ynxnhLvKfGeEu8p8Z4S7ynxnhLvH+705AruLa6w2TcqevJLhN19Istn6Sr8/2ZuDxVcB+FoHYSjdRCO1kE4WgfhaB2Eo3UQjtZBOFoH4WgdhKN1EI7WQThaB+FoHYSjdRCO1kE4WgfhaB2Eo3UQjtZBOFoH4WgdhKN1EA7XQThcB+FwHYTDdRAO10E4XAfhyBUcuYIjV3DkCo5cwZErOHIFR67gyBUcuYIjV3DkCo5cwZErOHIFR67gyBUcuYIjV3DkCo5cwZErOHIFR67gyBUcuYIjV3DkCo5cwZErOHIFR67gyBUcuYIjV3DkCo5cwb3uCvFmC0ihH7aA3JGDqtnKQbzZAaoa2myR4PEWhvZGItimw3YInhDMNjBUubxsqMUL6z6Pz08r3dPz/6lcfvv1Fynj2r+Vnf/cna2Aql1+e/r4ZfGwcrXvFVldLRh5vHj06XXZ7KMl1Huzz4XZPKQDo0xfwk15n7+d9H3lpDVqBdayHtGBj7cHVqGLCrBNhz3Z53yLMhpZa//6i7HF/44rjV9/iSNRK/521bjWPw68l3znjJ4ft3/86CjVWrvSXR1fyVpa8at/xfLZkZ9eNHnIRevHm1XOOrTJFsGU4JBgRjAnOCI4JjghOCU4K2E18E3RnODiBfj0ckWH9bGIbn4R3fwiuvlFdPOL6OYX0c0PYJdgj2C/hOHMRpTZiDIbUWYjymxEmY0osxFlNqLMRpTZEsahzAJcvACfZlYdklkfq1dupf1vP/5d30RN7bIyOlv/U9Qqo6v7z7XLwH305NWDtn6s7qAyql2eVerFgeJ49TmYnAdvyq8drLgHyyiubU7ORrVK/9v6X6r2pdI6X5+xq/2g27I+7LasKeKaIq4p4poirinimiKuKeKaIq4p4mH4tK7msLoaqquhuhqqq6G6Gqqroboaqquhuhqqq9mjrvawulqqq6W6Wqqrpbpaqqululqqq6W6Wqqr3aOu7rC6lt9xqlBdAaYEhwQzgjnBEcExwQnB6QvwSV1V9aC6qirUlWBKcEgwI5gTHBEcE5wQnL4An9ZVHFZXQXUVVFdBdRVUV0F1FVRXQXUVVFdBdRV71PWwYZqSVFdJdZVUV0l1lVRXSXWVVFdJdZVUV7lHXaPD6hpRXSOqa0R1jaiuEdU1orpGVNeI6hpRXaM96hofVteY6hpTXWOqa0x1jamuMdU1prrGVNeY6hrvUVd1WF0V1VVRXRXVVVFdFdVVUV0V1VVRXRXVVe1R18PGW0pTXTXVVVNdNdVVU1011VVTXTXVVVNd9R51PWy8pQzV1VBdDdXVUF0N1dVQXQ3V1VBdDdXV7FHXw8ZbylJdLdXVUl0t1dVSXS3V1VJdLdXVUl3tHnU9bLylaLxFMCU4JJgRzAmOCI4JTghO1R7jLX3YeEvTeItgSnBIMCOYExwRHBOcEJzqPcZb+rDxlqbxFsGU4JBgRjAnOCI4JjghONV7jLf0YeMtTeMtginBIcGMYE5wRHBMcEJwqvcYb+nDxluaxlsEU4JDghnBnOCI4JjghOBU7zHe0oeNtzSNtwimBIcEM4I5wRHBMcEJwaneY7ylDxtvaRpvEUwJDglmBHOCI4JjghOCU73HeEsfNt7SNN4imBIcEswI5gRHBMcEJwSneo/xlj5svKVpvEUwJTgkmBHMCY4IjglOCE71HuMtfdh4S9N4i2BKcEgwI5gTHBEcE5wQnOo9xlv6sPGWpvEWwZTgkGBGMCc4IjgmOCE41XuMt8xh4y1D4y2CKcEhwYxgTnBEcExwQnBq9hhvmcPGW4bGWwRTgkOCGcGc4IjgmOCE4NTsMd4yh423DI23CKYEhwQzgjnBEcExwQnBqdljvGUOG28ZGm8RTAkOCWYEc4IjgmOCE4JTs8d4yxw23jI03iKYEhwSzAjmBEcExwQnBKdmj/GWOWy8ZWi8RTAlOCSYEcwJjgiOCU4ITs0e4y1z2HjL0HiLYEpwSDAjmBMcERwTnBCcmj3GW+aw8Zah8RbBlOCQYEYwJzgiOCY4ITg1e4y3zGHjLUPjLYIpwSHBjGBOcERwTHBCcGr2GG+Zw8ZbhsZbBFOCQ4IZwZzgiOCY4ITg1Owx3rKHjbcsjbcIpgSHBDOCOcERwTHBCcGp3WO8ZQ8bb1kabxFMCQ4JZgRzgiOCY4ITglO7x3jLHjbesjTeIpgSHBLMCOYERwTHBCcEp3aP8ZY9bLxlabxFMCU4JJgRzAmOCI4JTghO7R7jLXvYeMvSeItgSnBIMCOYExwRHBOcEJxaGm99uD1bLu8ap3enn3//vrz5tqwvLy5uK1+uflyutmFZba6yfbhys/xzvezpY9KM1bsPz9BMfky8DIDEm6KNCZHVwULHSooWNvS4+NgSgcdPitPKgmeVxKvzDQBfNAm/ER+LgoReJhfFwUIg0R/7OtQgXrWIw6csilMOkbr5GK5W9NFHocflx1ao7kfmYxY6zqwobhICxXXyNvguqqt3UV2hDw85+fz79c355d3g+u786vK2cnZ1c/7fq8u704v68vJuebP8+uld8eH+9/Lm7vzLzoNny9Ov55ffbtd/fLs5/9o9v1zu/JUv1726eM3r02/L3unNt/PiVS6Wf96tn3dz3+1X+9pcXRf/+371fyvwx9VdcUvYvsTyZgWUEFaIqoy0lNXVOqY/r67uwmjzYsVL/7iuFO+nOOfT1bv79O7i9PLr7ZfT6+W7ynXx3zf5+X+Xn96tpLB4b8vVjad4zT/P70ZXj25I67+n51/vztZ/rg49uFmf1derfy5HZ8vLQVGe4rQvTr/8lVx+nZ6d3y3XZ//15nTzPh/K2rg+//Quqj6q6cMjX66uz1cFXNfrwz9XN3+tu/bn/w9QSwMEFAAAAAgANghjXay0ujtVCwAAy6sAAA0AAAB4bC9zdHlsZXMueG1s7V3rb9vWFf9XCNkokqGy+H7McTRFsVFjaR6Ok22IAoGWri0iEqlRtGv3U4BlRYAhWAZ0aDc3bYFkXT40a5d3sTQB5O/9KxqgiJz2XxgvKVGUdK8eFCXxJpSRiLz3/s4595zffTE88bGatVcG50sAWNRupazXlhIly6r+OpWqFUqgotYWjCrQ7ZpNw6yoln1rbqVqVROoxRoEVcoplqbFVEXV9MTxY/p2ZaVi1aiCsa1bSwlG8soo92u1aJeKfIJy5WWNIlhK5Oq3596dm6MXaHrxnT9uG9Zisn7bvWiVJ1JIQQJa0OKlteWTl1GiMHLETjmX5pM8rVxuKc8fdQXmjrRKckcxgiS8oC4pWBFyp4h88leUi08u5nzXsDyXdC5+k09iZCkYWbBTPnHurSsxne4vU6K7fD7f0TvX10fmfT7H9VRiOiXN5WBrF0ituN+2WNtfHRVH3QuMTLZLpg8574n0x6FV2V8s19Ppubl36ZyPHF0db1VjO981BhZylI3x/rJHAj2FD8Y2oZs2ufk28ZrDqtlRPyFhq0GUlEQkfTpG7PzAAStJWAtdLiONbNHctXMg0WUUPW0Zrsy0E3hQ9M0K6f4c6hqMuZwn0d/7XLLZ+1zfqU+m0dLwoqCcVHOCPn5s09Db8zQnJ9wSW5NaAdSOWl5KXDy9mlzXKqAGgZtqRSvvuRWOpNqH7g3DOnJdcLeIjKmp5f5wOrJwp+/UafABtWZUVL1bEDOeF9ih7ah/dyGTydSfwSaFkmrW7KW6qVTplsqFYNTGqP27eLoEyjvA0gpqf28zfYVAf4dMNWx/lD6SGs/+1/jPrWG8PbyLXj162Pjq2eH9h6MHMTSKhiaIGVOQPyAFo2yYlLm1sZRYWWmvSUM5dVRdoXli5BESWGiYrtamZbUSEtGU6fFsYqpcZZMnCj/FMTkuKScci9B8MmM/jE2UQfLHnQZHn1DUki2sdwkUuYEL9zicGU3rGJoaf/3L4f7VcJf44fY1g+ackDWMSKZ0ejyfOF/wzKKVy96ZxTmy2AXHj1VVywKmvmLfOBinsKeKal6v71Xt49KWqe4xrJAYGlAzyloRqtzKdvoafhxn9VZks458n8wxtSki/EFok2n4E7K2bLbVhY3eCrfTIWqDH0WZlifbDN7oruA4mp5A35Da2hVIbc6XTfwNwywCs/1YFXLfLTt+rAw2LRtvalsl+G0ZVajGsCyjYl8UNXXL0FVnYLQQeCTlPA1eSlRAUduuJDxBveXB5FolTe+V2iodVmavNWN1OrA93e07jGsVhtb78bSFqCCIpyfulTYX8BQJj91haA1ZzcTlBvfSeONjTH3BvTP0OAg6j405XsOaA5oX9jJTAOXyeYj8/aa31giivdbsbvoePTsPnnXv0l6hmpeunOaNWq2W9zJlbUuvAGfNssWorVuqZJjah7YQuNXbAjow7R0otQNM+AzRLnLtdZbF3c0u9TzX1s9h9ae6UUwgFB8IxQZBKUFAzX9KHRSNVJAQ9uoSgsHEYDApGEwOBlMCwSR6TPfzExpBBbsNMNEjyKdemMEApqfG2JmAxBm4lAtGXobArgYKDztmRyUMiAkCYkfxDlzohx3XgafMYBO0xAaDcdNbsSTf6ijPlqwKRj03HfXMLLZqgRfjgIQMtj+RAmqTor8bmt4CqIypiWFmwU9JnuLC2XwBaGSYPG4UGXa2U99bs8mc0mY+5T+nu6d234EdzjAhndipqrZjWCe2bTfrThP4Nhk4a4JNbde53910seEHzedKNsp2MtxUDW0yIer+JMRMfNipD0y1ug52reYe/83gajyowmXrlO0cw6FCbOhbGnmREIeKpDhUig0NN/JybGeodhK5hyJnb6JgDOUjRgOFELpGxM6R2MrSGKOFKRndKhlpiIkEGj1zTw9JY6ydbMTsZAj3p0giWaUoTwsyiZ5mCZzLeEKGHkfiOkGKcwUSdw6zfh435NtMWDtlQuwUImanSIadUdmOB34kEzU7ZRJXAN/Olouwc/kZmznsQiVGw52jcUAixLkyic5VSDRaJHwqi42e3PzLkjivRfl0w/Bkc0Am5C0oIWJ2sgqJg4rIXS4hRzKGf5Oec8iEvH0SseWAo8l4boS1UybEzqg9j2HIOIaRt1vhSHy6Fb9jHGhTxTHxi1Ekv//s/OcM5L6qH87hP2JcFSaQ/uLk28w0Z2pIQ+1T2gRmKR9deVJcSoyhgt9QJWqGcj5LxY68+An5NPhJxHdsljosZaJmKdan5FjKRsxS3IASSRn5DEfK+qREbn3C/t8dNDmmMlEzVSDfUjZqlo6Wmu0UnTVt6wqWBo2d9NGq6umiykbhCnAtK2nFItDfqCzZOKP7rc/ojjOl4wzkOGE2TuyNDY0TZiO6RPXZLQ5rYYr8LFecF/jJeiHOoY1zaOMc2mkNZjaUwYyTLociPc7/nQ4X4PZ8kuGK04vj9GJyEvTiNOg4DTpOg47ToAlNg47Ti+P04ji9OE4vjtOL4/RiMtOLiUnQi9Og4zToOA06ToMmMg06Ti+O04vf5PRigZD0YpmQ9GKBkLTdOA06Ti+OnxgMy844HTZOh43TYQNxNdX8HXG+X/He+QvevWJKVytgKXHaMCuQVC3N1Ma2VrY03fuH9W5A1qhU1FZ7pqM9h21PXaIveykVHRgRidk2TaAX9loQrgPC94P4NfEdMAkFOwtM6NMWQuhACChEOu2lW6GrbQsWaPpynspY1gLFJKmssQNj5oIkLMgzW0Y3aUs+u3bm5IXsOnVyeT2zeoo6x7SQCg6JhzA0BmMblKfpc5xCs2vLFxfaAAYDQLdm0a2h9BNry14zDt0M40SGxzS/UkiCMihQtb2aBSpUoQQKV6iyVvMCzCBjmgHL9XswBPnV0+curK79gaq/qD+qPz94kjn4InPwlPLgIhY+EIqMfObg8/rT+uMu3WkUXu6DH4RFEiObzhx8mm8issZy/b4HYPFDv50axfQbh+1mSAZkf3nxL1f7D88Q6pF0OKlawGuBZMCKtguKXhNkqN8Dqj1De/xkRXwj1muEDN379rSvmvb0CmP3O7uSWtcqmr7loeR+KCQCGab3DR0UVZwWjsZjkO2RUdO9amS03EWCSlJOoec8Dhmmg+f5XZpmivmDb+t34CVdyNe/aZby+XfmGG6xfvfg+QWnjskfXHUu+Hz9S6eJkHfuN/PN+uaXpxQZ+R+fXv3p+td5RTnHibyUzJw6lcxmznsR5JBceHnjTy+vf/Tj9zec2cgwrrR7JvZtj9eDZMpP9+++/O421atFxrfumiA5Bd+0UyiPJETj0xeNT75q3N1/9eSLgcsIzwwS0QeLJFDjmz83bn4+WDGHB/dBIRnR+Pa/jcfXDj+7m1cEryWSBo0n99L5E2fO/Pb8e6tnvaZIBhx+f6fx7+tOJBmW9sLOS/jGnQ2REX/90aPX//i4V6qCb9zRUECG/PXfPju8czV/5PDLvzcePGw8vtr4+unRw/2PGw+uHd56erh/89WDa6//ecMTwvQRMnBdFZBh//mTe7/c3O+/IRI4PBIHQQb851sPcPsFwYl7+7cpw+2xUTZM+1vTi8BeNLLNW3Nrw7mk7At7A9z8QHR3zYrzQdfgMG4dugbW4fTgLMBhXBROz5vUH5nG2ybTeNtkGi0Nh5GxGBeFqsk6Pzg9aIxif9A9VRSOE0WcR7NZpAVZnN9EEf5BS5OxPRVFnB6oaTRf46ONZ0h/Hsj06AyRR2Sv69PRfA1r0H6DCEVBRxunByJwUcBxB+pH64GcQmM4DkYVZxtuBONrFAVXA7mI5qgoYrwjwh90fHCjhOMURcRi0BZwHK4GjkZ8Dc4CaAOuxt1Mp7rWo1RrnUrV4MJ1vgSAdfz/UEsDBBQAAAAIADYIY12XirscwAAAABMCAAALAAAAX3JlbHMvLnJlbHOdkrluwzAMQH/F0J4wB9AhiDNl8RYE+QFWog/YEgWKRZ2/r9qlcZALGXk9PBLcHmlA7TiktoupGP0QUmla1bgBSLYlj2nOkUKu1CweNYfSQETbY0OwWiw+QC4ZZre9ZBanc6RXiFzXnaU92y9PQW+ArzpMcUJpSEszDvDN0n8y9/MMNUXlSiOVWxp40+X+duBJ0aEiWBaaRcnToh2lfx3H9pDT6a9jIrR6W+j5cWhUCo7cYyWMcWK0/jWCyQ/sfgBQSwMEFAAAAAgANghjXXsSwOZ5AQAAmAIAAA8AAAB4bC93b3JrYm9vay54bWyNUlFO5DAMvUqVA9DOLCAYUSTEiAVpd2EXBN+Z1p1aJHHluJThNlxmz7VuqsJI/OxX7Ofk+fk5ZwPx84boOXv1LsTStCLdKs9j1YK38YA6CFppiL0VTXmbx47B1rEFEO/yZVEc595iMOdnM9cd5/sJCVSCFBQcgUeEIX7WxzR7wYgbdCi70qTYgck8BvT4BnVpCpPFloZrYnyjINbdV0zOlWYxFR6BBasv8P0o8sFuYkJenzDUNCS23V48pPAJa2n13vG3k8MZuwbctlKak8Xp0mRiN3+sDlKao0KfNchRUofEYnXGF9BmU9YLXaET4LUV+M7Udxi2owx1Id+zIfk4n9MSVvw/a6CmwQrWVPUegkx7YHCjwBBb7KLJgvVQmt/9LvvV/n0Poyfa5Kae/BEVtuc2r1ALfFNPEmddamp1x9l4pIfLw6PFqQ7fO3ep2G34QXYiZGh+Uq2UF5qgTp74i4/4kvqgVi2KT2gNTqzeOSiKqev8Kc7/AVBLAwQUAAAACAA2CGNdJB6boq0AAAD4AQAAGgAAAHhsL19yZWxzL3dvcmtib29rLnhtbC5yZWxztZE9DoMwDIWvEuUANVCpQwVMXVgrLhAF8yMSEsWuCrcvhQGQOnRhsp4tf+/JTp9oFHduoLbzJEZrBspky+zvAKRbtIouzuMwT2oXrOJZhga80r1qEJIoukHYM2Se7pminDz+Q3R13Wl8OP2yOPAPMLxd6KlFZClKFRrkTMJotjbBUuLLTJaiqDIZiiqWcFog4skgbWlWfbBPTrTneRc390WuzeMJrt8McHh0/gFQSwMEFAAAAAgANghjXWWQeZIXAQAAzwMAABMAAABbQ29udGVudF9UeXBlc10ueG1srZNNbsIwEIWvEnmLYkMXXVSETem2ZdELuMmEWPhPnoGG23ecAIuKRlSwiRXPm/fZfvby8xgBi95Zj5XoiOKLUlh34DTKEMFzpQ3JaeLftFVR1zu9BfU0nz+rOngCTyVlD7FarqHVe0vFW8/TaIKvRAKLongdhZlVCR2jNbUmrquDb35RyhNBcuegwc5EnLFAqKuEXPkbcOr7OEBKpoFioxO9a8cq1VuFdLSActriyhpD25oamlDvHbdIjAl0gx0AOStH09k0mfiEYfwu7uYPNlNAVm5SiMiJJfg/7hxJ7i4jG0EiM73FC5Gt794f5LQbaG5k8/F+h7Qb8kA1DIsHZ3zxv2EdXyHsHn3F8iidNv7MV8M7Xv0AUEsBAhQDFAAAAAgANghjXUbHTUiVAAAAzQAAABAAAAAAAAAAAAAAAIABAAAAAGRvY1Byb3BzL2FwcC54bWxQSwECFAMUAAAACAA2CGNdVx1LvUwBAAD1AgAAEQAAAAAAAAAAAAAAgAHDAAAAZG9jUHJvcHMvY29yZS54bWxQSwECFAMUAAAACAA2CGNd9rDxgh0CAADRCAAAEwAAAAAAAAAAAAAAgAE+AgAAeGwvdGhlbWUvdGhlbWUxLnhtbFBLAQIUAxQAAAAIADYIY12l8JjXfygAANJ4AQAYAAAAAAAAAAAAAACAAYwEAAB4bC93b3Jrc2hlZXRzL3NoZWV0MS54bWxQSwECFAMUAAAACAA2CGNdrLS6O1ULAADLqwAADQAAAAAAAAAAAAAAgAFBLQAAeGwvc3R5bGVzLnhtbFBLAQIUAxQAAAAIADYIY12XirscwAAAABMCAAALAAAAAAAAAAAAAACAAcE4AABfcmVscy8ucmVsc1BLAQIUAxQAAAAIADYIY117EsDmeQEAAJgCAAAPAAAAAAAAAAAAAACAAao5AAB4bC93b3JrYm9vay54bWxQSwECFAMUAAAACAA2CGNdJB6boq0AAAD4AQAAGgAAAAAAAAAAAAAAgAFQOwAAeGwvX3JlbHMvd29ya2Jvb2sueG1sLnJlbHNQSwECFAMUAAAACAA2CGNdZZB5khcBAADPAwAAEwAAAAAAAAAAAAAAgAE1PAAAW0NvbnRlbnRfVHlwZXNdLnhtbFBLBQYAAAAACQAJAD4CAAB9PQAAAAA=";
+  const XL_TPL_VS="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";
+  const xlBytes=b=>{const bin=atob(b),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;};
+  const xlEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const xlUnesc=s=>String(s==null?'':s).replace(/&#x([0-9a-f]+);/gi,(m,n)=>String.fromCodePoint(parseInt(n,16))).replace(/&#(\d+);/g,(m,n)=>String.fromCodePoint(+n)).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+  const xlKey=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const xlColNum=c=>{let n=0;for(let i=0;i<c.length;i++)n=n*26+(c.charCodeAt(i)-64);return n;};
+  function xlGetRow(xml,r){const m=new RegExp('<row r="'+r+'"[^>]*?(?:/>|>[\\s\\S]*?</row>)').exec(xml);return m?m[0]:null;}
+  function xlGetCell(rowXml,ref){const m=new RegExp('<c r="'+ref+'"(?:\\s[^>]*?)?(?:/>|>[\\s\\S]*?</c>)').exec(rowXml);return m?m[0]:null;}
+  function xlCellStyle(cellXml){const m=/^<c\b[^>]*?\ss="(\d+)"/.exec(cellXml||'');return m?m[1]:null;}
+  /* ghi giá trị vào 1 ô (giữ nguyên style của ô, trừ khi truyền style mới) */
+  function xlSet(rowXml,ref,val,style){
+    const old=xlGetCell(rowXml,ref),s=(style!=null)?style:xlCellStyle(old);
+    const head='<c r="'+ref+'"'+(s!=null?' s="'+s+'"':'');
+    let nc;
+    if(val===''||val==null)nc=head+' t="n"></c>';
+    else if(typeof val==='number')nc=head+' t="n"><v>'+val+'</v></c>';
+    else nc=head+' t="inlineStr"><is><t xml:space="preserve">'+xlEsc(val)+'</t></is></c>';
+    if(old)return rowXml.replace(old,()=>nc);
+    const col=xlColNum(ref.replace(/\d+/g,'')),re=/<c r="([A-Z]+)\d+"/g;let m,pos=-1;
+    while((m=re.exec(rowXml))){if(xlColNum(m[1])>col){pos=m.index;break;}}
+    if(pos<0)pos=rowXml.lastIndexOf('</row>');
+    return rowXml.slice(0,pos)+nc+rowXml.slice(pos);
+  }
+  function xlRenumber(rowXml,r){return rowXml.replace(/^<row r="\d+"/,'<row r="'+r+'"').replace(/<c r="([A-Z]+)\d+"/g,(m,c)=>'<c r="'+c+r+'"');}
+  /* nhân bản style (xf) có thêm "thu nhỏ vừa ô" – dùng cho cột Vi sinh hẹp để tên không bị xuống dòng/cắt chữ */
+  function xlStyles(stXml){
+    const a=stXml.indexOf('<cellXfs'),b=stXml.indexOf('</cellXfs>'),open=/<cellXfs[^>]*>/.exec(stXml.slice(a))[0];
+    const body=stXml.slice(a+open.length,b),xfs=body.match(/<xf\b[^>]*?(?:\/>|>[\s\S]*?<\/xf>)/g)||[],added=[],map={};
+    return {
+      shrink(id){
+        if(id==null)return null;
+        if(map[id]!=null)return map[id];
+        let xf=xfs[+id];if(!xf)return id;
+        if(/<alignment\b/.test(xf))xf=xf.replace(/<alignment\b([^>]*?)\/?>/,(m,at)=>'<alignment'+at.replace(/\s(?:wrapText|shrinkToFit)="[^"]*"/g,'')+' wrapText="0" shrinkToFit="1"/>');
+        else if(/\/>$/.test(xf))xf=xf.replace(/\/>$/,'><alignment wrapText="0" shrinkToFit="1"/></xf>');
+        else xf=xf.replace(/<\/xf>$/,'<alignment wrapText="0" shrinkToFit="1"/></xf>');
+        if(!/applyAlignment=/.test(xf))xf=xf.replace(/^<xf\b/,'<xf applyAlignment="1"');else xf=xf.replace(/applyAlignment="0"/,'applyAlignment="1"');
+        added.push(xf);map[id]=String(xfs.length+added.length-1);return map[id];
+      },
+      out(){
+        if(!added.length)return stXml;
+        const n=xfs.length+added.length;
+        return stXml.slice(0,a)+open.replace(/count="\d+"/,'count="'+n+'"')+body+added.join('')+stXml.slice(b);
+      }
+    };
+  }
+  /* ---------- 1) Excel Lịch trực ---------- */
+  const XL_LICH_WEEKEND_ROWS=[11,12,18,19,25,26,32,33,39]; /* dòng tô xám sẵn trong mẫu (tháng 10/2026) */
+  async function buildLichXlsx(F){
+    if(!window.JSZip)throw new Error('Thư viện JSZip chưa được tải. Hãy kiểm tra kết nối mạng rồi thử lại.');
+    const zip=await JSZip.loadAsync(xlBytes(XL_TPL_LICH));
+    let xml=await zip.file('xl/worksheets/sheet1.xml').async('string');
+    const sty=xlStyles(await zip.file('xl/styles.xml').async('string'));
+    const R0={};for(let r=5;r<=40;r++)R0[r]=xlGetRow(xml,r);
+    const donorSat=R0[11],donorSun=R0[12],donorWeek=R0[13];
+    for(let d=1;d<=31;d++){
+      const r=8+d,day=F.days[d-1];let row=R0[r];
+      if(!day){
+        row=xlSet(row,'A'+r,'');row=xlSet(row,'B'+r,'');row=xlSet(row,'Y'+r,'');
+        row=row.replace(/^<row\b/,'<row hidden="1"');
+      }else{
+        const tplW=XL_LICH_WEEKEND_ROWS.indexOf(r)>=0;
+        if(tplW!==day.we)row=xlRenumber(day.we?(day.label==='CN'?donorSun:donorSat):donorWeek,r);
+        row=xlSet(row,'A'+r,day.day);
+        row=xlSet(row,'B'+r,day.label==='CN'?'CN':Number(day.label));
+        const ys=sty.shrink(xlCellStyle(xlGetCell(row,'Y'+r)));
+        row=xlSet(row,'Y'+r,day.dutyShort||'',ys);
+      }
+      xml=xml.replace(R0[r],()=>row);
+    }
+    /* tiêu đề tháng/năm + dòng ngày ký */
+    xml=xml.replace(R0[5],()=>xlSet(R0[5],'A5','THÁNG '+F.m+' NĂM '+F.y));
+    xml=xml.replace(R0[40],()=>xlSet(R0[40],'S40','Gia Lai, ngày                tháng              năm '+F.y));
+    zip.file('xl/worksheets/sheet1.xml',xml);zip.file('xl/styles.xml',sty.out());
+    return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'});
+  }
+  /* ---------- 2) Excel VS-MD ---------- */
+  async function buildVsXlsx(F){
+    if(!window.JSZip)throw new Error('Thư viện JSZip chưa được tải. Hãy kiểm tra kết nối mạng rồi thử lại.');
+    const zip=await JSZip.loadAsync(xlBytes(XL_TPL_VS));
+    let xml=await zip.file('xl/worksheets/sheet1.xml').async('string');
+    const FIRST=5,LAST=14,byKey={};
+    for(let r=FIRST;r<=LAST;r++){
+      const c=xlGetCell(xlGetRow(xml,r)||'','B'+r),t=c&&/<t[^>]*>([\s\S]*?)<\/t>/.exec(c);
+      if(t)byKey[xlKey(xlUnesc(t[1]))]=r;
+    }
+    const fill={},extra=[];
+    (F.summary||[]).forEach(s=>{const r=byKey[xlKey(s.name)];if(r)fill[r]=s;else extra.push(s);});
+    /* xóa số liệu mẫu cũ ở cột Ngày thường / Thứ 7, CN rồi điền số liệu thật */
+    for(let r=FIRST;r<=LAST;r++){
+      const old=xlGetRow(xml,r);if(!old)continue;
+      let row=xlSet(old,'D'+r,fill[r]&&fill[r].wd?fill[r].wd:''),s=fill[r];
+      row=xlSet(row,'E'+r,s&&s.we?s.we:'');
+      xml=xml.replace(old,()=>row);
+    }
+    /* nhân viên chưa có trong mẫu: thêm dòng mới ngay dưới, cùng định dạng dòng cuối */
+    let nr=LAST+1;const tpl=xlGetRow(xml,LAST-1);
+    extra.forEach(s=>{
+      let row=xlRenumber(tpl,nr);
+      row=xlSet(row,'A'+nr,nr-FIRST+1);row=xlSet(row,'B'+nr,s.name);row=xlSet(row,'C'+nr,'');
+      row=xlSet(row,'D'+nr,s.wd?s.wd:'');row=xlSet(row,'E'+nr,s.we?s.we:'');
+      const old=xlGetRow(xml,nr);
+      if(old)xml=xml.replace(old,()=>row);else xml=xml.replace('</sheetData>',()=>row+'</sheetData>');
+      nr++;
+    });
+    const r1=xlGetRow(xml,1);
+    xml=xml.replace(r1,()=>xlSet(r1,'B1','TRỰC VI SINH - MIỄN DỊCH tháng '+F.m+'/'+F.y));
+    zip.file('xl/worksheets/sheet1.xml',xml);
+    return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'});
+  }
   async function exportFormExcel(y,m,rows){
-    const F=buildForm(y,m,rows),fileName='BẢNG_TỔNG_HỢP_TRỰC_'+pad(m)+'_'+y+'.xlsx';
-    if(window.ExcelJS){
-      const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();
-      const thin={style:'thin',color:{argb:'FF000000'}},BORDER={top:thin,left:thin,bottom:thin,right:thin};
-      const put=(ws,r1,c1,r2,c2,val,o)=>{
-        if(r1!==r2||c1!==c2)ws.mergeCells(r1,c1,r2,c2);
-        for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++){const k=ws.getCell(r,c);if(o.border)k.border=BORDER;if(o.fill)k.fill={type:'pattern',pattern:'solid',fgColor:{argb:o.fill}};}
-        const k=ws.getCell(r1,c1);k.value=val;k.font={name:o.n||'Cambria',size:o.s||14,bold:!!o.b,color:o.c?{argb:o.c}:undefined};
-        k.alignment={horizontal:o.h||'center',vertical:'middle',wrapText:true};
-      };
-      const TNR='Times New Roman';
-      const ws=wb.addWorksheet('Tổng hợp trực');
-      [9,5,15,4,15,11,12,3,17].forEach((w,i)=>{ws.getColumn(i+1).width=w;});
-      put(ws,1,1,1,9,'BẢNG TỔNG HỢP TRỰC',{n:TNR,s:16,b:true});put(ws,2,1,2,9,F.title,{n:TNR,s:12,b:true});
-      put(ws,3,1,4,1,'Thứ',{n:TNR,b:true,border:true});put(ws,3,2,4,4,'Ngày/tháng',{n:TNR,b:true,border:true});put(ws,3,5,4,5,'Trực',{n:TNR,b:true,border:true});put(ws,3,6,4,9,'Ngoài giờ',{n:TNR,b:true,border:true});
-      ws.getRow(3).height=17;ws.getRow(4).height=17;
-      let r=5;
-      F.days.forEach(d=>{const o={border:true,b:d.we,fill:d.we?'FFBFBFBF':undefined};
-        put(ws,r,1,r,1,d.label,o);put(ws,r,2,r,4,d.dateText,o);put(ws,r,5,r,5,d.dutyShort,o);put(ws,r,6,r,7,d.mdShort.join(', '),o);put(ws,r,8,r,9,d.vsShort.join(', '),o);r++;});
-      r++;
-      const hs=(c1,c2,t)=>put(ws,r,c1,r,c2,t,{b:true,s:12,border:true});
-      hs(1,2,'Tên');hs(3,3,'Ngày thường');hs(4,5,'Thứ 7, CN');hs(6,6,'Lễ, Tết');hs(7,8,'Buổi trưa');hs(9,9,'Tổng tiền');r++;
-      F.summary.forEach(s=>{put(ws,r,1,r,2,s.short,{border:true});put(ws,r,3,r,3,s.wd?s.wd:'',{border:true});put(ws,r,4,r,5,s.we?s.we:'',{border:true,c:'FFFF0000'});put(ws,r,6,r,6,'',{border:true});put(ws,r,7,r,8,'',{border:true});put(ws,r,9,r,9,'',{border:true});r++;});
-      ws.pageSetup={paperSize:9,orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:1.18,right:0.63,top:0.35,bottom:0.39,header:0.28,footer:0.28}};
-      const w2=wb.addWorksheet('Làm ngoài giờ');
-      [8,22,34,34].forEach((w,i)=>{w2.getColumn(i+1).width=w;});
-      put(w2,1,1,1,4,'BẢNG TỔNG HỢP LÀM NGOÀI GIỜ',{n:TNR,b:true});put(w2,2,1,2,4,'KHOA VI SINH – MIỄN DỊCH',{n:TNR});put(w2,3,1,3,4,F.title,{n:TNR,b:true});
-      put(w2,5,1,5,1,'STT',{n:TNR,b:true,border:true});put(w2,5,2,5,2,'Ngày/Tháng/Năm',{n:TNR,b:true,border:true});put(w2,5,3,5,4,'Ngoài giờ',{n:TNR,b:true,border:true});
-      let q=6;F.outside.forEach(o=>{put(w2,q,1,q,1,o.stt,{border:true});put(w2,q,2,q,2,o.dateText,{border:true});put(w2,q,3,q,3,o.md,{border:true});put(w2,q,4,q,4,o.vs,{border:true});w2.getRow(q).height=28;q++;});
-      q++;put(w2,q,3,q,4,'NGƯỜI LẬP',{b:true,h:'center'});
-      w2.pageSetup={paperSize:9,orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:1.18,right:0.63,top:0.35,bottom:0.39,header:0.28,footer:0.28}};
-      const buf=await wb.xlsx.writeBuffer();
-      downloadFile(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),fileName);
-      return;
-    }
-    if(window.XLSX){
-      const a1=[['BẢNG TỔNG HỢP TRỰC'],[F.title],['Thứ','Ngày/tháng','Trực','Ngoài giờ',''],...F.days.map(d=>[d.label,d.dateText,d.dutyShort,d.mdShort.join(', '),d.vsShort.join(', ')]),[],['Tên','Ngày thường','Thứ 7, CN','Lễ, Tết','Buổi trưa','Tổng tiền'],...F.summary.map(s=>[s.short,s.wd||'',s.we||'','','',''])];
-      const a2=[['BẢNG TỔNG HỢP LÀM NGOÀI GIỜ'],['KHOA VI SINH – MIỄN DỊCH'],[F.title],[],['STT','Ngày/Tháng/Năm','Ngoài giờ',''],...F.outside.map(o=>[o.stt,o.dateText,o.md,o.vs]),[],['','','NGƯỜI LẬP','']];
-      const s1=XLSX.utils.aoa_to_sheet(a1),s2=XLSX.utils.aoa_to_sheet(a2);
-      s1['!cols']=[10,16,14,18,18,12].map(w=>({wch:w}));s1['!merges']=[{s:{r:2,c:3},e:{r:2,c:4}}];
-      s2['!cols']=[8,22,34,34].map(w=>({wch:w}));s2['!merges']=[{s:{r:4,c:2},e:{r:4,c:3}}];
-      const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,s1,'Tổng hợp trực');XLSX.utils.book_append_sheet(wb,s2,'Làm ngoài giờ');
-      XLSX.writeFile(wb,fileName);return;
-    }
-    throw new Error('Thư viện xuất Excel chưa được tải. Hãy kiểm tra kết nối mạng rồi thử lại.');
+    const F=buildForm(y,m,rows);
+    const b1=await buildLichXlsx(F),b2=await buildVsXlsx(F);
+    downloadFile(b1,'Excel Lịch trực.xlsx');
+    await new Promise(res=>setTimeout(res,700));
+    downloadFile(b2,'Excel VS-MD.xlsx');
   }
 
   /* ---------- khóa mật khẩu cho mục Tổng hợp trực & Ngoài giờ ---------- */
@@ -16945,7 +17353,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     try{
       const y=ui.y,m=ui.m,data=dataFor(y,m),rows=data.rows;
       if(type==='pdf'){
-        const html=buildFormHTML(buildForm(y,m,rows));
+        const html=buildFormHTML(buildForm(y,m,rows),true);
         if(typeof window.printWithClass==='function')window.printWithClass(html,'portrait');
         else if(typeof window.printNew==='function')window.printNew(html);
         else toast2('danger','In PDF thất bại','Không tìm thấy chức năng in.');
@@ -16955,7 +17363,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
         await exportFormWord(y,m,rows);
         return;
       }
-      if(type==='excel'){await exportFormExcel(y,m,rows);toast2('pass','Đã xuất Excel','Tổng hợp trực & ngoài giờ '+pad(m)+'/'+y);return;}
+      if(type==='excel'){await exportFormExcel(y,m,rows);toast2('pass','Đã xuất 2 file Excel','Excel Lịch trực & Excel VS-MD '+pad(m)+'/'+y);return;}
     }catch(err){console.error(err);toast2('danger','Xuất thất bại',(err&&err.message)||'Không thể xuất file.');}
   }
 
@@ -17301,19 +17709,16 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     }).join(' ');
   }
   function visible(el){return !!(el&&el.getClientRects().length);}
-  var STAR='<path d="M12 0c.9 6.2 3.8 9.1 12 12-8.2 2.9-11.1 5.8-12 12-.9-6.2-3.8-9.1-12-12 8.2-2.9 11.1-5.8 12-12z"/>';
-  function sunSvg(core,ray,r){
-    return '<svg class="vsmd-g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="vsmd-rays"><g stroke="'+ray+'" stroke-width="3" stroke-linecap="round"><path d="M24 3v6M24 39v6M3 24h6M39 24h6M9.1 9.1l4.2 4.2M34.7 34.7l4.2 4.2M9.1 38.9l4.2-4.2M34.7 13.3l4.2-4.2"/></g></g><circle class="vsmd-core" cx="24" cy="24" r="'+r+'" fill="'+core+'"/></svg>';
-  }
+  var RAYS8='<path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>';
   var ICON={
-    morning:sunSvg('#FBBF24','#F59E0B',9),
-    noon:sunSvg('#FF9F1C','#FB7C0A',11),
-    afternoon:'<svg class="vsmd-g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="vsmd-rays"><g stroke="#FB923C" stroke-width="3" stroke-linecap="round"><path d="M24 8v5M9 16l3.5 3.5M39 16l-3.5 3.5M5 30h5M38 30h5"/></g></g><path class="vsmd-core" d="M12 34a12 12 0 0 1 24 0z" fill="#F97316"/><path d="M6 38h36M12 43h24" stroke="#FDBA74" stroke-width="3" stroke-linecap="round" fill="none"/></svg>',
-    evening:'<svg class="vsmd-g-icon" viewBox="0 0 48 48" aria-hidden="true"><path class="vsmd-moon" d="M30 6a18 18 0 1 0 12 31A15 15 0 0 1 30 6z" fill="#A5B4FC"/><g fill="#FDE68A"><g class="vsmd-star" transform="translate(36 8) scale(.42)">'+STAR+'</g><g class="vsmd-star b" transform="translate(40 22) scale(.3)">'+STAR+'</g><g class="vsmd-star c" transform="translate(8 9) scale(.3)">'+STAR+'</g></g></svg>'
+    morning:'<svg class="vsmd-g-icon" viewBox="0 0 24 24" aria-hidden="true"><g class="vsmd-rays">'+RAYS8+'</g><circle cx="12" cy="12" r="4"/></svg>',
+    noon:'<svg class="vsmd-g-icon" viewBox="0 0 24 24" aria-hidden="true"><g class="vsmd-rays">'+RAYS8+'</g><circle class="vsmd-core" cx="12" cy="12" r="4.6" style="fill:currentColor"/></svg>',
+    afternoon:'<svg class="vsmd-g-icon" viewBox="0 0 24 24" aria-hidden="true"><g class="vsmd-core"><path d="M6.5 17a5.5 5.5 0 0 1 11 0"/></g><path d="M3 17h18M6 20.5h12"/><path d="M12 6.5v2M4.6 10.2l1.4 1.2M19.4 10.2L18 11.4"/></svg>',
+    evening:'<svg class="vsmd-g-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="vsmd-core" d="M20 14.2A8 8 0 0 1 9.8 4a8 8 0 1 0 10.2 10.2z"/><path class="vsmd-twinkle" d="M17.5 3.5v3M16 5h3"/><path class="vsmd-twinkle b" d="M21 9v2M20 10h2"/></svg>'
   };
 
   /* ---------- 1) Màn hình đăng nhập ---------- */
-  var loginEl=null, loginVis=false;
+  var loginVis=false;
   function buildLogin(){
     var card=document.querySelector('#loginScreen .login-card'); if(!card) return null;
     var el=card.querySelector('.vsmd-hello');
@@ -17321,9 +17726,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     return el;
   }
   function renderLogin(el){
-    el.innerHTML='<svg class="vsmd-spark s1" viewBox="0 0 24 24" aria-hidden="true">'+STAR+'</svg><svg class="vsmd-spark s2" viewBox="0 0 24 24" aria-hidden="true">'+STAR+'</svg><svg class="vsmd-spark s3" viewBox="0 0 24 24" aria-hidden="true">'+STAR+'</svg>'
-      +'<span class="vsmd-hello-text">'+letters(LOGIN_TEXT)+'</span>'
-      +'<svg class="vsmd-hello-line" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 7Q14 0 26 7T50 7T74 7T98 7T122 7T146 7T170 7T198 7"/></svg>';
+    el.innerHTML='<span class="vsmd-hello-text">'+letters(LOGIN_TEXT)+'</span><span class="vsmd-hello-line" aria-hidden="true"><span class="vsmd-road"></span><svg class="vsmd-flag" viewBox="0 0 16 21"><path d="M2 1v20" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" style="color:var(--primary)"/><g class="vsmd-flag-cloth"><rect x="2.7" y="1" width="11" height="8" fill="#ffffff" stroke="#1f2a37" stroke-width=".6"/><g fill="#1f2a37"><rect x="2.7" y="1" width="2.75" height="2.67"/><rect x="8.2" y="1" width="2.75" height="2.67"/><rect x="5.45" y="3.67" width="2.75" height="2.67"/><rect x="10.95" y="3.67" width="2.75" height="2.67"/><rect x="2.7" y="6.33" width="2.75" height="2.67"/><rect x="8.2" y="6.33" width="2.75" height="2.67"/></g></g></svg><span class="vsmd-car"><svg viewBox="0 0 38 18"><path class="vsmd-spd" d="M-5 7.5h4M-9 10.5h6M-4 13.5h3" stroke="currentColor" stroke-width="1" stroke-linecap="round" fill="none"/><path d="M3 13.5v-2.2c0-.8.5-1.4 1.2-1.6l4-1.1 3.2-3.4c.4-.4.9-.7 1.5-.7h8.6c.7 0 1.3.3 1.7.8l2.8 3.2 4.3.9c.9.2 1.5.9 1.5 1.8v2.3z" fill="currentColor"/><path d="M12 8.6l2.3-2.5c.2-.2.4-.3.7-.3h3.2v2.8zM20.6 5.8h2.3c.3 0 .6.1.8.4l2.1 2.4h-5.2z" fill="#ffffff" fill-opacity=".88"/><rect x="34.4" y="10.1" width="2.2" height="1.7" rx=".85" fill="#ffe08a"/><g class="vsmd-wheel"><circle cx="11" cy="14.3" r="3.3" fill="#1f2a37"/><circle cx="11" cy="14.3" r="1.2" fill="#cbd5e1"/><path d="M11 11.9v4.8M8.6 14.3h4.8" stroke="#cbd5e1" stroke-width=".7"/></g><g class="vsmd-wheel"><circle cx="28" cy="14.3" r="3.3" fill="#1f2a37"/><circle cx="28" cy="14.3" r="1.2" fill="#cbd5e1"/><path d="M28 11.9v4.8M25.6 14.3h4.8" stroke="#cbd5e1" stroke-width=".7"/></g></svg></span></span>';
   }
 
   /* ---------- 2) Dashboard ---------- */
@@ -17344,15 +17747,13 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   function sync(){
     try{
       var now=new Date(), p=period(now);
-      /* login */
       var ls=document.getElementById('loginScreen');
       var le=buildLogin();
       if(le){
         var vis=visible(ls)&&visible(le);
         if(!le.firstChild||(vis&&!loginVis)) renderLogin(le);
-        loginVis=vis; loginEl=le;
+        loginVis=vis;
       }
-      /* dashboard */
       var v=document.getElementById('view-dashboard'), de=ensureDash();
       if(de&&v){
         var want=v.classList.contains('active');
@@ -17374,3 +17775,102 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
 })();
 </script>
 
+<script id="smart-vsmd-presence">
+(function(){
+  'use strict';
+  if(window.__VSMD_PRESENCE__) return; window.__VSMD_PRESENCE__=true;
+  /* Người dùng đang đăng nhập — hiển thị ở Hệ thống → "Người dùng hiện tại".
+     Mỗi phiên (tab/thiết bị) tự khai báo tên của MÌNH; không ghi vào dữ liệu dùng chung nên các phiên không ghi đè lên nhau.
+       · Cùng trình duyệt (nhiều tab): qua localStorage + sự kiện 'storage'.
+       · Khác thiết bị: qua kênh Presence của Supabase (chỉ tồn tại khi đang online, tự biến mất khi đóng/đăng xuất). */
+  var LS_KEY='smartqc_sessions_v1', STALE=30000, BEAT=8000;
+  var sid='S'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  var chan=null, chanClient=null, chanWs='', chanTracked='', since=new Date().toISOString(), lastHtml=null;
+  function visible(el){return !!(el&&el.getClientRects().length);}
+  function selfInfo(){
+    var app=document.getElementById('app'); if(!visible(app)) return null;
+    var u=((document.getElementById('userName')||{}).textContent||'').trim(); if(!u) return null;
+    return {user:u,role:((document.getElementById('userRole')||{}).textContent||'').trim()};
+  }
+  function readLS(){ try{ var o=JSON.parse(localStorage.getItem(LS_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+  function writeLS(o){ try{ localStorage.setItem(LS_KEY,JSON.stringify(o)); }catch(e){} }
+  function beat(me){
+    var o=readLS(), now=Date.now();
+    Object.keys(o).forEach(function(k){ if(!o[k]||now-(o[k].ts||0)>STALE) delete o[k]; });
+    if(me) o[sid]={user:me.user,role:me.role,ts:now}; else delete o[sid];
+    writeLS(o);
+  }
+  function cloudClient(){ try{ return (typeof supabaseClient!=='undefined'&&supabaseClient&&typeof cloudUser!=='undefined'&&cloudUser)?supabaseClient:null; }catch(e){ return null; } }
+  function wsId(){ try{ return (typeof cloudWorkspaceId==='function')?String(cloudWorkspaceId()):'default'; }catch(e){ return 'default'; } }
+  function dropChannel(){
+    try{ if(chan){ try{ chan.untrack(); }catch(e){} if(chanClient&&chanClient.removeChannel) chanClient.removeChannel(chan); else chan.unsubscribe(); } }catch(e){}
+    chan=null; chanClient=null; chanTracked='';
+  }
+  function syncChannel(me){
+    var c=cloudClient();
+    if(!me||!c){ if(chan) dropChannel(); return; }
+    var ws=wsId();
+    if(chan&&(chanClient!==c||chanWs!==ws)) dropChannel();
+    var key=me.user+'|'+me.role;
+    if(!chan){
+      try{
+        chanClient=c; chanWs=ws;
+        chan=c.channel('smartqc-presence-'+ws,{config:{presence:{key:sid}}});
+        chan.on('presence',{event:'sync'},function(){ refresh(); });
+        chan.subscribe(function(status){
+          if(status==='SUBSCRIBED'&&chan){ var m=selfInfo(); if(m){ chanTracked=m.user+'|'+m.role; try{ chan.track({sid:sid,user:m.user,role:m.role,since:since}); }catch(e){} } }
+        });
+      }catch(e){ console.warn('SMART VSMD presence:',e); chan=null; chanClient=null; }
+    }else if(chanTracked&&chanTracked!==key){
+      chanTracked=key; try{ chan.track({sid:sid,user:me.user,role:me.role,since:since}); }catch(e){}
+    }
+  }
+  function collect(me){
+    var sess={};
+    if(me) sess[sid]={user:me.user,role:me.role,self:true};
+    var o=readLS(), now=Date.now();
+    Object.keys(o).forEach(function(k){ if(k!==sid&&o[k]&&o[k].user&&now-(o[k].ts||0)<=STALE) sess[k]={user:o[k].user,role:o[k].role||''}; });
+    try{
+      var st=chan&&chan.presenceState?chan.presenceState():{};
+      Object.keys(st||{}).forEach(function(k){
+        (st[k]||[]).forEach(function(m){ var id=(m&&m.sid)||k; if(id===sid||!m||!m.user) return; sess[id]={user:m.user,role:m.role||''}; });
+      });
+    }catch(e){}
+    var by={}, order=[];
+    Object.keys(sess).forEach(function(k){
+      var s=sess[k], g=s.user+'|'+s.role;
+      if(!by[g]){ by[g]={user:s.user,role:s.role,n:0,self:false}; order.push(g); }
+      by[g].n++; if(s.self) by[g].self=true;
+    });
+    order.sort(function(a,b){ return (by[b].self?1:0)-(by[a].self?1:0) || by[a].user.localeCompare(by[b].user,'vi'); });
+    return order.map(function(g){return by[g];});
+  }
+  function esc(s){ return (typeof escapeHtml==='function')?escapeHtml(s):String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function html(){
+    var me=selfInfo(), list=collect(me);
+    if(!list.length){
+      var u=(typeof state!=='undefined'&&state&&state.settings)?state.settings:{};
+      return esc(u.currentUser||'—')+' · '+esc(u.currentRole||'');
+    }
+    if(list.length===1) return esc(list[0].user)+' · '+esc(list[0].role);
+    return list.map(function(x,i){
+      var tag=x.self?'Bạn':'Đang online';
+      var dev=x.n>1?' · '+x.n+' thiết bị':'';
+      return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;'+(i?'margin-top:6px;':'')+'"><span>'+esc(x.user)+' · '+esc(x.role)+dev+'</span><span class="pill pass" style="font-size:11px;padding:1px 8px;"><span class="dot"></span>'+tag+'</span></div>';
+    }).join('');
+  }
+  window.vsmdOnlineUsersHtml=html;
+  function refresh(){
+    var el=document.getElementById('vsmdOnlineUsers'); if(!el) return;
+    var h=html(); if(h!==el.__h){ el.innerHTML=h; el.__h=h; }
+  }
+  function tick(){
+    try{ var me=selfInfo(); beat(me); syncChannel(me); refresh(); }catch(e){ console.warn('SMART VSMD presence tick:',e); }
+  }
+  tick(); setInterval(tick,BEAT/2);
+  setInterval(refresh,1500);
+  window.addEventListener('storage',function(e){ if(e.key===LS_KEY) refresh(); });
+  window.addEventListener('pagehide',function(){ try{ beat(null); }catch(e){} });
+  window.addEventListener('beforeunload',function(){ try{ beat(null); }catch(e){} });
+})();
+</script>
