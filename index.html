@@ -2231,12 +2231,25 @@ function dbFmtTime(iso){const d=new Date(iso);return isNaN(d.getTime())?'—':d.
 function dbAgeText(iso){const t=new Date(iso).getTime();if(isNaN(t))return '';const d=Math.floor((Date.now()-t)/864e5);return d<=0?'hôm nay':d+' ngày trước';}
 function dbSize(n){n=Number(n);if(!isFinite(n)||n<=0)return '—';return n>=1048576?(n/1048576).toFixed(2)+' MB':Math.max(1,Math.round(n/1024))+' KB';}
 function dbNum(n){n=Number(n);return isFinite(n)?n.toLocaleString('vi-VN'):'—';}
+/* Chuẩn hóa dữ liệu trạng thái do script ghi (at, size_bytes, kept, counts, warnings...) về các trường app hiển thị. Trường nào đã đúng định dạng app thì giữ nguyên. */
+function driveBackupNormalize(p){
+  p=(p&&typeof p==='object')?p:{};
+  const o=Object.assign({},p);
+  const counts=(p.counts&&typeof p.counts==='object')?p.counts:null;
+  if(o.lastRunAt==null&&p.at)o.lastRunAt=p.at;
+  if(o.lastSuccessAt==null&&p.ok!==false&&p.at)o.lastSuccessAt=p.at;
+  if(o.sizeBytes==null&&p.size_bytes!=null)o.sizeBytes=p.size_bytes;
+  if(o.keptCount==null&&p.kept!=null)o.keptCount=p.kept;
+  if(o.records==null&&counts){const t=Object.keys(counts).reduce((a,k)=>a+(Number(counts[k])||0),0);o.records=t;}
+  if(o.error==null&&p.ok===false){const w=Array.isArray(p.warnings)?p.warnings.join('; '):'';o.error=p.message||w||'';}
+  return o;
+}
 async function driveBackupFetch(){
   if(!cloudConfig||!supabaseClient)return {state:'noconfig'};
   if(!cloudUser)return {state:'nologin'};
   try{
     const res=await Promise.race([
-      supabaseClient.from('smartqc_backup_status').select('payload,updated_at').eq('id','drive').maybeSingle(),
+      supabaseClient.from('smartqc_backup_status').select('id,payload,updated_at').in('id',['drive','latest']),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('Hết thời gian chờ Supabase')),15000))
     ]);
     if(res.error){
@@ -2244,8 +2257,11 @@ async function driveBackupFetch(){
       if(c==='PGRST205'||c==='42P01'||/does not exist|schema cache|Could not find the table/i.test(m))return {state:'notable'};
       return {state:'error',message:m};
     }
-    if(!res.data||!res.data.payload)return {state:'empty'};
-    return {state:'data',payload:res.data.payload,updatedAt:res.data.updated_at};
+    /* Script sao lưu có thể ghi dòng id='drive' (định dạng của app) hoặc id='latest' (định dạng của script: at, size_bytes, kept, counts...). Ưu tiên 'drive', nếu không có thì dùng 'latest'. */
+    const rows=Array.isArray(res.data)?res.data:(res.data?[res.data]:[]);
+    const row=rows.find(x=>x&&x.id==='drive'&&x.payload)||rows.find(x=>x&&x.id==='latest'&&x.payload)||rows.find(x=>x&&x.payload);
+    if(!row)return {state:'empty'};
+    return {state:'data',payload:driveBackupNormalize(row.payload),updatedAt:row.updated_at};
   }catch(e){return {state:'error',message:(e&&e.message)||String(e)};}
 }
 function driveBackupStatusHtml(r){
