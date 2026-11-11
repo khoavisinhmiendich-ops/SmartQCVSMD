@@ -2329,9 +2329,21 @@ function openDriveBackup(){
       <div class="btn-row" style="margin:6px 0 0;"><button class="btn ghost sm" onclick="copyDriveBackupSql()">Sao chép SQL</button></div>
       <div style="${pre}">${escapeHtml(DRIVE_BACKUP_SQL)}</div>`,false)}
     ${sec(4,'Khôi phục từ một bản sao lưu',`
-      Tải tệp từ Drive về máy, rồi trên máy tính có Node.js 18 trở lên:
-      <div style="${pre}">BACKUP_PASSPHRASE='mật-khẩu-của-bạn' node scripts/restore-from-backup.mjs tep.json.gz.enc --out tep.json</div>
-      Muốn nạp lại vào Supabase: thêm <code>--import</code> (xem trước, chưa ghi gì), rồi <code>--import --yes</code> để thực hiện. Việc nạp lại chỉ ghi đè/thêm theo khóa <code>workspace_id + collection + record_id</code>, <b>không xóa</b> dòng nào đang có. Nên thử giải mã một bản thật ngay sau khi thiết lập để chắc mật khẩu đúng.`,false)}
+      Tải tệp <code>.bin</code> từ Drive về máy (ví dụ để cùng thư mục dự án), rồi trên máy tính có Node.js 18 trở lên, mở Command Prompt tại thư mục dự án.<br>
+      <b>Bước 1 — Giải mã để kiểm tra</b> (chưa ghi gì vào Supabase):
+      <div style="${pre}">set BACKUP_PASSPHRASE=mật-khẩu-của-bạn
+node scripts/restore-from-backup.mjs smartqc-backup-xxx.bin</div>
+      Script in ra thời điểm sao lưu, số dòng của từng bảng và tạo thêm tệp <code>smartqc-backup-xxx.bin.json</code> (dữ liệu chưa mã hóa — xóa đi sau khi dùng xong).<br>
+      <b>Bước 2 — Khôi phục vào Supabase:</b>
+      <div style="${pre}">set SUPABASE_URL=https://xxxx.supabase.co
+set SUPABASE_ANON_KEY=khóa-anon
+set SUPABASE_EMAIL=email-tài-khoản
+set SUPABASE_PASSWORD=mật-khẩu-tài-khoản
+set RESTORE_CONFIRM=yes
+node scripts/restore-from-backup.mjs smartqc-backup-xxx.bin --apply</div>
+      Bốn giá trị Supabase giống các secret dùng khi sao lưu; tài khoản phải có quyền ghi dữ liệu. Trên macOS/Linux thay <code>set TÊN=giá-trị</code> bằng <code>export TÊN=giá-trị</code>.<br>
+      Việc khôi phục ghi đè/thêm theo khóa chính (<code>workspace_id + collection + record_id</code>) và <b>không xóa</b> dòng nào đang có: dòng bị xóa được khôi phục, dòng đã sửa quay về bản cũ, dòng mới tạo sau thời điểm sao lưu vẫn được giữ. Cả bảng thành viên cũng được đưa về lúc sao lưu.<br>
+      <b>Nên làm:</b> chạy một lượt sao lưu mới trước khi khôi phục (để có điểm quay lại), đóng app trên mọi máy trong lúc khôi phục rồi mở lại sau đó, và thử giải mã một bản thật ngay sau khi thiết lập để chắc mật khẩu đúng.`,false)}
     ${sec(5,'Lưu ý an toàn',`
       • Khóa <code>service_role</code>/mật khẩu tài khoản sao lưu chỉ để trong <b>GitHub Secrets</b>, tuyệt đối không dán vào app hay file web. Nên để kho GitHub ở chế độ Private.<br>
       • Mã truy cập Google bị thu hồi/hết hạn (đổi mật khẩu Google, gỡ quyền ứng dụng, để “Testing”): tác vụ báo lỗi <code>refresh token</code>; lấy lại mã ở bước 1 rồi cập nhật secret.<br>
