@@ -1483,6 +1483,164 @@ body{font-family:'Be Vietnam Pro','Inter',system-ui,sans-serif;background:var(--
 .dc-pt-since{white-space:nowrap}
 @media print{.exp-bar{display:none!important}}
 </style>
+<style id="vsmd-r6">
+/* Phiếu Vi sinh */
+.vs-dlg{width:min(880px,96vw);max-width:96vw;max-height:92vh;padding:0;overflow:hidden}
+.vs-dlg[open]{display:flex}
+.vs-form{display:flex;flex-direction:column;max-height:92vh;width:100%;min-width:0}
+.vs-head{display:flex;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);align-items:flex-start}
+.vs-head h3{margin:0 0 2px;font-size:17px}.vs-code{font:600 12.5px var(--font-mono,monospace);color:var(--text-muted)}
+.vs-body{overflow:auto;padding:14px 20px;display:grid;gap:14px;-webkit-overflow-scrolling:touch}
+.vs-sec{border:1px solid var(--border);border-radius:14px;padding:8px 14px 14px;margin:0;min-width:0}
+.vs-sec legend{font-weight:700;font-size:13.5px;color:var(--primary-dark);padding:0 8px}
+.vs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.vs-w2{grid-column:1/-1}
+.vs-fld{display:grid;gap:5px;min-width:0}.vs-lb{font-size:12.5px;font-weight:600;color:var(--text-muted)}
+.vs-fld input,.vs-fld select,.vs-fld textarea{padding:9px 11px;border:1px solid var(--border-strong);border-radius:10px;font:14px inherit;font-family:inherit;background:var(--surface);color:var(--text);width:100%;box-sizing:border-box;min-width:0}
+.vs-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}
+.vs-form .vs-chk{display:flex;flex-direction:row;gap:8px;align-items:flex-start;font-size:13.5px;line-height:1.4;cursor:pointer;min-width:0}.vs-form .vs-chk input[type=checkbox]{width:18px;height:18px;min-width:18px;padding:0;margin:1px 0 0;flex:none;accent-color:var(--primary)}.vs-form .vs-chk span{flex:1;min-width:0;font-weight:500;color:var(--text)}
+.vs-r5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.vs-r5 label{display:grid;gap:3px}.vs-r5 small{color:var(--text-muted);font-weight:600}.vs-r5 select{padding:8px 6px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface);color:var(--text);font:13.5px inherit;font-family:inherit;min-width:0}
+.vs-foot{display:flex;gap:8px;align-items:center;padding:12px 20px;border-top:1px solid var(--border);flex-wrap:wrap}
+.vs-hint{font-size:12px;color:var(--text-muted)}
+.vs-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
+.vs-proc{margin-bottom:12px;padding:10px 16px}.vs-proc summary{cursor:pointer;font-weight:600}.vs-proc ol{margin:10px 0 4px;padding-left:22px;line-height:1.65;font-size:13.5px}
+.vs-sbar{margin:0 0 8px}
+@media (max-width:720px){.vs-grid,.vs-checks{grid-template-columns:1fr}.vs-r5{grid-template-columns:repeat(3,minmax(0,1fr))}.vs-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.vs-head,.vs-body,.vs-foot{padding-left:14px;padding-right:14px}}
+/* Dung lượng & lưu trữ (kiểu Supabase Free) */
+.sg-h{font-size:17px;margin:4px 2px 10px}
+.sg-card{padding:6px 18px 14px;margin-bottom:16px;max-width:880px}
+.sg-blk{padding:14px 0;border-bottom:1px solid var(--border)}
+.sg-top{display:flex;justify-content:space-between;align-items:center}
+.sg-pill{background:#d9f2e3;color:#14804a;font-weight:700;font-size:12px;border-radius:999px;padding:3px 10px}
+.sg-num{font-size:28px;font-weight:700;color:#0b6b3a;margin:8px 0 2px}.sg-sub{font-size:12px;color:var(--text-muted)}
+.sg-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
+.sg-tbl th{text-align:left;padding:10px 0;border-bottom:1px solid var(--border)}.sg-tbl th:last-child,.sg-tbl td:last-child{text-align:right}
+.sg-tbl td{padding:10px 0;border-bottom:1px solid var(--border)}.sg-tbl tr:last-child td{border-bottom:0}
+/* QĐ-2429 */
+.q24-hero,.q24-conn{display:flex;gap:18px;align-items:center;background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff;border:0}
+.q24-hero h2,.q24-conn h2{margin:0 0 4px;font-size:22px;color:#fff}.q24-hero p{margin:0;opacity:.9}
+.q24-mark{flex:none;width:68px;height:68px;border-radius:18px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-weight:800;font-size:18px;letter-spacing:.02em}
+.q24-conn{align-items:flex-start;padding:22px}.q24-conn .q24-txt p{margin:6px 0}.q24-tag{font-size:11.5px;letter-spacing:.14em;font-weight:700;opacity:.85}
+.q24-conn .dc-ul{color:#fff;margin:8px 0 14px}.q24-conn .avs-note{color:rgba(255,255,255,.85)}
+.q24-btn{display:inline-flex;align-items:center;justify-content:center;background:#fff!important;color:var(--primary-dark)!important;border:0!important;font-weight:700;padding:12px 22px;border-radius:12px;text-decoration:none;min-height:46px}
+.q24-ul li{margin-bottom:6px}.q24-strip{margin-bottom:0}
+@media (max-width:640px){.q24-hero,.q24-conn{flex-direction:column;align-items:flex-start}}
+/* Dashboard: bỏ Điều cần chú ý + Hoạt động mới, thu nhỏ Chất lượng tháng này */
+.dc-main.dc-main2{grid-template-columns:minmax(0,1fr) minmax(250px,320px)}
+.dc-main2 .dc-q{padding:10px 14px}.dc-main2 .dc-q h3{font-size:13.5px}
+.dc-main2 .dc-qrow{gap:10px}.dc-main2 .dc-qrow .dc-donut{width:62px;height:62px}.dc-main2 .dc-qrow .dc-leg{font-size:11.5px;gap:2px}.dc-main2 .dc-qrow .dc-meter{min-width:110px;font-size:12px}
+.dc-main2 .dc-q .vp-bar2{height:8px}
+@media (max-width:1100px){.dc-main.dc-main2{grid-template-columns:1fr}}
+</style>
+
+<style id="vsmd-mobile">
+/* ===== Giao diện điện thoại (chỉ khi html.vsmd-m; máy tính giữ nguyên) ===== */
+#vmTabs,#vmChips,#vmSheet{display:none}
+html.vsmd-m body{-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+html.vsmd-m .sb-resize{display:none}
+/* Đăng nhập */
+html.vsmd-m .login-screen{display:flex;grid-template-columns:1fr!important;align-items:center;justify-content:center;flex-direction:column;padding:20px 14px 70px!important;min-height:100vh;min-height:100dvh}
+html.vsmd-m .login-brand{display:none!important}
+html.vsmd-m .login-card{width:100%!important;max-width:440px!important;margin:0 auto!important;padding:26px 20px!important;border-radius:24px!important;box-sizing:border-box}
+html.vsmd-m .login-logo{flex-direction:column;align-items:center;text-align:center;gap:10px!important;margin-bottom:18px!important}
+html.vsmd-m .login-logo .vl-xl{width:84px;height:84px}
+html.vsmd-m .login-logo b{font-size:22px!important}
+html.vsmd-m .login-logo span{font-size:13px!important;line-height:1.5}
+html.vsmd-m .login-card input,html.vsmd-m .login-card select{font-size:16px;min-height:48px;box-sizing:border-box;width:100%}
+html.vsmd-m .login-card .btn{min-height:50px;font-size:16px;border-radius:14px}
+html.vsmd-m .login-copyright{position:static!important;margin:14px 0 0!important;text-align:center;font-size:11px;padding:0 8px}
+/* Khung và thanh trên */
+html.vsmd-m .sidebar,html.vsmd-m .sidebar.collapsed{width:min(86vw,320px)!important;position:fixed!important;left:0;top:0;height:100%!important;transform:translateX(-100%);z-index:90}
+html.vsmd-m .sidebar.open,html.vsmd-m .sidebar.collapsed.open{transform:translateX(0)}
+html.vsmd-m .sidebar-scrim{z-index:85}
+html.vsmd-m .sidebar .sidebar-toggle{display:none}
+html.vsmd-m .sidebar.collapsed .brand-text,html.vsmd-m .sidebar.collapsed .nav-group-label,html.vsmd-m .sidebar.collapsed .nav-item>span:not(.ic),html.vsmd-m .sidebar.collapsed .user-chip>div:not(.av),html.vsmd-m .sidebar.collapsed .sidebar-foot .btn{display:block}
+html.vsmd-m .main{width:100%;min-width:0}
+html.vsmd-m .header{height:54px;padding:0 10px!important;gap:8px;box-sizing:border-box;position:sticky;top:0;z-index:30}
+html.vsmd-m .hamburger{display:flex!important;width:40px;height:40px;align-items:center;justify-content:center;flex:none}
+html.vsmd-m .view-title{font-size:16px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
+html.vsmd-m .view-sub,html.vsmd-m .sys-status,html.vsmd-m .clock,html.vsmd-m .save-indicator span:last-child,html.vsmd-m #installAppBtn{display:none!important}
+html.vsmd-m .mod-bar{display:none!important}
+html.vsmd-m .app-copyright{margin-bottom:76px;font-size:10.5px}
+html.vsmd-m .content{padding:10px 12px calc(92px + env(safe-area-inset-bottom))!important;max-width:100%!important;box-sizing:border-box}
+html.vsmd-m .toast-stack{top:auto;bottom:calc(84px + env(safe-area-inset-bottom));left:12px;right:12px;max-width:none}
+/* Thanh chip điều hướng (như danh mục của app mua sắm) */
+html.vsmd-m #vmChips{display:block;position:sticky;top:54px;z-index:28;background:var(--bg);padding:8px 0 4px;margin:0 -2px}
+html.vsmd-m #vmChips .vm-row{display:flex;gap:8px;overflow-x:auto;padding:0 12px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+html.vsmd-m #vmChips .vm-row::-webkit-scrollbar{display:none}
+html.vsmd-m #vmChips .vm-row.sub{padding-top:2px}
+.vm-chip{flex:none;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:999px;padding:0 15px;min-height:40px;font:600 13.5px inherit;font-family:inherit;cursor:pointer;white-space:nowrap}
+.vm-chip svg{width:16px;height:16px;flex:none}
+.vm-chip.on{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 4px 12px -4px rgba(11,110,122,.55)}
+.vm-row.sub .vm-chip{min-height:34px;font-size:12.5px;background:var(--surface-3);border-color:transparent}
+.vm-row.sub .vm-chip.on{background:var(--primary-dark);color:#fff}
+/* Thanh tab dưới */
+html.vsmd-m #vmTabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--surface);border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -6px 22px rgba(8,40,48,.14);gap:2px}
+html.vsmd-m #vmTabs button{flex:1;min-width:0;border:0;background:transparent;color:var(--text-muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:14px;font:600 10.5px/1.1 inherit;font-family:inherit;cursor:pointer;min-height:52px}
+html.vsmd-m #vmTabs button svg{width:22px;height:22px}
+html.vsmd-m #vmTabs button[aria-current=page]{color:var(--primary-dark);background:var(--primary-tint)}
+html.vsmd-m #vmTabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Bảng "Thêm" kiểu lưới ô vuông */
+html.vsmd-m #vmSheet.open{display:block;position:fixed;inset:0;z-index:80}
+html.vsmd-m #vmSheet .vm-scrim{position:absolute;inset:0;background:rgba(8,20,28,.55);backdrop-filter:blur(2px)}
+html.vsmd-m #vmSheet .vm-panel{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;padding:10px 16px calc(86px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto;animation:vmUp .22s ease-out}
+@keyframes vmUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.vm-grab{width:44px;height:5px;border-radius:9px;background:var(--border-strong);margin:2px auto 12px}
+.vm-panel h4{margin:0 0 10px;font-size:15px}
+.vm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.vm-tile{border:1px solid var(--border);background:var(--surface-2);border-radius:18px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:8px;font:600 12.5px/1.2 inherit;font-family:inherit;color:var(--text);cursor:pointer;min-height:92px;text-align:center}
+.vm-tile svg{width:28px;height:28px;color:var(--primary)}
+.vm-tile.on{background:var(--primary-tint);border-color:var(--primary)}
+.vm-wide{display:flex;gap:8px;flex-wrap:wrap}.vm-wide .btn{flex:1;justify-content:center;min-height:46px}
+/* Thẻ, nút, ô nhập */
+html.vsmd-m .card{border-radius:18px}
+html.vsmd-m .card-head{flex-wrap:wrap;gap:8px;padding:12px 14px}
+html.vsmd-m .btn{min-height:44px;border-radius:12px}
+html.vsmd-m .btn.sm{min-height:40px}
+html.vsmd-m input,html.vsmd-m select,html.vsmd-m textarea{font-size:16px!important;min-height:44px;box-sizing:border-box}
+html.vsmd-m input[type=checkbox],html.vsmd-m input[type=radio]{min-height:0}
+html.vsmd-m .form-grid,html.vsmd-m .form-grid.c3,html.vsmd-m .two-col{grid-template-columns:1fr!important}
+html.vsmd-m .btn-row{flex-wrap:wrap}
+html.vsmd-m .table-wrap,html.vsmd-m .vp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+html.vsmd-m .vp-bar{gap:8px}html.vsmd-m .vp-bar input[type=search]{min-width:0;width:100%;flex:1 1 100%}
+html.vsmd-m .exp-bar{flex-wrap:wrap;gap:8px}
+/* Bảng danh sách dạng thẻ */
+html.vsmd-m .vp-table{display:block}html.vsmd-m .vp-table thead{display:none}
+html.vsmd-m .vp-table tbody{display:grid;gap:10px;padding:10px}
+html.vsmd-m .vp-table tr{display:block;border:1px solid var(--border);border-radius:16px;padding:6px 0;background:var(--surface)}
+html.vsmd-m .vp-table td{display:flex;justify-content:space-between;align-items:center;gap:12px;border:0;padding:6px 14px;text-align:right}
+html.vsmd-m .vp-table td[data-l]::before{content:attr(data-l);color:var(--text-muted);font-weight:600;text-align:left;flex:none}
+html.vsmd-m .vp-table td.vp-act{justify-content:flex-end;flex-wrap:wrap;padding-top:8px}
+html.vsmd-m .vp-table td.vp-empty{display:block;text-align:center}
+/* Dashboard */
+html.vsmd-m .dash-hero{grid-template-columns:1fr!important;padding:16px!important;border-radius:20px}
+html.vsmd-m .dash-hero h2{font-size:19px}
+html.vsmd-m .dh-sync{justify-content:flex-start;gap:6px}html.vsmd-m .dh-sync .btn{min-height:38px;font-size:12.5px;padding:7px 12px}
+html.vsmd-m .dc-strip,html.vsmd-m .vs-strip,html.vsmd-m .q24-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+html.vsmd-m .dc-tile{border-radius:18px;padding:12px 14px}html.vsmd-m .dc-tile b{font-size:26px}
+html.vsmd-m .dc-main,html.vsmd-m .dc-main.dc-main2,html.vsmd-m .dc-grid,html.vsmd-m .dc-halves{grid-template-columns:1fr!important}
+html.vsmd-m .dc{border-radius:18px}
+html.vsmd-m .sr{grid-template-columns:1fr auto!important}html.vsmd-m .sr-b{grid-column:1/-1;order:3}
+html.vsmd-m .dc-sum .sr>b{font-size:14px}
+html.vsmd-m .dc-link{min-height:84px}
+/* Hộp thoại / form thành bảng kéo từ dưới lên */
+html.vsmd-m .modal-backdrop{align-items:flex-end;padding:0}
+html.vsmd-m .modal{max-width:100%!important;border-radius:22px 22px 0 0;max-height:92vh}
+html.vsmd-m dialog{max-width:100vw}
+html.vsmd-m dialog.vs-dlg{width:100vw;max-width:100vw;max-height:94vh;margin:auto 0 0;border-radius:22px 22px 0 0}
+html.vsmd-m dialog.vs-dlg .vs-form{max-height:94vh}
+html.vsmd-m dialog.vs-dlg .vs-grid,html.vsmd-m dialog.vs-dlg .vs-checks{grid-template-columns:1fr}
+html.vsmd-m dialog.vs-dlg .vs-r5{grid-template-columns:repeat(3,minmax(0,1fr))}
+html.vsmd-m dialog.vs-dlg .vs-foot .btn{flex:1;justify-content:center}
+html.vsmd-m dialog.vp-cmd{margin-top:8vh}
+/* Module QĐ-2429, Dung lượng */
+html.vsmd-m .q24-hero,html.vsmd-m .q24-conn{flex-direction:column;align-items:flex-start}
+html.vsmd-m .q24-btn{width:100%;box-sizing:border-box}
+html.vsmd-m .sg-card{max-width:100%}
+html.vsmd-m .sg-num{font-size:26px}
+@media print{#vmTabs,#vmChips,#vmSheet{display:none!important}}
+</style>
+
 </head>
 <body>
 
@@ -1723,6 +1881,8 @@ function vsmdNoIdentity(o){
   }
   return o;
 }
+/* Nhật ký chỉ hiển thị trên app trong phiên làm việc, KHÔNG lưu vào máy/Supabase (tiết kiệm dung lượng). */
+function vsmdStateNoAudit(){ if(!state||typeof state!=='object') return state; const o=Object.assign({},state); delete o.audit; return o; }
 function vsmdKeepIdentity(key,payload){
   const id=window.__vsmdIdentity;
   if(key==='settings' && id && payload && typeof payload==='object') return Object.assign({},payload,{currentUser:id.user,currentRole:id.role});
@@ -1845,6 +2005,7 @@ function cloudIdsOf(arr){
 function cloudExplode(st){
   const rows=new Map(), order={};
   CLOUD_RECORD_COLLECTIONS.forEach(c=>{
+    if(c==='audit'){ order[c]=[]; return; }   /* Nhật ký không lưu vào hệ thống */
     const arr=Array.isArray(st[c])?st[c]:[]; const ids=cloudIdsOf(arr); order[c]=[];
     arr.forEach((it,i)=>{ if(ids[i]===null) return; order[c].push(ids[i]); rows.set(c+'|'+ids[i],{collection:c,record_id:ids[i],payload:it,hash:cloudHash(it)}); });
   });
@@ -1870,7 +2031,7 @@ function cloudAssemble(rows){
     if(r.collection==='_kv'){ if(r.record_id===CLOUD_ORDER_KEY) order=r.payload; else st[r.record_id]=r.payload; }
     else (byColl[r.collection]||(byColl[r.collection]=[])).push(r);
   });
-  CLOUD_RECORD_COLLECTIONS.forEach(c=>{ st[c]=cloudOrderRows(c,byColl[c]||[],order&&order[c]).map(r=>r.payload); });
+  CLOUD_RECORD_COLLECTIONS.forEach(c=>{ st[c]=(c==='audit')?[]:cloudOrderRows(c,byColl[c]||[],order&&order[c]).map(r=>r.payload); });
   Object.keys(byColl).forEach(c=>{ if(!CLOUD_RECORD_COLLECTIONS.includes(c)) delete byColl[c]; });
   return st;
 }
@@ -1891,7 +2052,7 @@ async function cloudLoadLegacy(){
   return null;
 }
 async function cloudPersistLegacy(){
-  const payload=vsmdNoIdentity(JSON.parse(JSON.stringify(state)));
+  const payload=vsmdNoIdentity(JSON.parse(JSON.stringify(vsmdStateNoAudit())));
   const hash=cloudHash(payload);
   const {error}=await supabaseClient.from('smartqc_shared_state').upsert({workspace_id:cloudWorkspaceId(),payload,updated_at:new Date().toISOString()},{onConflict:'workspace_id'});
   if(error) throw error;
@@ -2125,7 +2286,7 @@ async function cloudSyncAfterLogin(localSt){
     else return false;
     vsmdRestoreIdentity();
     migrateState();
-    await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
+    await storageAdapter.set(STORAGE_KEY,JSON.stringify(vsmdStateNoAudit()),false);
     let pushed=false;
     try{ await cloudPersistState(); pushed=true; }catch(e){ console.error('Supabase push error',e); }
     cloudLastPushOk=pushed;
@@ -2262,6 +2423,7 @@ function cloudReorderLocal(c,ids){
 function cloudOnRecordEvent(p){
   if(cloudMode!=='records') return;
   const row=p&&p.new; if(!row || !state || !row.collection) return;
+  if(row.collection==='audit') return;   /* Nhật ký không đồng bộ */
   const key=row.collection+'|'+row.record_id;
   if(row.deleted){ if(!cloudSnap.has(key)) return; }
   else if(row.payload!==undefined && cloudSnap.get(key)===cloudHash(row.payload)) return; /* bản của chính máy này */
@@ -2306,7 +2468,7 @@ async function cloudApplyPending(){
       if(r.deleted){ delete state[r.record_id]; cloudSnap.delete(key); } else { state[r.record_id]=vsmdKeepIdentity(r.record_id,r.payload); cloudSnap.set(key,h); }
       changed=true; return;
     }
-    const c=r.collection; if(!CLOUD_RECORD_COLLECTIONS.includes(c)) return;
+    const c=r.collection; if(!CLOUD_RECORD_COLLECTIONS.includes(c)||c==='audit') return;
     if(!Array.isArray(state[c])) state[c]=[];
     const ids=cloudIdsOf(state[c]); const i=ids.indexOf(r.record_id);
     if(i>=0){
@@ -2321,7 +2483,7 @@ async function cloudApplyPending(){
   if(!changed) return;
   if(localClsDraft) state.clsDraft=localClsDraft;
   migrateState();
-  await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
+  await storageAdapter.set(STORAGE_KEY,JSON.stringify(vsmdStateNoAudit()),false);
   cloudSaveSyncSnap();
   if(typeof currentView!=='undefined' && currentView){
     renderNav();
@@ -2383,7 +2545,7 @@ async function applyCloudRemote(remote,h,notify){
   state=remote; vsmdRestoreIdentity();
   if(localClsDraft) state.clsDraft=localClsDraft;
   migrateState(); lastCloudHash=h;
-  await storageAdapter.set(STORAGE_KEY,JSON.stringify(state),false);
+  await storageAdapter.set(STORAGE_KEY,JSON.stringify(vsmdStateNoAudit()),false);
   if(typeof currentView!=='undefined' && currentView){
     renderNav();
     /* Đang mở phiếu CLS hoặc đang nhập chưa lưu: KHÔNG vẽ lại màn hình (tránh mất dữ liệu đang nhập). Dữ liệu đồng bộ đã được cập nhật trong bộ nhớ. */
@@ -2748,6 +2910,7 @@ async function loadState(){
   /* Nếu lớp lưu chính trống/lỗi (ví dụ sau khi mã nguồn được cập nhật), phục hồi
      từ bản sao lưu độc lập trước khi khởi tạo dữ liệu mới. */
   if(!localState) localState=readEmergencyBackup();
+  if(localState && typeof localState==='object') localState.audit=[];   /* Nhật ký chỉ hiển thị trong phiên, không nạp lại từ bộ nhớ */
   await initCloud();
   if(cloudUser){
     try{
@@ -2806,7 +2969,7 @@ async function persistNow(retriesLeft){
     else{ saveQueuedWhileBusy=true; return; }
   }
   isSaving=true; saveStartedAt=Date.now();
-  const payload=JSON.stringify(state);
+  const payload=JSON.stringify(vsmdStateNoAudit());
   /* Ghi backup trước lớp lưu chính để luôn có một bản sao mới nhất nếu trang bị reload
      hoặc mã nguồn được thay thế ngay sau thao tác nhập liệu. */
   writeEmergencyBackup(payload);
@@ -2861,7 +3024,7 @@ async function persistNow(retriesLeft){
 /* Chốt backup đồng bộ ngay trước khi rời trang/reload, không chờ debounce 500ms. */
 function backupBeforePageExit(){
   try{
-    if(typeof state!=='undefined' && state) writeEmergencyBackup(JSON.stringify(state));
+    if(typeof state!=='undefined' && state) writeEmergencyBackup(JSON.stringify(vsmdStateNoAudit()));
   }catch(e){}
 }
 window.addEventListener('beforeunload',backupBeforePageExit);
@@ -3415,7 +3578,7 @@ const VIEW_META={
   'external-qc':['Ngoại kiểm','Theo dõi và đánh giá kết quả ngoại kiểm — Ngoại kiểm MD và Ngoại kiểm VS'],
   'reports-cls':['Báo cáo trực CLS','SỔ GHI CHÉP THƯỜNG TRỰC — XN Vi sinh - Miễn dịch'],
   'duty-summary':['Tổng hợp trực & Ngoài giờ','Tổng hợp Ngày trực, Ngày làm ngoài giờ, Nghỉ bù, Nghỉ phép theo từng nhân viên — lấy từ Báo cáo trực CLS'],
-  audit:['Nhật ký','Lịch sử thao tác — không thể chỉnh sửa hoặc xoá'],
+  audit:['Nhật ký','Lịch sử thao tác — chỉ hiển thị trên ứng dụng trong phiên làm việc, không lưu vào hệ thống'],
   users:['Người dùng','Danh sách người dùng hệ thống'],
   system:['Hệ thống','Cấu hình chung']
 };
@@ -5222,7 +5385,7 @@ function renderAudit(){
   const el=document.getElementById('view-audit');
   el.innerHTML=`
     <div class="card">
-      <div class="card-head"><h3>Audit Trail</h3><span class="hint">Chỉ ghi thao tác quan trọng · đăng nhập tính 1 lần mỗi người mỗi ngày</span>${['Trưởng khoa','Quản trị hệ thống'].includes((state.settings||{}).currentRole)?'<button class="btn sm" onclick="audCleanup()">Gọn nhật ký</button>':''}</div>
+      <div class="card-head"><h3>Audit Trail</h3><span class="hint">Chỉ hiển thị trên ứng dụng trong phiên làm việc này · không lưu vào hệ thống · đăng nhập tính 1 lần mỗi người mỗi ngày</span>${['Trưởng khoa','Quản trị hệ thống'].includes((state.settings||{}).currentRole)?'<button class="btn sm" onclick="audCleanup()">Gọn nhật ký</button>':''}</div>
       <div class="table-wrap"><table><thead><tr><th>Thời gian</th><th>Người dùng</th><th>Hành động</th><th>Chi tiết</th></tr></thead><tbody>
       ${auditVisibleRows().slice(0,1000).map(a=>`<tr><td class="mono">${new Date(a.time).toLocaleString('vi-VN')}</td><td>${escapeHtml(a.user||'—')}</td><td><span class="tag">${escapeHtml(a.action)}</span></td><td style="color:var(--text-muted)">${escapeHtml(a.detail||'')}</td></tr>`).join('') || `<tr><td colspan="4" class="tbl-empty">Chưa có lịch sử</td></tr>`}
       </tbody></table></div>
@@ -18235,7 +18398,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
 /* ===== SMART VSMD PLUS: phân hệ, module nghiệp vụ mới, tìm nhanh ===== */
 (function(){
 'use strict';
-const BUILD='bản 17/11/2026-b13';try{if(localStorage.getItem('vsmd_build')!==BUILD){localStorage.setItem('vsmd_build',BUILD);if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(r=>r.forEach(x=>x.unregister())).catch(()=>{});if(window.caches&&caches.keys)caches.keys().then(k=>k.forEach(x=>caches.delete(x))).catch(()=>{});}}catch(x){}
+const BUILD='bản 18/11/2026-b14';try{if(localStorage.getItem('vsmd_build')!==BUILD){localStorage.setItem('vsmd_build',BUILD);if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(r=>r.forEach(x=>x.unregister())).catch(()=>{});if(window.caches&&caches.keys)caches.keys().then(k=>k.forEach(x=>caches.delete(x))).catch(()=>{});}}catch(x){}
 const e=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const FULL=NAV.slice(), flat={}, parent={};
 FULL.forEach(g=>g.items.forEach(i=>{flat[i.id]=i;(i.children||[]).forEach(c=>parent[c.id]=i.id);}));
@@ -18252,7 +18415,7 @@ const REG={
   f:[['name','Nhân sự','text'],['topic','Nội dung / thiết bị','text'],['date','Ngày đào tạo','date'],['next','Hạn đánh giá lại','date'],['result','Kết quả','select',['Đạt','Cần đào tạo thêm']]],due:r=>r.next},
  docs:{label:'Văn bản & hồ sơ',sub:'Quy trình, biểu mẫu, hướng dẫn — theo dõi hiệu lực',icon:iconDoc(),
   f:[['code','Số hiệu','text'],['name','Tên tài liệu','text'],['type','Loại','select',['Quy trình','Biểu mẫu','Hướng dẫn','Công văn']],['issued','Ngày ban hành','date'],['next','Hiệu lực đến','date'],['link','Liên kết','text']],due:r=>r.next},
- impact:{label:'Hiệu quả sáng kiến',sub:'So sánh trước và sau khi áp dụng SMART VSMD — dữ liệu cho hồ sơ sáng kiến',icon:iconTrend(),
+ impact:{label:'Đánh giá hiệu quả',sub:'So sánh trước và sau khi áp dụng SMART VSMD — dữ liệu cho hồ sơ cải tiến chất lượng',icon:iconTrend(),
   f:[['metric','Chỉ số','text'],['unit','Đơn vị','text'],['before','Trước','number'],['after','Sau','number'],['dir','Tốt hơn khi','select',['Giảm','Tăng']]],
   calc:[['Cải thiện',r=>{const b=+r.before,a=+r.after;if(!b||r.after===''||r.after==null)return '—';const p=(r.dir==='Tăng'?(a-b):(b-a))/b*100;return (p>=0?'+':'')+p.toFixed(0)+'%';}]]}
 };
@@ -18263,7 +18426,7 @@ const MODS=[
  {id:'chem',n:'Hóa chất',go:'chemical-md',g:[['Hóa chất',['chemical-md','chemical-vs']],['Lot & danh mục',['lots','rapidwater-lots','tests']]]},
  {id:'equip',n:'Thiết bị',go:'equipment',g:[['Thiết bị',['machines','equipment']]]},
  {id:'ops',n:'Vận hành',go:'tasks',g:[['Công việc',['tasks']],['Trực',['reports-cls']],['Nhân sự & hồ sơ',['staff','docs']]]},
- {id:'report',n:'Báo cáo',go:'reports',g:[['Báo cáo',['reports']],['Kết nối',['whonet']],['Sáng kiến',['impact']]]},
+ {id:'report',n:'Báo cáo',go:'reports',g:[['Báo cáo',['reports']],['Kết nối',['whonet']],['Quản trị cải tiến',['impact']]]},
  {id:'admin',n:'Quản trị',go:'users',g:[['Hệ thống',['users','system','audit']]]}];
 Object.keys(REG).forEach(k=>{flat[k]={id:k,label:REG[k].label,icon:REG[k].icon};VIEW_META[k]=[REG[k].label,REG[k].sub];});
 const modOf=v=>{const id=parent[v]||v;const m=MODS.find(m=>m.g.some(g=>g[1].includes(id)));return m?m.id:null;};
@@ -18314,22 +18477,25 @@ VP.cmd=()=>{const d=dlg('vpCmd');d.className='vp-cmd';d.innerHTML='<input id="vp
   I.oninput=draw;I.onkeydown=ev=>{if(ev.key==='Enter')run(L.firstElementChild);if(ev.key==='ArrowDown'&&L.firstElementChild)L.firstElementChild.focus();};
   L.onclick=ev=>run(ev.target.closest('li'));L.onkeydown=ev=>{const li=ev.target.closest('li');if(ev.key==='Enter')run(li);if(ev.key==='ArrowDown'&&li.nextElementSibling)li.nextElementSibling.focus();if(ev.key==='ArrowUp')(li.previousElementSibling||I).focus();};draw();I.focus();};
 document.addEventListener('keydown',ev=>{if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==='k'&&document.getElementById('app').style.display!=='none'){ev.preventDefault();VP.cmd();}});
-/* ===== PLUS 2: kiểm soát dung lượng 5 MB + hiệu quả sáng kiến tự tính ===== */
-const QUOTA=5*1024*1024, SAFE=0.8;
-const COLL=[['results','QC miễn dịch'],['virologyTCResults','Vi sinh (TC)'],['virologyTDResults','Vi sinh (TĐ)'],['rapidWaterResults','Test nhanh & nước'],['audit','Nhật ký'],['alerts','Cảnh báo đã xử lý']];
+/* ===== PLUS 2: kiểm soát dung lượng (Supabase Free 500 MB) + hiệu quả cải tiến tự tính ===== */
+const QUOTA=500*1024*1024, SAFE=0.8;
+const COLL=[['results','QC miễn dịch'],['virologyTCResults','Vi sinh (TC)'],['virologyTDResults','Vi sinh (TĐ)'],['rapidWaterResults','Test nhanh & nước'],['alerts','Cảnh báo đã xử lý']];
+/* Chỉ tính dung lượng dữ liệu quan trọng (không gồm Nhật ký, bản nháp, cài đặt tạm) */
+const IMPK=['results','virologyTCResults','virologyTDResults','rapidWaterResults','rapidWaterSheet','qcDyeMedia','qcReagent','chemicalMD','chemicalVS','externalQC','clsReports','alerts','lots','configs','machines','tests','rapidWaterTests','rapidWaterLots','virologyLots','virologyTDProfiles','vsmdReg','vsmdDocs','vsmdTestsVS'];
+const impState=()=>{const o={};IMPK.forEach(k=>{if(state&&state[k]!==undefined&&state[k]!==null)o[k]=state[k];});return o;};
 const dateOf=r=>String((r&&(r.date||r.qcDate||r.testStart||r.datetime||r.createdAt||r.time))||'').slice(0,10);
 const bytes=o=>{try{return new Blob([JSON.stringify(o)]).size;}catch(x){return 0;}};
 const mb=n=>(n/1048576).toFixed(2);
 let szCache={t:0,v:0};
-const size=(force)=>{if(force||Date.now()-szCache.t>30000)szCache={t:Date.now(),v:bytes(state)};return szCache.v;};
+const size=(force)=>{if(force||Date.now()-szCache.t>30000)szCache={t:Date.now(),v:bytes(impState())};return szCache.v;};
 const level=p=>p>=0.9?'bad':p>=SAFE?'warn':'ok';
 const _qs=queueSave;let warned=false;
-queueSave=function(){_qs.apply(this,arguments);try{const p=size()/QUOTA;if(p>=SAFE&&!warned){warned=true;toast('warning','Dữ liệu gần đầy','Đã dùng '+Math.round(p*100)+'% hạn mức 5 MB. Vào Quản trị → Dung lượng & lưu trữ để sao lưu và dọn dữ liệu cũ.');}}catch(x){}};
+queueSave=function(){_qs.apply(this,arguments);try{const p=size()/QUOTA;if(p>=SAFE&&!warned){warned=true;toast('warning','Dữ liệu gần đầy','Đã dùng '+Math.round(p*100)+'% dung lượng database 500 MB (Supabase Free). Vào Quản trị → Dung lượng & lưu trữ để sao lưu và dọn dữ liệu cũ.');}}catch(x){}};
 const A=MODS.find(m=>m.id==='admin');A.g[0][1].push('storage');
 flat.storage={id:'storage',label:'Dung lượng & lưu trữ',icon:iconBox()};
-VIEW_META.storage=['Dung lượng & lưu trữ','Theo dõi hạn mức 5 MB, sao lưu và dọn dữ liệu cũ có kiểm soát'];
+VIEW_META.storage=['Dung lượng & lưu trữ','Giới hạn gói Supabase Free và dung lượng dữ liệu quan trọng đang dùng'];
 const dl=(name,obj)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:'application/json'}));a.download=name;a.click();};
-VP.backup=()=>dl('smart-vsmd-backup-'+todayISO()+'.json',state);
+VP.backup=()=>dl('smart-vsmd-backup-'+todayISO()+'.json',vsmdStateNoAudit());
 VP.purge=()=>{if(!isAdm()){toast('warning','Không đủ quyền','Chỉ Trưởng khoa hoặc Quản trị hệ thống được dọn dữ liệu.');return;}
   const m=+document.getElementById('vpMon').value||12,c=new Date();c.setMonth(c.getMonth()-m);const cut=c.toISOString().slice(0,10),out={},keep=(k,r)=>{const d=dateOf(r);return !d||d>=cut||(k==='alerts'&&!r.resolved);};
   let n=0;COLL.forEach(([k])=>{const a=Array.isArray(state[k])?state[k]:[];const old=a.filter(r=>!keep(k,r));if(old.length){out[k]=old;n+=old.length;}});
@@ -18339,13 +18505,23 @@ VP.purge=()=>{if(!isAdm()){toast('warning','Không đủ quyền','Chỉ Trưở
   Object.keys(out).forEach(k=>{state[k]=state[k].filter(r=>keep(k,r));});
   (state.audit=state.audit||[]).unshift({id:uid('AU'),time:new Date().toISOString(),user:(state.settings&&state.settings.currentUser)||'',action:'Dọn dữ liệu cũ',detail:n+' bản ghi trước '+cut+' đã sao lưu ra file'});
   queueSave();size(true);warned=false;go('storage');toast('success','Đã dọn dữ liệu',n+' bản ghi đã sao lưu và xóa.');};
-const VNK=k=>({audit:'Nhật ký hoạt động',chemicalMD:'Hóa chất Miễn dịch',chemicalVS:'Hóa chất Vi sinh',clsReports:'Báo cáo trực CLS',clsDraft:'Phiếu trực đang soạn',virologyTCResults:'QC Vi sinh thủ công',virologyTDResults:'QC Vi sinh tự động',virologyTDProfiles:'Mapping xét nghiệm Vi sinh tự động',virologyLots:'Lot QC Vi sinh',qcDyeMedia:'QC thuốc nhuộm và môi trường',qcReagent:'QC thuốc thử',results:'Kết quả QC miễn dịch',rapidWaterResults:'Kết quả QC test nhanh và test nước',rapidWaterLots:'Lot test nhanh và test nước',rapidWaterTests:'Xét nghiệm test nhanh và test nước',lots:'Lot QC miễn dịch',tests:'Xét nghiệm miễn dịch',machines:'Máy xét nghiệm',alerts:'Cảnh báo',configs:'Cấu hình',users:'Người dùng',settings:'Cài đặt',externalQC:'Ngoại kiểm',vsmdReg:'Dữ liệu module bổ sung',vsmdDocs:'Danh sách tài liệu',vsmdMachineStatus:'Trạng thái thiết bị',vsmdImpactCfg:'Giả định hiệu quả sáng kiến',cvsFilter:'Bộ lọc hóa chất Vi sinh'}[k]?({audit:'Nhật ký hoạt động',chemicalMD:'Hóa chất Miễn dịch',chemicalVS:'Hóa chất Vi sinh',clsReports:'Báo cáo trực CLS',clsDraft:'Phiếu trực đang soạn',virologyTCResults:'QC Vi sinh thủ công',virologyTDResults:'QC Vi sinh tự động',virologyTDProfiles:'Mapping xét nghiệm Vi sinh tự động',virologyLots:'Lot QC Vi sinh',qcDyeMedia:'QC thuốc nhuộm và môi trường',qcReagent:'QC thuốc thử',results:'Kết quả QC miễn dịch',rapidWaterResults:'Kết quả QC test nhanh và test nước',rapidWaterLots:'Lot test nhanh và test nước',rapidWaterTests:'Xét nghiệm test nhanh và test nước',lots:'Lot QC miễn dịch',tests:'Xét nghiệm miễn dịch',machines:'Máy xét nghiệm',alerts:'Cảnh báo',configs:'Cấu hình',users:'Người dùng',settings:'Cài đặt',externalQC:'Ngoại kiểm',vsmdReg:'Dữ liệu module bổ sung',vsmdDocs:'Danh sách tài liệu',vsmdMachineStatus:'Trạng thái thiết bị',vsmdImpactCfg:'Giả định hiệu quả sáng kiến',cvsFilter:'Bộ lọc hóa chất Vi sinh'}[k]):'Dữ liệu khác')+' ('+k+')';
+const VNK=k=>({audit:'Nhật ký hoạt động',chemicalMD:'Hóa chất Miễn dịch',chemicalVS:'Hóa chất Vi sinh',clsReports:'Báo cáo trực CLS',clsDraft:'Phiếu trực đang soạn',virologyTCResults:'QC Vi sinh thủ công',virologyTDResults:'QC Vi sinh tự động',virologyTDProfiles:'Mapping xét nghiệm Vi sinh tự động',virologyLots:'Lot QC Vi sinh',qcDyeMedia:'QC thuốc nhuộm và môi trường',qcReagent:'QC thuốc thử',results:'Kết quả QC miễn dịch',rapidWaterResults:'Kết quả QC test nhanh và test nước',rapidWaterLots:'Lot test nhanh và test nước',rapidWaterTests:'Xét nghiệm test nhanh và test nước',lots:'Lot QC miễn dịch',tests:'Xét nghiệm miễn dịch',machines:'Máy xét nghiệm',alerts:'Cảnh báo',configs:'Cấu hình',users:'Người dùng',settings:'Cài đặt',externalQC:'Ngoại kiểm',vsmdReg:'Dữ liệu module bổ sung',vsmdDocs:'Danh sách tài liệu',vsmdMachineStatus:'Trạng thái thiết bị',vsmdImpactCfg:'Giả định hiệu quả cải tiến',cvsFilter:'Bộ lọc hóa chất Vi sinh'}[k]?({audit:'Nhật ký hoạt động',chemicalMD:'Hóa chất Miễn dịch',chemicalVS:'Hóa chất Vi sinh',clsReports:'Báo cáo trực CLS',clsDraft:'Phiếu trực đang soạn',virologyTCResults:'QC Vi sinh thủ công',virologyTDResults:'QC Vi sinh tự động',virologyTDProfiles:'Mapping xét nghiệm Vi sinh tự động',virologyLots:'Lot QC Vi sinh',qcDyeMedia:'QC thuốc nhuộm và môi trường',qcReagent:'QC thuốc thử',results:'Kết quả QC miễn dịch',rapidWaterResults:'Kết quả QC test nhanh và test nước',rapidWaterLots:'Lot test nhanh và test nước',rapidWaterTests:'Xét nghiệm test nhanh và test nước',lots:'Lot QC miễn dịch',tests:'Xét nghiệm miễn dịch',machines:'Máy xét nghiệm',alerts:'Cảnh báo',configs:'Cấu hình',users:'Người dùng',settings:'Cài đặt',externalQC:'Ngoại kiểm',vsmdReg:'Dữ liệu module bổ sung',vsmdDocs:'Danh sách tài liệu',vsmdMachineStatus:'Trạng thái thiết bị',vsmdImpactCfg:'Giả định hiệu quả cải tiến',cvsFilter:'Bộ lọc hóa chất Vi sinh'}[k]):'Dữ liệu khác')+' ('+k+')';
 function renderStorage(){const el=document.getElementById('view-storage'),t=size(true),p=t/QUOTA,lv=level(p);
-  const rowsH=Object.keys(state).map(k=>[k,bytes(state[k]),Array.isArray(state[k])?state[k].length:'']).sort((a,b)=>b[1]-a[1]).slice(0,10).map(x=>`<tr><td>${e(VNK(x[0]))}</td><td>${x[2]}</td><td>${(x[1]/1024).toFixed(1)} KB</td><td><div class="vp-mini"><i style="width:${Math.min(100,x[1]/t*100).toFixed(0)}%"></i></div></td></tr>`).join('');
-  el.innerHTML=`<section class="card vp-meter"><div class="vp-big"><b>${mb(t)}</b> / 5 MB <span class="vp-chip ${lv}">${Math.round(p*100)}%</span></div><div class="vp-bar2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p*100)}" aria-label="Dung lượng đã dùng"><i class="${lv}" style="width:${Math.min(100,p*100)}%"></i></div><p class="vp-sum">Ước tính theo kích thước dữ liệu app. Ngưỡng cảnh báo ${Math.round(SAFE*100)}%. Ảnh và tệp lớn không lưu trong dữ liệu; app chỉ lưu số liệu dạng văn bản.</p>
+  const grp=Object.keys(impState()).map(k=>[k,bytes(state[k]),Array.isArray(state[k])?state[k].length:'']).filter(x=>x[1]>2).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const kb=n=>n>=1048576?(n/1048576).toFixed(2)+' MB':(n/1024).toFixed(1)+' KB';
+  const lim=[['Tài khoản đăng nhập','Không giới hạn tổng số'],['Người dùng hoạt động/tháng','50.000'],['Băng thông','5 GB/tháng'],['Kích thước tải lên mỗi file','50 MB'],['Số project miễn phí','2'],['Sao lưu tự động','Không có']];
+  const rowsH=grp.map(x=>`<tr><td data-l="Nhóm dữ liệu">${e(VNK(x[0]))}</td><td data-l="Số bản ghi">${x[2]}</td><td data-l="Dung lượng">${kb(x[1])}</td><td data-l="Tỷ trọng"><div class="vp-mini"><i style="width:${Math.min(100,x[1]/Math.max(1,t)*100).toFixed(0)}%"></i></div></td></tr>`).join('');
+  el.innerHTML=`<h3 class="sg-h">1. Dung lượng Supabase Free hiện tại</h3>
+  <section class="card sg-card" aria-label="Giới hạn gói Supabase Free">
+    <div class="sg-blk"><div class="sg-top"><b>Database</b><span class="sg-pill">Miễn phí</span></div><div class="sg-num">500 MB</div><div class="sg-sub">Mỗi project</div></div>
+    <div class="sg-blk"><div class="sg-top"><b>File Storage</b><span class="sg-pill">Miễn phí</span></div><div class="sg-num">1 GB</div><div class="sg-sub">Dung lượng lưu trữ file</div></div>
+    <table class="sg-tbl"><thead><tr><th scope="col">Hạng mục</th><th scope="col">Giới hạn</th></tr></thead><tbody>${lim.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table>
+  </section>
+  <h3 class="sg-h">2. Dữ liệu ứng dụng đang dùng</h3>
+  <section class="card vp-meter"><div class="vp-big"><b>${mb(t)}</b> / 500 MB <span class="vp-chip ${lv}">${p<0.01?'<1':Math.round(p*100)}%</span></div><div class="vp-bar2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p*100)}" aria-label="Dung lượng database đã dùng"><i class="${lv}" style="width:${Math.max(p>0?1:0,Math.min(100,p*100))}%"></i></div><p class="vp-sum">Ước tính, chỉ tính dữ liệu quan trọng: kết quả QC, hóa chất, Lot, ngoại kiểm, báo cáo trực, cảnh báo, danh mục và sổ phiếu. Không tính Nhật ký (chỉ hiển thị trên app, không lưu vào hệ thống), bản nháp và file tài liệu lưu trên thiết bị. Ngưỡng cảnh báo ${Math.round(SAFE*100)}%.</p>
   <div class="vp-bar"><button class="btn" onclick="VP.backup()">Sao lưu toàn bộ (JSON)</button><span style="flex:1"></span><label class="vp-sum">Dọn bản ghi cũ hơn <input id="vpMon" type="number" min="3" value="12" style="width:64px"> tháng</label><button class="btn primary" onclick="VP.purge()">Sao lưu và dọn</button></div></section>
-  <div class="card vp-wrap"><table class="vp-table"><thead><tr><th scope="col">Nhóm dữ liệu</th><th scope="col">Số bản ghi</th><th scope="col">Dung lượng</th><th scope="col">Tỷ trọng</th></tr></thead><tbody>${rowsH}</tbody></table></div>`;}
-/* ----- Hiệu quả sáng kiến tự tính từ dữ liệu thật ----- */
+  <div class="card vp-wrap"><table class="vp-table"><thead><tr><th scope="col">Nhóm dữ liệu quan trọng</th><th scope="col">Số bản ghi</th><th scope="col">Dung lượng</th><th scope="col">Tỷ trọng</th></tr></thead><tbody>${rowsH||'<tr><td colspan="4" class="vp-empty">Chưa có dữ liệu.</td></tr>'}</tbody></table></div>`;}
+/* ----- Hiệu quả cải tiến tự tính từ dữ liệu thật ----- */
 const CFG0={minEntry:3,hrReport:6,pages:0.6,page$:350,wage:70000};
 const cfg=()=>Object.assign({},CFG0,state.vsmdImpactCfg||{});
 function stats(){const arr=(x)=>Array.isArray(x)?x:[],q=state.qcDyeMedia||{};
@@ -18362,15 +18538,15 @@ function renderImpactTop(){const el=document.getElementById('view-impact'),s=sta
   el.insertAdjacentHTML('afterbegin',`<section class="vp-imp"><div class="vp-kpis"><div class="card vp-k"><span>Bản ghi QC đã số hóa</span><b>${s.rec.toLocaleString('vi-VN')}</b></div><div class="card vp-k"><span>Giờ công tiết kiệm (ước tính)</span><b>${s.hours.toFixed(0)} giờ</b></div><div class="card vp-k"><span>Quy đổi chi phí</span><b>${vnd(s.money)}</b></div><div class="card vp-k"><span>Giấy in giảm</span><b>${s.pages.toLocaleString('vi-VN')} trang</b></div><div class="card vp-k"><span>Cảnh báo tự động phát hiện</span><b>${s.alerts}</b></div><div class="card vp-k"><span>Ngoại kiểm, sự cố, hồ sơ đã quản lý</span><b>${s.ext+s.reg}</b></div></div>
   <div class="vp-two"><div class="card vp-pad"><h3>Số bản ghi theo tháng</h3>${ks.length?`<svg viewBox="0 0 312 104" role="img" aria-label="Số bản ghi QC theo tháng" style="width:100%;max-width:520px">${bars}</svg>`:'<p class="vp-empty">Chưa có dữ liệu để vẽ biểu đồ.</p>'}</div>
   <div class="card vp-pad"><h3>Giả định quy đổi (chỉnh theo thực tế khoa)</h3><div class="vp-cfs">${inp('minEntry','Phút tiết kiệm mỗi lượt nhập QC')}${inp('hrReport','Giờ tiết kiệm mỗi báo cáo tháng')}${inp('pages','Trang giấy mỗi bản ghi')}${inp('page$','Chi phí mỗi trang (đ)')}${inp('wage','Chi phí giờ công (đ)')}</div><p class="vp-sum">Số bản ghi và cảnh báo lấy trực tiếp từ dữ liệu app. Giờ công và chi phí là ước tính theo giả định ở đây; hãy đối chiếu bằng số đo thực tế trong bảng bên dưới trước khi nộp hồ sơ.</p></div></div>
-  <div class="card vp-pad"><h3>Điểm mới và khả năng nhân rộng</h3><ul class="vp-ul"><li>Một ứng dụng duy nhất thay cho nhiều sổ giấy và file Excel rời: QC, hóa chất, thiết bị, hồ sơ, nhân sự, công việc.</li><li>Tự kiểm tra quy tắc Westgard và cảnh báo ngay khi nhập kết quả.</li><li>Truy vết đầy đủ bằng nhật ký thao tác và phân quyền theo vai trò, thuận tiện khi kiểm tra và đánh giá.</li><li>Dùng được trên điện thoại, có chế độ ngoại tuyến, không cần cài đặt máy chủ.</li><li>Dữ liệu được giới hạn trong 5 MB, có sao lưu và dọn tự động có kiểm soát nên chi phí vận hành bằng 0.</li><li>Nhân rộng: các khoa xét nghiệm khác chỉ cần đổi danh mục máy và xét nghiệm.</li></ul><div class="vp-bar"><button class="btn primary" onclick="VP.report()">Xuất báo cáo hiệu quả (in / PDF)</button></div></div></section><h3 class="vp-h3">Bảng đo trước và sau khi áp dụng</h3>`);}
+  <div class="card vp-pad"><h3>Điểm mới và khả năng nhân rộng</h3><ul class="vp-ul"><li>Một ứng dụng duy nhất thay cho nhiều sổ giấy và file Excel rời: QC, hóa chất, thiết bị, hồ sơ, nhân sự, công việc.</li><li>Tự kiểm tra quy tắc Westgard và cảnh báo ngay khi nhập kết quả.</li><li>Truy vết đầy đủ bằng nhật ký thao tác và phân quyền theo vai trò, thuận tiện khi kiểm tra và đánh giá.</li><li>Dùng được trên điện thoại, có chế độ ngoại tuyến, không cần cài đặt máy chủ.</li><li>Dữ liệu chỉ lưu số liệu dạng văn bản (không lưu nhật ký, ảnh, tệp lớn) trong hạn mức Supabase Free 500 MB, có sao lưu và dọn có kiểm soát nên chi phí vận hành bằng 0.</li><li>Nhân rộng: các khoa xét nghiệm khác chỉ cần đổi danh mục máy và xét nghiệm.</li></ul><div class="vp-bar"><button class="btn primary" onclick="VP.report()">Xuất báo cáo hiệu quả (in / PDF)</button></div></div></section><h3 class="vp-h3">Bảng đo trước và sau khi áp dụng</h3>`);}
 VP.report=()=>{const s=stats(),c=cfg(),r=rows('impact'),w=window.open('','_blank');if(!w)return;
-  w.document.write(`<html lang="vi"><head><meta charset="utf-8"><title>Báo cáo hiệu quả sáng kiến</title><style>body{font:14px/1.6 'Times New Roman',serif;margin:30px 50px;color:#111}h1{text-align:center;font-size:18px;text-transform:uppercase}h2{font-size:15px;margin:18px 0 6px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:5px 8px;text-align:left}</style></head><body><h1>Báo cáo hiệu quả sáng kiến</h1><p style="text-align:center"><b>Số hóa quản lý chất lượng nội kiểm, ngoại kiểm và hóa chất tại Khoa Vi sinh - Miễn dịch</b><br>Bệnh viện Phong - Da liễu TW Quy Hòa · Ngày ${new Date().toLocaleDateString('vi-VN')}</p>
+  w.document.write(`<html lang="vi"><head><meta charset="utf-8"><title>Báo cáo hiệu quả cải tiến</title><style>body{font:14px/1.6 'Times New Roman',serif;margin:30px 50px;color:#111}h1{text-align:center;font-size:18px;text-transform:uppercase}h2{font-size:15px;margin:18px 0 6px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:5px 8px;text-align:left}</style></head><body><h1>Báo cáo hiệu quả cải tiến</h1><p style="text-align:center"><b>Số hóa quản lý chất lượng nội kiểm, ngoại kiểm và hóa chất tại Khoa Vi sinh - Miễn dịch</b><br>Bệnh viện Phong - Da liễu TW Quy Hòa · Ngày ${new Date().toLocaleDateString('vi-VN')}</p>
   <h2>1. Số liệu ghi nhận từ ứng dụng</h2><table><tr><th>Chỉ số</th><th>Giá trị</th></tr><tr><td>Bản ghi QC đã số hóa</td><td>${s.rec}</td></tr><tr><td>Số tháng có dữ liệu</td><td>${s.months}</td></tr><tr><td>Cảnh báo tự động phát hiện</td><td>${s.alerts}</td></tr><tr><td>Ngoại kiểm, sự cố, thiết bị, hồ sơ quản lý</td><td>${s.ext+s.reg}</td></tr></table>
   <h2>2. Quy đổi hiệu quả (theo giả định nêu ở mục 4)</h2><table><tr><td>Giờ công tiết kiệm</td><td>${s.hours.toFixed(0)} giờ</td></tr><tr><td>Giấy in giảm</td><td>${s.pages} trang</td></tr><tr><td>Quy đổi chi phí</td><td>${vnd(s.money)}</td></tr></table>
   <h2>3. Đo trước và sau khi áp dụng</h2><table><tr><th>Chỉ số</th><th>Đơn vị</th><th>Trước</th><th>Sau</th><th>Cải thiện</th></tr>${r.map(x=>`<tr><td>${e(x.metric)}</td><td>${e(x.unit)}</td><td>${e(x.before)}</td><td>${e(x.after)}</td><td>${REG.impact.calc[0][1](x)}</td></tr>`).join('')}</table>
   <h2>4. Giả định quy đổi</h2><p>${c.minEntry} phút mỗi lượt nhập QC; ${c.hrReport} giờ mỗi báo cáo tháng; ${c.pages} trang giấy mỗi bản ghi; ${c.page$} đ mỗi trang; ${c.wage} đ mỗi giờ công.</p></body></html>`);w.document.close();w.focus();setTimeout(()=>w.print(),400);};
 const _rv2=renderView;renderView=function(v){if(v==='storage')return renderStorage();_rv2(v);if(v==='impact')renderImpactTop();};
-const _go2=go;go=function(v){if(v==='storage'&&!document.getElementById('view-storage')){const d=document.createElement('div');d.className='view';d.id='view-storage';document.getElementById('content').appendChild(d);}_go2(v);const b=document.getElementById('modBar'),p=size()/QUOTA;if(b)b.insertAdjacentHTML('beforeend',`<button class="mod-btn find vp-q ${level(p)}" onclick="go('storage')" aria-label="Dung lượng dữ liệu ${Math.round(p*100)} phần trăm">Dữ liệu ${mb(size())}/5 MB</button>`);};
+const _go2=go;go=function(v){if(v==='storage'&&!document.getElementById('view-storage')){const d=document.createElement('div');d.className='view';d.id='view-storage';document.getElementById('content').appendChild(d);}_go2(v);const b=document.getElementById('modBar'),p=size()/QUOTA;if(b)b.insertAdjacentHTML('beforeend',`<button class="mod-btn find vp-q ${level(p)}" onclick="go('storage')" aria-label="Dung lượng dữ liệu ${Math.round(p*100)} phần trăm">Dữ liệu ${mb(size())}/500 MB</button>`);};
 
 /* ===== PLUS 3: bổ sung theo chuẩn LIMS / ISO 15189 ===== */
 const TR={'Tủ lạnh 2–8°C':[2,8],'Tủ ấm 35±2°C':[33,37],'Tủ âm sâu -20°C':[-25,-15],'Phòng xét nghiệm 18–28°C':[18,28]};
@@ -18408,14 +18584,14 @@ delete parent['reports-cls'];delete parent['duty-summary'];
 Object.assign(MI,{duty:'M4 4h16v16H4zM8 9h8M8 13h8M8 17h5',docs:'M4 5h6l2 2h8v12H4z'});
 MODS.length=0;MODS.push(
  {id:'home',n:'Tổng quan',go:'dashboard',g:[['Tổng quan',['dashboard']]]},
- {id:'quality',n:'Chất lượng',go:'qa-md',g:[['Chất lượng',['qa-md','qa-vs','external-qc','chart-hub']],['Đánh giá',['assess']]]},
- {id:'ops',n:'Vận hành',go:'ops-md',g:[['Nhập QC',['ops-md','virology']]]},
+ {id:'quality',n:'Chất lượng',go:'qa-md',g:[['Chất lượng',['qa-md','qa-vs','external-qc']],['Đánh giá',['assess']]]},
+ {id:'ops',n:'Vận hành',go:'ops-md',g:[['Nhập QC',['ops-md','virology','chart-hub']]]},
  {id:'chem',n:'Hóa chất',go:'tests',g:[['Xét nghiệm',['tests','tests-vs']],['Hóa chất',['chemical-md','chemical-vs']],['Lot QC',['lots','rapidwater-lots']]]},
  {id:'equip',n:'Thiết bị',go:'machines',g:[['Miễn dịch',['machines']],['Vi sinh',['machine-vs']],['Kết nối',['whonet']]]},
  {id:'report',n:'Báo cáo',go:'reports',g:[['Miễn dịch',['reports']],['Vi sinh',['reports-vs']]]},
  {id:'duty',n:'Trực CLS',go:'reports-cls',g:[['Trực CLS',['reports-cls','duty-summary']]]},
  {id:'docs',n:'Tài liệu',go:'docs',g:[['Tài liệu',['docs']]]},
- {id:'admin',n:'Quản trị',go:'audit',g:[['Hệ thống',['audit','users','system']],['Sáng kiến',['impact','storage']]]});
+ {id:'admin',n:'Quản trị',go:'audit',g:[['Hệ thống',['audit','users','system']],['Quản trị cải tiến',['impact','storage']]]});
 const VM={'qa-md':['Chất lượng · Miễn dịch','Thống kê, biểu đồ và phân tích xu hướng QC miễn dịch'],'qa-vs':['Chất lượng · Vi sinh','Thống kê, biểu đồ và phân tích xu hướng QC vi sinh'],'chart-hub':['Biểu đồ QC','Biểu đồ nội kiểm Miễn dịch và Vi sinh'],'chart-vs':['Biểu đồ QC Vi sinh','Tỷ trọng phiếu QC giữa các module vi sinh'],'assess':['Đánh giá','Westgard, cảnh báo, xử lý QC không đạt, sự cố và khắc phục'],'ops-md':['Nhập QC Miễn dịch','Chọn loại phiếu cần nhập'],'tests-vs':['Xét nghiệm Vi sinh','Danh sách xét nghiệm vi sinh (mapping)'],'reports-vs':['Báo cáo QC Vi sinh','Tổng hợp theo module; in và xuất PDF, Word, Excel tại từng phiếu'],'docs':['Tài liệu','PDF, Word, Excel — thêm, cập nhật, xóa, tìm kiếm']};
 Object.assign(VIEW_META,VM);
 VIEW_META['machine-vs']=[REG['machine-vs'].label,REG['machine-vs'].sub];
@@ -18447,7 +18623,7 @@ function dashHTML(){const ER=[],G=(f,d)=>{try{return f();}catch(x){ER.push(x&&x.
  const lotsMD=G(()=>A0(state.lots).filter(l=>l&&l.active!==false).length+A0(state.rapidWaterLots).length,0),tstMD=G(()=>A0(state.tests).length+A0(state.rapidWaterTests).length,0),lotsVS=G(()=>{const v=state.virologyLots;return Array.isArray(v)?v.length:Object.keys(v||{}).length;},0),tstVS=G(()=>A0(state.virologyTDProfiles).length,0);
  const au=G(()=>A0(state.audit).filter(Boolean).map(x=>({t:String(x.time||x.at||x.ts||x.createdAt||x.date||''),u:String(x.user||x.by||x.actor||'').replace(/\s*\(.*\)$/,'').replace(/^[A-ZĐ]+\.\s*/,''),m:[x.action||x.type||x.event,x.detail||x.message].filter(Boolean).join(' · ')})).filter(x=>x.m).sort((a,b)=>b.t.localeCompare(a.t)),[]);
  const real=au.filter(x=>!/Đăng nhập|Cảnh báo bảo mật|Đăng xuất/.test(x.m)),src=real.length?real:au,feed=(src.some(x=>x.t.slice(0,10)===t)?src.filter(x=>x.t.slice(0,10)===t):src).slice(0,5);
- const failT=A.filter(x=>x.date===t&&x.status==='reject').length,warnT=A.filter(x=>x.date===t&&x.status==='warning').length,alOpen=G(()=>A0(state.alerts).filter(a=>a&&!a.resolved).length,0),ncOpen=G(()=>rows('nonconf').filter(x=>x.status!=='Đã đóng').length,0);
+ const failT=A.filter(x=>x.date===t&&x.status==='reject').length,warnT=A.filter(x=>x.date===t&&x.status==='warning').length,alOpen=G(()=>A0(state.alerts).filter(a=>a&&!a.resolved).length,0),ncOpen=G(()=>rows('nonconf').concat(rows('vsi')).filter(x=>x.status!=='Đã đóng').length,0);
  const AT=[];if(failT)AT.push(['bad',`${failT} kết quả QC không đạt hôm nay`,"go('handling')"]);if(alOpen)AT.push(['bad',`${alOpen} cảnh báo QC chưa xử lý`,"go('alerts')"]);if(warnT)AT.push(['warn',`${warnT} kết quả QC ở mức cảnh báo hôm nay`,"go('alerts')"]);
  ['iFlash 9000','DxI 800','BD Phoenix M50'].forEach((n,i)=>{if(st[i]!=='Đang hoạt động')AT.push([st[i]==='Lỗi'?'bad':'warn',`${n}: ${st[i]}`,"VP.mod('equip')"]);});
  if(ncOpen)AT.push(['warn',`${ncOpen} sự cố đang mở`,"go('nonconf')"]);if(sMD+sVS===0)AT.push(['info','Chưa nhập QC hôm nay',"VP.mod('ops')"]);if(!dutyToday)AT.push(['info','Chưa báo cáo trực hôm nay',"go('reports-cls')"]);
@@ -18458,8 +18634,8 @@ function dashHTML(){const ER=[],G=(f,d)=>{try{return f();}catch(x){ER.push(x&&x.
  const qual=S(()=>`<section class="dc dc-q"><header><h3>Chất lượng tháng này</h3><button class="dc-open" onclick="VP.mod('quality')">Mở</button></header><div class="dc-qrow">${donut([['Đạt',cnt('pass'),COL.pass],['Không đạt',cnt('reject'),COL.reject],['Cảnh báo',cnt('warning'),COL.warning]])}<div class="dc-meter"><label>Miễn dịch <b>${pc(pctOf(md))}</b></label><div class="vp-bar2"><i style="width:${pctOf(md)||0}%"></i></div><label>Vi sinh <b>${pc(pctOf(vs))}</b></label><div class="vp-bar2"><i style="width:${pctOf(vs)||0}%"></i></div></div></div></section>`);
  const fd=S(()=>`<section class="dc"><header><h3>Hoạt động mới</h3></header><ul class="dc-feed">${feed.length?feed.map(x=>`<li><time>${e(x.t.slice(11,16)||x.t.slice(5,10))}</time><span>${e(x.u)}</span>${e(x.m.length>90?x.m.slice(0,90)+'…':x.m)}</li>`).join(''):'<li class="dc-none">Chưa có hoạt động.</li>'}</ul></section>`);
  const R=(l,b,m)=>`<div class="sr"><b>${l}</b><div class="sr-b">${b}</div>${m?`<button class="dc-open" onclick="VP.mod('${m}')">Mở</button>`:'<span></span>'}</div>`;
- const sum=S(()=>`<section class="dc dc-wide dc-sum"><header><h3>Tổng hợp theo phân hệ</h3></header>${R('Vận hành',`<span><em>Miễn dịch ${sMD}:</em> iFlash ${N.iflash} · DxI ${N.dxi} · Test nhanh & nước ${N.rw}</span><span><em>Vi sinh ${sVS}:</em> Thủ công ${N.tc} · Tự động ${N.td} · Môi trường ${N.media} · Thuốc nhuộm ${N.dye} · Thuốc thử ${N.rg}</span>`,'ops')}${R('Xét nghiệm & Hóa chất',`<span><em>Miễn dịch:</em> ${tstMD} xét nghiệm · ${lotsMD} lot QC</span><span><em>Vi sinh:</em> ${tstVS} xét nghiệm (mapping) · ${lotsVS} lot QC</span>`,'chem')}${R('Thiết bị',`<span>iFlash 9000 ${stChip(st[0])}</span><span>DxI 800 ${stChip(st[1])}</span><span>BD Phoenix M50 ${stChip(st[2])}</span>`,'equip')}${R('Trực CLS',`<span>${dutyToday?'Đã báo cáo trực hôm nay':'Chưa báo cáo trực hôm nay'}</span><span>Tổng ${reps.length} phiếu</span>`,'duty')}${R('Tài liệu',`<span>${docs.length} tài liệu</span><span>PDF ${docs.filter(d=>d.type==='PDF').length} · Word ${docs.filter(d=>d.type==='WORD').length} · Excel ${docs.filter(d=>d.type==='EXCEL').length}</span>`,'docs')}${R('Quản trị',`<span>${e((state.settings&&state.settings.currentUser)||'—')}</span><span>${e((state.settings&&state.settings.currentRole)||'')}</span>`,isAdm()?'admin':'')}</section>`);
- return strip+`<div class="dc-main"><div class="dc-col">${attn}${pat}</div><div class="dc-col">${qual}${fd}</div></div>`+sum+(ER.length?`<p class="dc-ver">Một số số liệu chưa tính được: ${e([...new Set(ER)].join('; '))}</p>`:'')+`<p class="dc-ver">Giao diện ${BUILD}</p>`;}
+ const sum=S(()=>`<section class="dc dc-wide dc-sum"><header><h3>Tổng quan hoạt động khoa Vi sinh - Miễn dịch</h3></header>${R('Vận hành',`<span><em>Miễn dịch ${sMD}:</em> iFlash ${N.iflash} · DxI ${N.dxi} · Test nhanh & nước ${N.rw}</span><span><em>Vi sinh ${sVS}:</em> Thủ công ${N.tc} · Tự động ${N.td} · Môi trường ${N.media} · Thuốc nhuộm ${N.dye} · Thuốc thử ${N.rg}</span>`,'ops')}${R('Xét nghiệm & Hóa chất',`<span><em>Miễn dịch:</em> ${tstMD} xét nghiệm · ${lotsMD} lot QC</span><span><em>Vi sinh:</em> ${tstVS} xét nghiệm (mapping) · ${lotsVS} lot QC</span>`,'chem')}${R('Thiết bị',`<span>iFlash 9000 ${stChip(st[0])}</span><span>DxI 800 ${stChip(st[1])}</span><span>BD Phoenix M50 ${stChip(st[2])}</span>`,'equip')}${R('Trực CLS',`<span>${dutyToday?'Đã báo cáo trực hôm nay':'Chưa báo cáo trực hôm nay'}</span><span>Tổng ${reps.length} phiếu</span>`,'duty')}${R('Tài liệu',`<span>${docs.length} tài liệu</span><span>PDF ${docs.filter(d=>d.type==='PDF').length} · Word ${docs.filter(d=>d.type==='WORD').length} · Excel ${docs.filter(d=>d.type==='EXCEL').length}</span>`,'docs')}${R('Quản trị',`<span>${e((state.settings&&state.settings.currentUser)||'—')}</span><span>${e((state.settings&&state.settings.currentRole)||'')}</span>`,isAdm()?'admin':'')}</section>`);
+ return strip+`<div class="dc-main dc-main2"><div class="dc-col">${pat}</div><div class="dc-col">${qual}</div></div>`+sum+(ER.length?`<p class="dc-ver">Một số số liệu chưa tính được: ${e([...new Set(ER)].join('; '))}</p>`:'')+`<p class="dc-ver">Giao diện ${BUILD}</p>`;}
 const buildDash=el=>{try{const hero=el.querySelector('.dash-hero');if(!hero)return;const mid=document.createElement('div');mid.className='dc-wrap';mid.innerHTML=dashHTML();const sy=hero.querySelector('#dhSync');if(sy)sy.innerHTML=syncHTML();
   const rest=[...el.children].filter(n=>n!==hero&&!n.classList.contains('vp-todo')&&!n.classList.contains('dc-err')),det=document.createElement('details');det.className='card qc-area';det.innerHTML='<summary>Khu vực nội kiểm QC — chi tiết (bấm để mở rộng)</summary>';const b=document.createElement('div');b.className='qc-body';rest.forEach(n=>b.appendChild(n));det.appendChild(b);el.replaceChildren(hero,mid,det);
  }catch(x){console.error('VSMD dashboard',x);try{toast('warning','Dashboard mới gặp lỗi',String(x&&x.message||x));}catch(y){}}};
@@ -18505,7 +18681,7 @@ VP.docLink=id=>{const m=docs().find(d=>d.id===id),v=prompt('Dán liên kết chi
 VP.docDel=async id=>{if(!confirm('Xóa tài liệu này?'))return;try{await idbDo('delete',id);}catch(x){}state.vsmdDocs=docs().filter(d=>d.id!==id);queueSave();renderDocs();};
 function renderDocs(){const el=document.getElementById('view-'+(VP.dcur||'docs')),q=VP.dq.toLowerCase(),L=docs().filter(d=>dcat(d)===(DCAT[VP.dcur]||'khoa')&&(!q||(d.name+' '+d.type).toLowerCase().includes(q))),T=['PDF','WORD','EXCEL'],show=VP.dtab==='all'?T:[VP.dtab];
  const tbl=t=>{const a=L.filter(d=>d.type===t);return `<section class="dc dc-wide"><header><h3>${t}</h3><span class="dc-tag">${a.length} tài liệu</span></header>${a.length?`<div class="vp-wrap"><table class="vp-table"><thead><tr><th>Tên tài liệu</th><th>Dung lượng</th><th>Cập nhật</th><th>Người tải</th><th></th></tr></thead><tbody>${a.map(d=>`<tr><td data-l="Tên">${e(d.name)}${d.link?' <span class="vp-chip ok">có liên kết</span>':''}</td><td data-l="Dung lượng">${(d.size/1024).toFixed(0)} KB</td><td data-l="Cập nhật">${e(d.updated||d.added)}</td><td data-l="Người tải">${e(d.by||'')}</td><td class="vp-act"><button class="btn sm" onclick="VP.docOpen('${d.id}')">Mở</button><button class="btn sm ghost" onclick="VP.docUp('${d.id}')">Cập nhật file</button><button class="btn sm ghost" onclick="VP.docLink('${d.id}')">Liên kết</button><button class="btn sm ghost" onclick="VP.docDel('${d.id}')">Xóa</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="vp-empty">Chưa có tài liệu.</p>'}</section>`;};
- el.innerHTML=`<div class="vp-bar"><input type="search" id="vpdq" value="${e(VP.dq)}" placeholder="Tìm tài liệu PDF, Word, Excel…" aria-label="Tìm tài liệu" oninput="VP.dsq(this.value)"><div class="dc-tabs" role="tablist">${['all',...T].map(t=>`<button role="tab" aria-selected="${VP.dtab===t}" class="${VP.dtab===t?'on':''}" onclick="VP.dt('${t}')">${t==='all'?'Tất cả':t}</button>`).join('')}</div><span style="flex:1"></span><button class="btn primary" onclick="VP.docAdd()">Thêm file mới</button></div><p class="vp-sum">${e(DCN[VP.dcur]||'')} — tối đa 4 MB mỗi file. File lưu trên thiết bị đã tải lên (không tính vào hạn mức 5 MB của Supabase); danh sách và liên kết chia sẻ được đồng bộ.</p><div class="dc-grid">${show.map(tbl).join('')}</div>`;
+ el.innerHTML=`<div class="vp-bar"><input type="search" id="vpdq" value="${e(VP.dq)}" placeholder="Tìm tài liệu PDF, Word, Excel…" aria-label="Tìm tài liệu" oninput="VP.dsq(this.value)"><div class="dc-tabs" role="tablist">${['all',...T].map(t=>`<button role="tab" aria-selected="${VP.dtab===t}" class="${VP.dtab===t?'on':''}" onclick="VP.dt('${t}')">${t==='all'?'Tất cả':t}</button>`).join('')}</div><span style="flex:1"></span><button class="btn primary" onclick="VP.docAdd()">Thêm file mới</button></div><p class="vp-sum">${e(DCN[VP.dcur]||'')} — tối đa 4 MB mỗi file. File lưu trên thiết bị đã tải lên (không tính vào dung lượng database Supabase); danh sách và liên kết chia sẻ được đồng bộ.</p><div class="dc-grid">${show.map(tbl).join('')}</div>`;
  if(VP.dq){const i=document.getElementById('vpdq');i.focus();i.setSelectionRange(i.value.length,i.value.length);}}
 /* ---------- Thiết bị: trạng thái hoạt động trong màn hình Máy Miễn dịch ---------- */
 VP.ms=(k,v)=>{state.vsmdMachineStatus=Object.assign({},state.vsmdMachineStatus,{[k]:v});queueSave();};
@@ -18566,9 +18742,12 @@ function domModel(el,title,sub,file){const secs=[],clean=x=>x.replace(/\s+/g,' '
 
 /* ---------- Đánh giá Miễn dịch / Đánh giá Vi sinh ---------- */
 flat.assess=Object.assign({},flat.assess,{label:'Đánh giá Miễn dịch'});
-flat['assess-vs']=mk('assess-vs','Đánh giá Vi sinh',iconShieldCheck(),[I('avs-qc','Nội kiểm QC Vi sinh',iconFlask()),I('avs-comply','Tuân thủ thực hiện QC',iconClipboardCheck()),I('avs-eqa','Ngoại kiểm Vi sinh',iconReport()),I('avs-lot','Lot & hóa chất Vi sinh',iconPackage()),I('avs-capa','Cảnh báo & khắc phục',iconAlertTriangle()),I('avs-handling','Xử lý QC không đạt',iconToolbox()),I('avs-nonconf','Sự cố & khắc phục',iconAlertTriangle())]);
-Object.assign(parent,{'avs-qc':'assess-vs','avs-comply':'assess-vs','avs-eqa':'assess-vs','avs-lot':'assess-vs','avs-capa':'assess-vs','avs-handling':'assess-vs','avs-nonconf':'assess-vs'});
+flat['assess-vs']=mk('assess-vs','Đánh giá Vi sinh',iconShieldCheck(),[I('avs-qc','Nội kiểm QC Vi sinh',iconFlask()),I('avs-comply','Tuân thủ thực hiện QC',iconClipboardCheck()),I('avs-eqa','Ngoại kiểm Vi sinh',iconReport()),I('avs-capa','Cảnh báo & khắc phục',iconAlertTriangle()),I('avs-handling','Xử lý QC không đạt',iconToolbox()),I('avs-nonconf','Sự cố & khắc phục',iconAlertTriangle())]);
+Object.assign(parent,{'avs-qc':'assess-vs','avs-comply':'assess-vs','avs-eqa':'assess-vs','avs-capa':'assess-vs','avs-handling':'assess-vs','avs-nonconf':'assess-vs'});
 MODS.find(m=>m.id==='quality').g.find(g=>g[0]==='Đánh giá')[1].push('assess-vs');
+/* Lot & hóa chất Vi sinh (Lot QC Vi sinh) nằm trong mục Lot QC của module Hóa chất */
+flat['avs-lot']=I('avs-lot','Lot & hóa chất Vi sinh',iconPackage());
+MODS.find(m=>m.id==='chem').g.find(g=>g[0]==='Lot QC')[1].push('avs-lot');
 const AVSV=['assess-vs','avs-qc','avs-comply','avs-eqa','avs-lot','avs-capa','avs-handling'];
 Object.assign(VIEW_META,{assess:['Đánh giá Miễn dịch','Westgard, cảnh báo, xử lý QC không đạt, sự cố và khắc phục'],'assess-vs':['Đánh giá Vi sinh','Chỉ số chất lượng Vi sinh theo ISO 15189 và QĐ 2429/QĐ-BYT — tính từ dữ liệu thật của ứng dụng'],'avs-qc':['Nội kiểm QC Vi sinh','Kết quả đạt / cảnh báo / không đạt theo từng module Nhập QC Vi sinh'],'avs-comply':['Tuân thủ thực hiện QC','Tần suất và độ trễ thực hiện QC Vi sinh theo từng module'],'avs-eqa':['Ngoại kiểm Vi sinh','Kết quả các đợt ngoại kiểm Vi sinh (VS) đã nhập'],'avs-lot':['Lot & hóa chất Vi sinh','Hạn dùng của Lot chủng chuẩn và hóa chất Vi sinh'],'avs-capa':['Cảnh báo & khắc phục','QC Vi sinh không đạt / cảnh báo và tình trạng sự cố, hành động khắc phục'],'avs-handling':['Xử lý QC không đạt · Vi sinh','Danh sách kết quả QC Vi sinh không đạt / cảnh báo cần xử lý — mở đúng phiếu của từng module'],'avs-nonconf':['Sự cố & khắc phục · Vi sinh','Sổ sự cố và hành động khắc phục (dùng chung với Miễn dịch)']});
 const PERN={week:'7 ngày qua',month:'Tháng này',quarter:'Quý này',year:'Năm nay'};
@@ -18609,15 +18788,15 @@ function renderAVS(v){const el=document.getElementById('view-'+v);if(!el)return;
   body+=sect('Hóa chất Vi sinh có Lot / hạn dùng',ch.length+' mục',tblH(['Nhóm','Tên','Lot','Hạn dùng','Tình trạng'],ch.length?ch.slice().sort((a,b)=>String(a.expDate||'9999').localeCompare(String(b.expDate||'9999'))).map(x=>{const s=lotSt(x.expDate);return `<tr>${td_('Nhóm',e(x.type||''))}${td_('Tên',e(x.name||''))}${td_('Lot',e(x.lot||''))}${td_('Hạn dùng',x.expDate?vnDate(x.expDate):'—')}${td_('Tình trạng',pchip(s[0],s[1]))}</tr>`;}).join(''):empty(5)));}
  else if(v==='avs-handling'){const bad=M.flatMap(m=>m.a.filter(x=>x.st==='reject'||x.st==='warning').map(x=>({...x,mod:m.n,go:m.go}))).sort((a,b)=>b.date.localeCompare(a.date)),rj=bad.filter(x=>x.st==='reject').length;
    body=sect('QC Vi sinh không đạt / cảnh báo cần xử lý',PERN[VP.avp]+' · '+bad.length+' kết quả'+(rj?' · '+rj+' không đạt':''),tblH(['Ngày','Module','Nội dung','Đánh giá','Người thực hiện',''],bad.length?bad.slice(0,100).map(x=>`<tr>${td_('Ngày',vnDate(x.date))}${td_('Module',e(x.mod))}${td_('Nội dung',e(x.lab))}${td_('Đánh giá',pchip(x.st==='reject'?'bad':'warn',stVN(x.st)))}${td_('Người thực hiện',e(x.who))}<td class="vp-act"><button class="btn sm" onclick="go('${x.go}')">Mở phiếu</button></td></tr>`).join(''):empty(6))+(bad.length>100?`<p class="avs-note">Hiển thị 100 kết quả mới nhất trong ${bad.length}.</p>`:'')+`<p class="avs-note">Quy trình: xác định nguyên nhân, thực hiện QC lại tại module tương ứng và ghi nhận hành động khắc phục trong mục Sự cố &amp; khắc phục.</p>`);}
- else if(v==='avs-capa'){const bad=M.flatMap(m=>m.a.filter(x=>x.st==='reject'||x.st==='warning').map(x=>({...x,mod:m.n}))).sort((a,b)=>b.date.localeCompare(a.date)),nc=rows('nonconf'),open=nc.filter(x=>x.status!=='Đã đóng'),late=open.filter(x=>x.due&&x.due<todayISO());
+ else if(v==='avs-capa'){const bad=M.flatMap(m=>m.a.filter(x=>x.st==='reject'||x.st==='warning').map(x=>({...x,mod:m.n}))).sort((a,b)=>b.date.localeCompare(a.date)),nc=rows('vsi'),open=nc.filter(x=>x.status!=='Đã đóng'),late=open.filter(x=>x.due&&x.due<todayISO());
   extra=`<button class="btn" onclick="go('avs-handling')">Mở Xử lý QC không đạt</button><button class="btn" onclick="go('avs-nonconf')">Mở Sự cố & khắc phục</button>`;
-  body=sect('Chỉ số tổng hợp',PERN[VP.avp],tblH(['Chỉ số','Giá trị','Ghi chú'],[['Kết quả QC Vi sinh không đạt',bad.filter(x=>x.st==='reject').length,'Tất cả module Nhập QC Vi sinh trong kỳ'],['Kết quả QC Vi sinh ở mức cảnh báo',bad.filter(x=>x.st==='warning').length,'Cần theo dõi'],['Sự cố đang mở (toàn khoa)',open.length,'Sổ Sự cố & khắc phục dùng chung Miễn dịch và Vi sinh'],['Sự cố quá hạn khắc phục',late.length,'Có hạn khắc phục sớm hơn hôm nay và chưa đóng'],['Tỷ lệ sự cố đã đóng',nc.length?Math.round((nc.length-open.length)/nc.length*100)+'%':'—','Đã đóng / tổng số sự cố']].map(r=>`<tr>${td_('Chỉ số',r[0])}${td_('Giá trị',`<b>${r[1]}</b>`)}${td_('Ghi chú',r[2])}</tr>`).join('')));
+  body=sect('Chỉ số tổng hợp',PERN[VP.avp],tblH(['Chỉ số','Giá trị','Ghi chú'],[['Kết quả QC Vi sinh không đạt',bad.filter(x=>x.st==='reject').length,'Tất cả module Nhập QC Vi sinh trong kỳ'],['Kết quả QC Vi sinh ở mức cảnh báo',bad.filter(x=>x.st==='warning').length,'Cần theo dõi'],['Sự cố Vi sinh đang mở',open.length,'Sổ Sự cố & khắc phục Vi sinh'],['Phiếu xử lý QC chưa đóng',rows('vsh').filter(x=>x.status!=='Đã đóng').length,'Sổ phiếu Xử lý QC không đạt Vi sinh'],['Sự cố quá hạn khắc phục',late.length,'Có hạn khắc phục sớm hơn hôm nay và chưa đóng'],['Tỷ lệ sự cố đã đóng',nc.length?Math.round((nc.length-open.length)/nc.length*100)+'%':'—','Đã đóng / tổng số sự cố']].map(r=>`<tr>${td_('Chỉ số',r[0])}${td_('Giá trị',`<b>${r[1]}</b>`)}${td_('Ghi chú',r[2])}</tr>`).join('')));
   body+=sect('QC Vi sinh không đạt / cảnh báo trong kỳ',bad.length+' kết quả',tblH(['Ngày','Module','Nội dung','Đánh giá','Người thực hiện'],bad.length?bad.slice(0,40).map(x=>`<tr>${td_('Ngày',vnDate(x.date))}${td_('Module',e(x.mod))}${td_('Nội dung',e(x.lab))}${td_('Đánh giá',pchip(x.st==='reject'?'bad':'warn',stVN(x.st)))}${td_('Người thực hiện',e(x.who))}</tr>`).join(''):empty(5))+(bad.length>40?`<p class="avs-note">Hiển thị 40 kết quả mới nhất trong ${bad.length}.</p>`:''));}
  body+=`<section class="dc dc-wide exp-skip"><header><h3>Căn cứ và lưu ý</h3></header><ul class="dc-ul exp-list">${REFS.map(x=>`<li>${e(x)}</li>`).join('')}</ul></section>`;
  el.innerHTML=avsBar(v,extra)+`<div class="dc-grid">${body}</div>`;}
 function renderAVSHub(){const el=document.getElementById('view-assess-vs');if(!el)return;const C=cfgE(),[f,t]=rng(),all=vsMods(),M=all.map(m=>({...m,a:m.a.filter(x=>x.date>=f&&x.date<=t)})),A=M.flatMap(m=>m.a),ev=A.filter(x=>x.st),p=cntS(A,'pass'),r=cntS(A,'reject'),pct=ev.length?Math.round(p/ev.length*1000)/10:null,late=all.filter(m=>{const l=m.a.map(x=>x.date).sort().pop();return l&&sinceDays(l)>C.lateDays;}).length,exv=A0(state.externalQC).filter(x=>x&&x.kind==='VS').length;
  const tile=(l,v,s,c)=>`<div class="dc-tile ${c||''}"><span>${l}</span><b>${v}</b><small>${s}</small></div>`,card=(id,h,pp)=>`<button class="dc dc-link" onclick="go('${id}')"><h3>${h}</h3><p>${pp}</p></button>`;
- el.innerHTML=`<div class="exp-bar exp-skip no-print"><label class="exp-cfg">Kỳ đánh giá <select onchange="VP.avpSet(this.value)">${Object.entries(PERN).map(([k,v])=>`<option value="${k}"${VP.avp===k?' selected':''}>${v}</option>`).join('')}</select></label><span class="exp-cfg">${vnDate(f)} – ${vnDate(t)}</span></div><div class="dc-strip">${tile('Phiếu QC Vi sinh',A.length,PERN[VP.avp])}${tile('% QC đạt',pct===null?'—':pct+'%','mục tiêu ≥ '+C.minPass+'%',pct===null?'':pct>=C.minPass?'t-ok':'t-warn')}${tile('QC không đạt',r,'trong kỳ',r?'t-bad':'')}${tile('Module trễ QC',late,'quá '+C.lateDays+' ngày',late?'t-warn':'')}${tile('Đợt ngoại kiểm VS',exv,'đã nhập')}</div><div class="dc-grid">${card('avs-qc','Nội kiểm QC Vi sinh','% đạt theo 5 module: Thủ công, Tự động, Thuốc nhuộm, Thuốc thử, Môi trường')}${card('avs-comply','Tuân thủ thực hiện QC','Tần suất, khoảng cách và độ trễ giữa các lần QC')}${card('avs-eqa','Ngoại kiểm Vi sinh','Kết quả các đợt ngoại kiểm VS và so với mục tiêu')}${card('avs-lot','Lot & hóa chất Vi sinh','Hạn dùng Lot chủng chuẩn và hóa chất Vi sinh')}${card('avs-capa','Cảnh báo & khắc phục','QC không đạt, cảnh báo và tiến độ xử lý sự cố')}</div>`;}
+ el.innerHTML=`<div class="exp-bar exp-skip no-print"><label class="exp-cfg">Kỳ đánh giá <select onchange="VP.avpSet(this.value)">${Object.entries(PERN).map(([k,v])=>`<option value="${k}"${VP.avp===k?' selected':''}>${v}</option>`).join('')}</select></label><span class="exp-cfg">${vnDate(f)} – ${vnDate(t)}</span></div><div class="dc-strip">${tile('Phiếu QC Vi sinh',A.length,PERN[VP.avp])}${tile('% QC đạt',pct===null?'—':pct+'%','mục tiêu ≥ '+C.minPass+'%',pct===null?'':pct>=C.minPass?'t-ok':'t-warn')}${tile('QC không đạt',r,'trong kỳ',r?'t-bad':'')}${tile('Module trễ QC',late,'quá '+C.lateDays+' ngày',late?'t-warn':'')}${tile('Đợt ngoại kiểm VS',exv,'đã nhập')}</div><div class="dc-grid">${card('avs-qc','Nội kiểm QC Vi sinh','% đạt theo 5 module: Thủ công, Tự động, Thuốc nhuộm, Thuốc thử, Môi trường')}${card('avs-comply','Tuân thủ thực hiện QC','Tần suất, khoảng cách và độ trễ giữa các lần QC')}${card('avs-eqa','Ngoại kiểm Vi sinh','Kết quả các đợt ngoại kiểm VS và so với mục tiêu')}${card('avs-capa','Cảnh báo & khắc phục','QC không đạt, cảnh báo và tiến độ xử lý sự cố')}</div>`;}
 
 /* ---------- Xuất báo cáo Vi sinh: từng module, bảng so sánh theo năm ---------- */
 flat['virology-reports']=mk('virology-reports','Xuất báo cáo Vi sinh',iconReport(),[I('virology-reports-tc','Thủ công',iconReport()),I('virology-reports-td','Tự động',iconReport()),I('virology-reports-dye','Thuốc nhuộm',iconReport()),I('virology-reports-reagent','Thuốc thử',iconReport()),I('virology-reports-media','Môi trường nuôi cấy',iconReport())]);
@@ -18699,6 +18878,146 @@ const _rv5=renderView;renderView=function(v){
  if(v==='tests-vs'){renderTestsVS2();return;}
  if(v==='docs'||v==='docs-staff'||v==='docs-other'){VP.dcur=v;renderDocs();return;}
  _rv5(v);};
+/* ===== PLUS 6: Phiếu Vi sinh — Xử lý QC không đạt & Sự cố / khắc phục (CAPA) =====
+   Căn cứ: CLSI M100/M02 và EUCAST (xử lý QC kháng sinh đồ ngoài khoảng), ISO 15189:2022 mục 7.3.7, 7.5 (công việc không phù hợp)
+   và 8.7 (sự không phù hợp, hành động khắc phục, đánh giá hiệu quả); QĐ 2429/QĐ-BYT. Dữ liệu lưu trong state.vsmdReg.vsh / .vsi */
+(function(){
+const VSMN=['Thủ công (TC)','Tự động (TĐ) — BD Phoenix M50','Thuốc nhuộm','Thuốc thử','Môi trường nuôi cấy','Khác'];
+const VSMK={tc:0,td:1,dye:2,reagent:3,media:4};
+const CAUSE=['Chủng chuẩn: hạn dùng, bảo quản, số lần cấy chuyển, độ thuần','Môi trường nuôi cấy: pH, độ dày thạch, lô, hạn dùng, bảo quản','Đĩa kháng sinh / hóa chất / thuốc thử: lô, hạn dùng, bảo quản','Huyền dịch vi khuẩn: độ đục 0,5 McFarland, thời gian sử dụng','Thao tác: cấy trải, đặt đĩa, đo hoặc đọc vùng ức chế','Ủ: nhiệt độ, thời gian, khí trường CO₂','Thiết bị: tủ ấm, BD Phoenix M50, máy đo độ đục; hiệu chuẩn','Nhập liệu, ghi nhận hoặc tính toán kết quả','Khác'];
+const AREA=['Trước xét nghiệm: lấy mẫu, vận chuyển, tiếp nhận mẫu','Nuôi cấy và định danh','Kháng sinh đồ','Nhuộm soi, soi tươi','Thiết bị: tủ ấm, tủ lạnh, BD Phoenix M50, máy đo độ đục','Môi trường nuôi cấy, thuốc nhuộm, thuốc thử, vật tư','Sau xét nghiệm: nhập liệu, trả kết quả','An toàn sinh học, vệ sinh, nhiễm chéo','Hạ tầng: nhiệt độ phòng, điện, mạng','Khác'];
+const SRC=['Nội kiểm QC','Ngoại kiểm','Đánh giá nội bộ','Phản hồi hoặc khiếu nại của lâm sàng','Quan sát khi làm việc','Khác'];
+const G6M=['Con người (kỹ năng, đào tạo, khối lượng việc)','Phương pháp (quy trình, hướng dẫn)','Máy móc, thiết bị','Vật tư, hóa chất, môi trường nuôi cấy','Môi trường làm việc','Quản lý, hệ thống'];
+const f=(k,l,t,o,w)=>({k,l,t,o,w});
+const SPEC={
+ vsh:{code:'XL-VS',title:'Phiếu xử lý QC Vi sinh không đạt',view:'avs-handling',first:'Mới',st:['Mới','Đang xử lý','Chờ QC lặp','Đã đóng'],secs:[
+  {t:'A. Thông tin phát hiện',f:[f('date','Ngày phát hiện','date'),f('by','Người phát hiện','text'),f('mod','Module QC','select',VSMN),f('qcDate','Ngày thực hiện QC','date'),f('item','Nội dung QC (chủng, panel, loại thuốc nhuộm, thuốc thử, môi trường)','text'),f('lot','LOT liên quan (chủng, đĩa, môi trường, hóa chất)','text'),f('level','Mức đánh giá','select',['Không đạt','Cảnh báo']),f('desc','Mô tả kết quả bất thường (kết quả đo được so với khoảng chấp nhận)','area',null,2)]},
+  {t:'B. Kiểm soát ngay và khoanh vùng ảnh hưởng',f:[f('c1','Đã tạm ngưng trả kết quả bệnh nhân của mục liên quan (kháng sinh, xét nghiệm)','check',null,2),f('c2','Đã báo Trưởng khoa hoặc người phụ trách','check',null,2),f('c3','Đã ngưng sử dụng lô, môi trường hoặc thuốc thử nghi ngờ','check',null,2),f('c4','Đã rà soát kết quả bệnh nhân từ lần QC đạt gần nhất','check',null,2),f('lastOk','Lần QC đạt gần nhất','date'),f('nAff','Số kết quả bệnh nhân có thể bị ảnh hưởng','number'),f('affAct','Hướng xử lý kết quả bệnh nhân đã trả','select',['Chưa xác định','Không ảnh hưởng','Đã xét nghiệm lại','Đã hiệu chỉnh kết quả và thông báo lâm sàng','Đang rà soát'],2)]},
+  {t:'C. Điều tra nguyên nhân',f:[f('errType','Phân loại','select',['Lỗi rõ ràng (sai đĩa, sai chủng, nhiễm, ủ sai nhiệt độ hoặc điều kiện…)','Chưa xác định rõ nguyên nhân'],2),f('causes','Các yếu tố đã kiểm tra hoặc nghi ngờ','checks',CAUSE),f('root','Nguyên nhân gốc (kết luận sau điều tra)','area',null,2)]},
+  {t:'D. Khắc phục và QC lặp lại',f:[f('fix','Hành động khắc phục đã thực hiện','area',null,2),f('repDate','Ngày QC lặp lại','date'),f('repRes','Kết quả QC lặp lại','select',['Chưa lặp','Đạt','Không đạt']),f('rep5','QC 5 ngày liên tiếp (khi QC lặp lại vẫn không đạt)','row5'),f('prevent','Hành động phòng ngừa tái diễn, cập nhật rủi ro (nếu có)','area',null,2)]},
+  {t:'E. Kết luận và xác nhận',f:[f('resume','Cho phép trả lại kết quả bệnh nhân','select',['Chưa quyết định','Có','Không, dùng phương pháp thay thế']),f('doneDate','Ngày hoàn thành','date'),f('handler','Người xử lý','text'),f('approver','Trưởng khoa / phụ trách xác nhận','text'),f('apprDate','Ngày xác nhận','date'),f('status','Trạng thái phiếu','select',['Mới','Đang xử lý','Chờ QC lặp','Đã đóng']),f('note','Ghi chú','area',null,2)]}]},
+ vsi:{code:'SC-VS',title:'Phiếu sự cố và khắc phục — Vi sinh',view:'avs-nonconf',first:'Mở',st:['Mở','Đang xử lý','Chờ đánh giá hiệu quả','Đã đóng'],secs:[
+  {t:'A. Ghi nhận sự cố',f:[f('date','Ngày xảy ra','date'),f('time','Giờ xảy ra','time'),f('by','Người phát hiện','text'),f('src','Nguồn phát hiện','select',SRC),f('area','Công đoạn, khu vực','select',AREA,2),f('desc','Mô tả sự cố','area',null,2),f('level','Mức độ','select',['Nhẹ','Trung bình','Nghiêm trọng']),f('patient','Ảnh hưởng đến người bệnh','select',['Không','Có, chưa gây hại','Có, đã gây hại hoặc nguy cơ cao']),f('nAff','Số mẫu hoặc kết quả bị ảnh hưởng','number')]},
+  {t:'B. Khắc phục tức thời',f:[f('fixNow','Xử lý ngay để kiểm soát và sửa chữa','area',null,2),f('c1','Đã giữ hoặc ngưng trả kết quả liên quan','check',null,2),f('c2','Đã thông báo lâm sàng hoặc người bệnh khi cần','check',null,2),f('c3','Đã thu hồi hoặc hiệu chỉnh kết quả đã trả','check',null,2),f('c4','Đã báo Trưởng khoa','check',null,2)]},
+  {t:'C. Phân tích nguyên nhân gốc',f:[f('method','Phương pháp phân tích','select',['5 Why (hỏi “tại sao” nhiều lần)','Biểu đồ xương cá (6M)','Khác'],2),f('groups','Nhóm nguyên nhân','checks',G6M),f('direct','Nguyên nhân trực tiếp','area',null,2),f('root','Nguyên nhân gốc','area',null,2)]},
+  {t:'D. Hành động khắc phục',f:[f('capa','Hành động khắc phục để loại bỏ nguyên nhân gốc','area',null,2),f('owner','Người chịu trách nhiệm','text'),f('due','Hạn hoàn thành','date'),f('doneAt','Ngày hoàn thành thực tế','date'),f('doc','Cần cập nhật quy trình, biểu mẫu','check',null,2),f('train','Cần đào tạo lại hoặc hướng dẫn nhân sự','check',null,2),f('risk','Cập nhật rủi ro và cơ hội cải tiến','area',null,2)]},
+  {t:'E. Đánh giá hiệu quả',f:[f('effDate','Ngày đánh giá (nên sau 1–2 tháng)','date'),f('effRes','Kết quả đánh giá','select',['Chưa đánh giá','Hiệu quả','Chưa hiệu quả, mở lại']),f('effNote','Nhận xét','area',null,2)]},
+  {t:'F. Xác nhận',f:[f('approver','Trưởng khoa / phụ trách xác nhận','text'),f('apprDate','Ngày xác nhận','date'),f('status','Trạng thái phiếu','select',['Mở','Đang xử lý','Chờ đánh giá hiệu quả','Đã đóng'])]}]}
+};
+const cu=()=>(state.settings&&state.settings.currentUser)||'';
+const nextCode=k=>{const yr=String(todayISO()).slice(0,4),mx=rows(k).reduce((m,r)=>{const x=String(r.code||'').match(/\/(\d{4})\/(\d+)$/);return x&&x[1]===yr?Math.max(m,+x[2]):m;},0);return SPEC[k].code+'/'+yr+'/'+String(mx+1).padStart(3,'0');};
+const stChip=s=>pchip(s==='Đã đóng'?'ok':(s==='Mới'||s==='Mở')?'bad':'warn',s||'—');
+const trunc=(t,n)=>{t=String(t||'').replace(/\s+/g,' ').trim();return t.length>n?t.slice(0,n)+'…':t;};
+VP.vsq=VP.vsq||{};
+function defaults(k){const o={code:nextCode(k),status:SPEC[k].first,date:todayISO(),by:cu()};if(k==='vsh'){o.handler=cu();o.level='Không đạt';o.mod=VSMN[0];o.repRes='Chưa lặp';o.errType=SPEC.vsh.secs[2].f[0].o[1];o.affAct='Chưa xác định';o.resume='Chưa quyết định';}else{o.level='Nhẹ';o.patient='Không';o.effRes='Chưa đánh giá';}return o;}
+function fieldHTML(fd,x){
+ const v=x[fd.k],w=fd.w===2?' vs-w2':'';
+ if(fd.t==='check')return `<label class="vs-chk${w}"><input type="checkbox" data-k="${fd.k}"${v?' checked':''}><span>${e(fd.l)}</span></label>`;
+ if(fd.t==='checks'){const a=Array.isArray(v)?v:[];return `<div class="vs-fld vs-w2"><span class="vs-lb">${e(fd.l)}</span><div class="vs-checks">${fd.o.map(o=>`<label class="vs-chk"><input type="checkbox" data-k="${fd.k}" data-v="${e(o)}"${a.includes(o)?' checked':''}><span>${e(o)}</span></label>`).join('')}</div></div>`;}
+ if(fd.t==='row5'){const a=Array.isArray(v)?v:[];return `<div class="vs-fld vs-w2"><span class="vs-lb">${e(fd.l)}</span><div class="vs-r5">${[0,1,2,3,4].map(i=>`<label><small>Ngày ${i+1}</small><select data-k="${fd.k}"><option value=""${!a[i]?' selected':''}>—</option><option${a[i]==='Đạt'?' selected':''}>Đạt</option><option${a[i]==='Không đạt'?' selected':''}>Không đạt</option></select></label>`).join('')}</div></div>`;}
+ let c;
+ if(fd.t==='select'){const o=fd.o.slice();if(v&&!o.includes(v))o.unshift(v);c=`<select data-k="${fd.k}">${o.map(z=>`<option${v===z?' selected':''}>${e(z)}</option>`).join('')}</select>`;}
+ else if(fd.t==='area')c=`<textarea data-k="${fd.k}" rows="3">${e(v||'')}</textarea>`;
+ else c=`<input data-k="${fd.k}" type="${fd.t}" value="${e(v??'')}"${fd.t==='number'?' min="0" inputmode="numeric"':''}>`;
+ return `<label class="vs-fld${w}"><span class="vs-lb">${e(fd.l)}</span>${c}</label>`;}
+function readForm(d,sp){const o={};sp.secs.forEach(s=>s.f.forEach(fd=>{const els=[...d.querySelectorAll('[data-k="'+fd.k+'"]')];
+ if(fd.t==='check')o[fd.k]=!!(els[0]&&els[0].checked);else if(fd.t==='checks')o[fd.k]=els.filter(x=>x.checked).map(x=>x.dataset.v);else if(fd.t==='row5')o[fd.k]=els.map(x=>x.value);else o[fd.k]=els[0]?String(els[0].value).trim():'';}));return o;}
+const redo2=()=>{try{renderView(currentView);}catch(x){console.error(x);}};
+VP.vsClose=()=>{const d=document.getElementById('vsDlg');if(d&&d.open)d.close();};
+VP.vsOpen=(k,id,pre)=>{const sp=SPEC[k],cur=id?rows(k).find(a=>a.id===id):null,x=cur?JSON.parse(JSON.stringify(cur)):Object.assign(defaults(k),pre||{}),d=dlg('vsDlg');
+ d.className='vs-dlg';d.dataset.src=x.src||'';
+ d.innerHTML=`<form method="dialog" class="vs-form" onsubmit="return false"><header class="vs-head"><div><h3>${e(sp.title)}</h3><span class="vs-code">${e(x.code)}${cur?'':' · mã cấp khi lưu'}</span></div><button type="button" class="btn ghost sm" onclick="VP.vsClose()" aria-label="Đóng">✕</button></header><div class="vs-body">${sp.secs.map(s=>`<fieldset class="vs-sec"><legend>${e(s.t)}</legend><div class="vs-grid">${s.f.map(fd=>fieldHTML(fd,x)).join('')}</div></fieldset>`).join('')}</div><footer class="vs-foot"><span class="vs-hint">Phiếu lưu cùng dữ liệu ứng dụng và đồng bộ giữa các thiết bị.</span><span style="flex:1"></span>${cur?`<button type="button" class="btn" onclick="VP.vsPrint('${k}','${id}','pdf')">In phiếu</button>`:''}<button type="button" class="btn" onclick="VP.vsClose()">Hủy</button><button type="button" class="btn primary" onclick="VP.vsSave('${k}','${id||''}')">Lưu phiếu</button></footer></form>`;
+ d.showModal();const b=d.querySelector('.vs-body');if(b)b.scrollTop=0;};
+VP.vsFrom=i=>{const x=(VP._vsb||[])[i];if(!x)return;const ex=rows('vsh').find(r=>r.src===x.key);if(ex){VP.vsOpen('vsh',ex.id);return;}
+ const mi=VSMK[x.k]!==undefined?VSMK[x.k]:5;
+ VP.vsOpen('vsh',null,{src:x.key,qcDate:x.date,mod:VSMN[mi],item:x.lab||'',level:x.st==='reject'?'Không đạt':'Cảnh báo',handler:cu(),desc:'QC '+VSMN[mi]+' ngày '+vnDate(x.date)+' đánh giá '+stVN(x.st)+(x.lab?' — '+x.lab:'')+'. Ghi rõ kết quả đo được và khoảng chấp nhận: '});};
+VP.vsSave=(k,id)=>{const sp=SPEC[k],d=document.getElementById('vsDlg');if(!d)return;const o=readForm(d,sp),need=k==='vsh'?[['date','Ngày phát hiện'],['item','Nội dung QC'],['desc','Mô tả kết quả bất thường']]:[['date','Ngày xảy ra'],['desc','Mô tả sự cố']];
+ for(const [kk,l] of need){if(!o[kk]){toast('warning','Thiếu thông tin','Vui lòng nhập: '+l);const el=d.querySelector('[data-k="'+kk+'"]');if(el)el.focus();return;}}
+ if(o.status==='Đã đóng'){
+  if(k==='vsh'&&!(o.repRes==='Đạt'||(o.rep5||[]).every(z=>z==='Đạt'))&&!confirm('QC lặp lại chưa ghi nhận là Đạt. Vẫn đóng phiếu?'))return;
+  if(k==='vsi'&&o.effRes!=='Hiệu quả'&&!confirm('Chưa ghi nhận đánh giá hiệu quả của hành động khắc phục. Vẫn đóng phiếu?'))return;}
+ const list=rows(k),now=new Date().toISOString();let code;
+ if(id){const r=list.find(a=>a.id===id);if(!r)return;Object.assign(r,o,{updatedAt:now,updatedBy:cu()});code=r.code;}
+ else{code=nextCode(k);list.unshift(Object.assign({id:uid('R'),code,src:d.dataset.src||'',createdAt:now,createdBy:cu()},o));}
+ (state.audit=state.audit||[]).unshift({id:uid('AU'),time:now,user:cu(),action:(id?'Sửa':'Lập')+' · '+sp.title,detail:code});
+ queueSave();d.close();redo2();toast('success','Đã lưu phiếu',code);};
+VP.vsDel=(k,id)=>{const r=rows(k).find(a=>a.id===id);if(!r)return;if(!(isAdm()||r.createdBy===cu())){toast('warning','Không đủ quyền','Chỉ người lập phiếu, Trưởng khoa hoặc Quản trị hệ thống được xóa phiếu.');return;}
+ if(!confirm('Xóa phiếu '+r.code+'?'))return;state.vsmdReg[k]=rows(k).filter(a=>a.id!==id);(state.audit=state.audit||[]).unshift({id:uid('AU'),time:new Date().toISOString(),user:cu(),action:'Xóa · '+SPEC[k].title,detail:r.code});queueSave();redo2();};
+function pval(fd,v){if(fd.t==='check')return v?'Có':'Không';if(fd.t==='checks')return (v||[]).join('; ')||'—';if(fd.t==='row5')return (v||[]).some(z=>z)?(v||[]).map((q,i)=>'Ngày '+(i+1)+': '+(q||'—')).join(' · '):'—';if(fd.t==='date')return v?vnDate(v):'—';return v||'—';}
+function pmodel(k,x){const sp=SPEC[k];return {title:sp.title,sub:'Mã phiếu: '+x.code+' · Trạng thái: '+(x.status||''),file:sp.code.toLowerCase()+'-'+String(x.code).replace(/[^\w]+/g,'-'),sections:sp.secs.map(s=>({h:s.t,head:['Nội dung','Thông tin'],rows:s.f.map(fd=>[fd.l,pval(fd,x[fd.k])])}))};}
+VP.vsPrint=(k,id,t)=>{const x=rows(k).find(a=>a.id===id);if(!x)return;VP.exm['vs-print']=()=>pmodel(k,x);VP.ex(t||'pdf','vs-print');};
+VP.vsQ=(k,v,inputId)=>{VP.vsq[k]=v;redo2();const i=document.getElementById(inputId);if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}};
+const tile=(l,v,s,c)=>`<div class="dc-tile ${c||''}"><span>${l}</span><b>${v}</b><small>${s}</small></div>`;
+const searchBar=(k,id,ph)=>`<div class="vp-bar vs-sbar"><input type="search" id="${id}" value="${e(VP.vsq[k]||'')}" placeholder="${ph}" aria-label="Tìm kiếm" oninput="VP.vsQ('${k}',this.value,'${id}')"></div>`;
+const filt=(k,a)=>{const q=(VP.vsq[k]||'').toLowerCase();return q?a.filter(x=>JSON.stringify(x).toLowerCase().includes(q)):a;};
+const steps=(arr,refs)=>`<details class="card vs-proc"><summary>Quy trình xử lý tham khảo (bấm để xem)</summary><ol>${arr.map(x=>`<li>${e(x)}</li>`).join('')}</ol><p class="avs-note">${e(refs)}</p></details>`;
+const STEPS_H=['Dừng và giữ kết quả: không trả kết quả bệnh nhân của kháng sinh hoặc xét nghiệm có QC không đạt cho đến khi giải quyết xong; báo Trưởng khoa hoặc người phụ trách.','Phân loại: lỗi rõ ràng (sai đĩa, sai chủng, nhiễm, ủ sai nhiệt độ hoặc điều kiện) thì ghi lý do và QC lặp lại trong ngày; nếu đạt thì không cần hành động thêm. Chưa rõ nguyên nhân thì điều tra: chủng chuẩn, môi trường, đĩa hoặc hóa chất, huyền dịch, thao tác, ủ, thiết bị.','Khoanh vùng: rà soát kết quả bệnh nhân đã trả từ lần QC đạt gần nhất để xác định kết quả có thể bị ảnh hưởng.','QC lặp lại: nếu vẫn ngoài khoảng chấp nhận, QC 5 ngày liên tiếp; đạt đủ 5 ngày thì trở lại QC định kỳ, chưa đạt thì QC hằng ngày đến khi giải quyết xong và dùng phương pháp thay thế trong thời gian này.','Xử lý kết quả đã trả: xét nghiệm lại, hiệu chỉnh và thông báo lâm sàng khi cần; lưu hồ sơ.','Đóng phiếu: Trưởng khoa hoặc người phụ trách xác nhận; ghi hành động phòng ngừa tái diễn và cập nhật rủi ro nếu cần.'];
+const STEPS_I=['Ghi nhận ngay khi phát hiện (ngày giờ, công đoạn, mô tả, mức độ, ảnh hưởng đến người bệnh).','Kiểm soát và khắc phục tức thời: giữ hoặc ngưng trả kết quả liên quan, xử lý hậu quả, thông báo lâm sàng khi cần.','Đánh giá ý nghĩa lâm sàng và phạm vi ảnh hưởng (các mẫu, kết quả bị ảnh hưởng).','Phân tích nguyên nhân gốc (5 Why hoặc biểu đồ xương cá 6M); tránh dừng ở “lỗi của cá nhân”, cần tìm điểm yếu của quy trình.','Thực hiện hành động khắc phục, có người chịu trách nhiệm và hạn hoàn thành; cập nhật quy trình, đào tạo, rủi ro khi cần.','Đánh giá hiệu quả sau khi thực hiện (thường sau 1–2 tháng) rồi mới đóng phiếu; ISO 15189:2022 không còn mục hành động phòng ngừa riêng, nội dung này nằm trong quản lý rủi ro và cải tiến.'];
+function renderVSH(){const el=document.getElementById('view-avs-handling');if(!el)return;const [fr,to]=rng(),all=vsMods(),v='avs-handling';
+ const M=all.map(m=>({...m,a:m.a.filter(x=>x.date>=fr&&x.date<=to)})),bad=M.flatMap(m=>m.a.filter(x=>x.st==='reject'||x.st==='warning').map(x=>({...x,k:m.k,mod:m.n,go:m.go,key:m.k+'|'+x.date+'|'+(x.lab||'')+'|'+(x.who||'')}))).sort((a,b)=>b.date.localeCompare(a.date));
+ VP._vsb=bad.slice(0,100);const R=rows('vsh'),by=key=>R.find(r=>r.src===key),pending=bad.filter(x=>!by(x.key)).length,open=R.filter(r=>r.status!=='Đã đóng').length,L=filt('vsh',R);
+ VP.exm[v]=()=>({title:'Xử lý QC Vi sinh không đạt — '+PERN[VP.avp],sub:VIEW_META[v][1],file:v,sections:[
+  {h:'QC Vi sinh không đạt / cảnh báo trong kỳ',head:['Ngày','Module','Nội dung','Đánh giá','Người thực hiện','Phiếu xử lý'],rows:bad.map(x=>{const p=by(x.key);return [vnDate(x.date),x.mod,x.lab||'',stVN(x.st),x.who||'',p?p.code+' · '+p.status:'Chưa lập phiếu'];})},
+  {h:'Sổ phiếu xử lý QC Vi sinh không đạt',head:['Mã phiếu','Ngày phát hiện','Module','Nội dung','Nguyên nhân gốc','QC lặp lại','Trạng thái'],rows:R.map(r=>[r.code,vnDate(r.date),r.mod||'',r.item||'',r.root||'',r.repRes||'',r.status||''])}]});
+ const t1=bad.length?bad.slice(0,100).map((x,i)=>{const p=by(x.key);return `<tr>${td_('Ngày',vnDate(x.date))}${td_('Module',e(x.mod))}${td_('Nội dung',e(x.lab||'—'))}${td_('Đánh giá',pchip(x.st==='reject'?'bad':'warn',stVN(x.st)))}${td_('Người thực hiện',e(x.who||'—'))}${td_('Phiếu xử lý',p?`<b>${e(p.code)}</b> ${stChip(p.status)}`:pchip('bad','Chưa lập phiếu'))}<td class="vp-act"><button class="btn sm ${p?'':'primary'}" onclick="VP.vsFrom(${i})">${p?'Mở phiếu':'Lập phiếu'}</button><button class="btn sm ghost" onclick="go('${x.go}')">Phiếu QC</button></td></tr>`;}).join(''):empty(7);
+ const t2=L.length?L.map(r=>`<tr>${td_('Mã phiếu',`<b>${e(r.code)}</b>`)}${td_('Ngày phát hiện',vnDate(r.date))}${td_('Module',e(r.mod||'—'))}${td_('Nội dung',e(trunc(r.item,50)||'—'))}${td_('Nguyên nhân gốc',e(trunc(r.root,70)||'—'))}${td_('QC lặp lại',pchip(r.repRes==='Đạt'?'ok':r.repRes==='Không đạt'?'bad':'warn',r.repRes||'Chưa lặp'))}${td_('Trạng thái',stChip(r.status))}<td class="vp-act"><button class="btn sm" onclick="VP.vsOpen('vsh','${r.id}')">Mở</button><button class="btn sm ghost" onclick="VP.vsPrint('vsh','${r.id}','pdf')">In</button><button class="btn sm ghost" onclick="VP.vsDel('vsh','${r.id}')">Xóa</button></td></tr>`).join(''):`<tr><td colspan="8" class="vp-empty">${R.length?'Không có phiếu phù hợp.':'Chưa có phiếu xử lý. Bấm “Lập phiếu” ở dòng QC không đạt hoặc “Lập phiếu mới”.'}</td></tr>`;
+ el.innerHTML=avsBar(v,`<button class="btn primary" onclick="VP.vsOpen('vsh')">Lập phiếu mới</button>`)+
+ `<div class="dc-strip vs-strip">${tile('Cần lập phiếu',pending,'QC không đạt / cảnh báo trong kỳ',pending?'t-bad':'t-ok')}${tile('Phiếu đang xử lý',open,'chưa đóng',open?'t-warn':'')}${tile('Phiếu đã đóng',R.length-open,'toàn bộ thời gian')}${tile('Tổng số phiếu',R.length,'sổ xử lý QC Vi sinh')}</div>`+
+ steps(STEPS_H,'Tham khảo: CLSI M100 / M02 và EUCAST về xử lý kết quả QC kháng sinh đồ ngoài khoảng; ISO 15189:2022 mục 7.3.7, 7.5 và 8.7; QĐ 2429/QĐ-BYT. Quyết định chấp nhận hay loại kết quả vẫn do người có chuyên môn và Trưởng khoa thực hiện.')+
+ `<div class="dc-grid">${sect('QC Vi sinh không đạt / cảnh báo cần xử lý',PERN[VP.avp]+' · '+bad.length+' kết quả',tblH(['Ngày','Module','Nội dung','Đánh giá','Người thực hiện','Phiếu xử lý',''],t1)+(bad.length>100?`<p class="avs-note">Hiển thị 100 kết quả mới nhất trong ${bad.length}.</p>`:''))}
+ <section class="dc dc-wide"><header><h3>Sổ phiếu xử lý QC Vi sinh không đạt</h3><span class="dc-tag">${R.length} phiếu</span></header>${searchBar('vsh','vshQ','Tìm theo mã phiếu, nội dung, nguyên nhân…')}${tblH(['Mã phiếu','Ngày phát hiện','Module','Nội dung','Nguyên nhân gốc','QC lặp lại','Trạng thái',''],t2)}</section></div>`;}
+function renderVSI(){const el=document.getElementById('view-avs-nonconf');if(!el)return;const R=rows('vsi'),v='avs-nonconf',t0=todayISO(),L=filt('vsi',R),isOpen=r=>r.status!=='Đã đóng',late=R.filter(r=>isOpen(r)&&r.due&&r.due<t0).length,wait=R.filter(r=>r.status==='Chờ đánh giá hiệu quả').length;
+ VP.exm[v]=()=>({title:'Sự cố và khắc phục — Vi sinh',sub:VIEW_META[v][1],file:v,sections:[{h:'Sổ sự cố và khắc phục Vi sinh',head:['Mã phiếu','Ngày xảy ra','Công đoạn','Mô tả sự cố','Mức độ','Nguyên nhân gốc','Hành động khắc phục','Hạn','Hiệu quả','Trạng thái'],rows:R.map(r=>[r.code,vnDate(r.date),r.area||'',r.desc||'',r.level||'',r.root||'',r.capa||'',r.due?vnDate(r.due):'',r.effRes||'',r.status||''])}]});
+ const rowsH=L.length?L.map(r=>`<tr>${td_('Mã phiếu',`<b>${e(r.code)}</b>`)}${td_('Ngày xảy ra',vnDate(r.date))}${td_('Công đoạn',e(trunc(r.area,40)||'—'))}${td_('Mô tả sự cố',e(trunc(r.desc,80)||'—'))}${td_('Mức độ',pchip(r.level==='Nghiêm trọng'?'bad':r.level==='Trung bình'?'warn':'ok',r.level||'—'))}${td_('Hạn khắc phục',isOpen(r)?chip(r.due):'<span class="vp-chip">—</span>')}${td_('Trạng thái',stChip(r.status))}<td class="vp-act"><button class="btn sm" onclick="VP.vsOpen('vsi','${r.id}')">Mở</button><button class="btn sm ghost" onclick="VP.vsPrint('vsi','${r.id}','pdf')">In</button><button class="btn sm ghost" onclick="VP.vsDel('vsi','${r.id}')">Xóa</button></td></tr>`).join(''):`<tr><td colspan="8" class="vp-empty">${R.length?'Không có phiếu phù hợp.':'Chưa có phiếu sự cố. Bấm “Ghi nhận sự cố” để lập phiếu.'}</td></tr>`;
+ el.innerHTML=avsBar(v,`<button class="btn primary" onclick="VP.vsOpen('vsi')">Ghi nhận sự cố</button><button class="btn ghost" onclick="go('nonconf')" title="Sổ sự cố dùng chung trước đây (Miễn dịch)">Xem sổ sự cố cũ</button>`)+
+ `<div class="dc-strip vs-strip">${tile('Đang mở',R.filter(isOpen).length,'chưa đóng',R.filter(isOpen).length?'t-warn':'t-ok')}${tile('Quá hạn khắc phục',late,'hạn sớm hơn hôm nay',late?'t-bad':'')}${tile('Chờ đánh giá hiệu quả',wait,'trước khi đóng phiếu')}${tile('Tổng số phiếu',R.length,'sổ sự cố Vi sinh')}</div>`+
+ steps(STEPS_I,'Tham khảo: ISO 15189:2022 mục 7.5 (công việc không phù hợp) và 8.7 (sự không phù hợp và hành động khắc phục); QĐ 2429/QĐ-BYT. Sự cố ghi trước đây trong sổ chung vẫn xem được ở Đánh giá Miễn dịch → Sự cố & khắc phục.')+
+ `<div class="dc-grid"><section class="dc dc-wide"><header><h3>Sổ sự cố và khắc phục Vi sinh</h3><span class="dc-tag">${R.length} phiếu</span></header>${searchBar('vsi','vsiQ','Tìm theo mã phiếu, mô tả, nguyên nhân…')}${tblH(['Mã phiếu','Ngày xảy ra','Công đoạn','Mô tả sự cố','Mức độ','Hạn khắc phục','Trạng thái',''],rowsH)}</section></div>`;}
+const _rv6=renderView;renderView=function(v){if(v==='avs-handling'){renderVSH();return;}if(v==='avs-nonconf'){renderVSI();return;}_rv6(v);};
+VIEW_META['avs-handling']=['Xử lý QC không đạt · Vi sinh','Lập phiếu xử lý, điều tra nguyên nhân, QC lặp lại và xác nhận đóng phiếu — theo CLSI, EUCAST, ISO 15189:2022'];
+VIEW_META['avs-nonconf']=['Sự cố & khắc phục · Vi sinh','Sổ sự cố và hành động khắc phục — theo ISO 15189:2022 mục 7.5 và 8.7'];
+})();
+
+/* ===== PLUS 7: Module QĐ-2429/BYT — chỉ hiển thị trên app, không ghi vào dữ liệu chính ===== */
+(function(){
+const LINK='https://smartlab-qms-2429.vercel.app/';
+const icLink=()=>'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 10 18.7l1-1"/></svg>';
+flat['q2429-intro']=I('q2429-intro','Giới thiệu',iconShieldCheck());
+flat['q2429-link']=I('q2429-link','Kết nối SMART2429',icLink());
+MI.q2429='M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7zM9 12l2 2 4-4';
+const ai=MODS.findIndex(m=>m.id==='admin');
+MODS.splice(ai<0?MODS.length:ai,0,{id:'q2429',n:'QĐ-2429/BYT',go:'q2429-intro',g:[['QĐ-2429/BYT',['q2429-intro','q2429-link']]]});
+NEWV.push('q2429-intro','q2429-link');
+VIEW_META['q2429-intro']=['QĐ-2429/BYT · Giới thiệu','Tổng quan Quyết định 2429/QĐ-BYT và tình hình quản lý chất lượng của khoa'];
+VIEW_META['q2429-link']=['QĐ-2429/BYT · Kết nối SMART2429','Kết nối sang ứng dụng SMARTLAB QMS — Quản lý chất lượng 2429'];
+function stat(k){const T=k==='md'?['base','rw']:['tc','td'],t=todayISO(),A=VP.recs().filter(x=>T.includes(x.type)&&x.date&&x.date<=t),from=D(t,-29),L=A.filter(x=>x.date>=from),g={};
+ L.forEach(x=>{const n=x.type==='base'?(mName(x.r)||'QC xét nghiệm'):x.module;(g[n]=g[n]||[]).push(x);});
+ const days=[...Array(14)].map((_,i)=>D(t,i-13)),per=days.map(d=>A.filter(x=>x.date===d)),w1=A.filter(x=>x.date>D(t,-7)),w0=A.filter(x=>x.date>D(t,-14)&&x.date<=D(t,-7));
+ return {L,g,days,per,w1,w0,p1:pctOf(w1),p0:pctOf(w0)};}
+function svg14(S){const stk=S.per.map(r=>[r.filter(x=>x.status==='pass').length,r.filter(x=>x.status==='warning').length,r.filter(x=>x.status==='reject').length]),mx=Math.max(1,...stk.map(s=>s[0]+s[1]+s[2]));
+ return `<svg viewBox="0 0 420 110" class="dc-bars" role="img" aria-label="Số kết quả QC 14 ngày gần nhất">${stk.map((s,i)=>{let y=84;return s.map((v,j)=>{const h=Math.round(v/mx*70);y-=h;return h?`<rect x="${i*30+5}" y="${y}" width="20" height="${h}" rx="3" fill="${[COL.pass,COL.warning,COL.reject][j]}"/>`:'';}).join('')+`<text x="${i*30+15}" y="100" text-anchor="middle" font-size="9" fill="var(--text-muted)">${S.days[i].slice(8)}/${S.days[i].slice(5,7)}</text>`;}).join('')}</svg>`;}
+function qCard(k,title,mod){const S=stat(k),d=S.p1!==null&&S.p0!==null?S.p1-S.p0:null;
+ const tr=!S.L.length?'Chưa đủ dữ liệu 30 ngày gần nhất để phân tích xu hướng.':(S.p1!==null?`Tỷ lệ đạt 7 ngày gần nhất là ${S.p1}%`+(d===null?'; chưa có dữ liệu tuần trước để so sánh.':`, ${d>0?'tăng':d<0?'giảm':'không đổi'}${d?' '+Math.abs(d)+' điểm':''} so với 7 ngày trước (${S.p0}%).`):'Chưa có kết quả được đánh giá trong 7 ngày gần nhất.');
+ return `<section class="dc"><header><h3>${title}</h3><span class="dc-tag">${S.L.length} kết quả · 30 ngày</span><button class="dc-open" onclick="go('${mod}')">Mở</button></header>
+ <div class="vp-wrap"><table class="vp-table dc-sm-t"><thead><tr><th>Nhóm</th><th>Tổng</th><th>Đạt</th><th>Cảnh báo</th><th>Không đạt</th><th>% đạt</th></tr></thead><tbody>${Object.keys(S.g).length?Object.entries(S.g).map(([n,a])=>`<tr><td data-l="Nhóm">${e(n)}</td><td data-l="Tổng">${a.length}</td><td data-l="Đạt">${a.filter(x=>x.status==='pass').length}</td><td data-l="Cảnh báo">${a.filter(x=>x.status==='warning').length}</td><td data-l="Không đạt">${a.filter(x=>x.status==='reject').length}</td><td data-l="% đạt"><b>${pc(pctOf(a))}</b></td></tr>`).join(''):'<tr><td colspan="6" class="vp-empty">Chưa có dữ liệu.</td></tr>'}</tbody></table></div>${svg14(S)}<p class="dc-none">${e(tr)}</p></section>`;}
+function renderIntro(){const el=document.getElementById('view-q2429-intro');if(!el)return;const md=stat('md'),vs=stat('vs'),A0_=a=>Array.isArray(a)?a:[],ex=A0_(state.externalQC),
+ tile=(l,v,s,c)=>`<div class="dc-tile ${c||''}"><span>${l}</span><b>${v}</b><small>${s}</small></div>`,rj=a=>a.filter(x=>x.status==='reject').length,open=A0_(state.alerts).filter(a=>a&&!a.resolved).length;
+ el.innerHTML=`<section class="dc dc-wide q24-hero"><div class="q24-mark" aria-hidden="true">2429</div><div><h2>Quyết định 2429/QĐ-BYT</h2><p>Tiêu chí đánh giá mức chất lượng phòng xét nghiệm y học</p></div></section>
+ <section class="dc dc-wide"><header><h3>Tổng quan QĐ 2429/QĐ-BYT</h3><span class="dc-tag">tóm tắt</span></header>
+ <ul class="dc-ul q24-ul"><li><b>Văn bản:</b> Quyết định số 2429/QĐ-BYT ngày 12/6/2017 của Bộ trưởng Bộ Y tế ban hành Tiêu chí đánh giá mức chất lượng phòng xét nghiệm y học.</li><li><b>Mục đích:</b> giúp phòng xét nghiệm tự đánh giá và cải tiến chất lượng; làm cơ sở để cơ quan quản lý đánh giá, giám sát và công bố mức chất lượng.</li><li><b>Cấu trúc:</b> bộ tiêu chí gồm 12 chương với 169 tiêu chí và các tiểu mục; kết quả xếp mức chất lượng từ Mức 1 đến Mức 5 theo tỷ lệ điểm đạt (chưa xếp mức khi dưới ngưỡng tối thiểu).</li><li><b>Nội dung chính:</b> tổ chức và quản lý, hồ sơ tài liệu, nhân sự, thiết bị, mua sắm vật tư hóa chất, quy trình xét nghiệm, nội kiểm và ngoại kiểm, an toàn, cải tiến chất lượng.</li><li><b>Liên hệ SMART VSMD:</b> dữ liệu nội kiểm, ngoại kiểm, hóa chất, thiết bị, trực CLS trong ứng dụng là minh chứng phục vụ đánh giá.</li></ul>
+ <p class="avs-note">Nội dung tóm tắt để tham khảo nhanh; khi đánh giá cần đối chiếu văn bản gốc của Bộ Y tế.</p></section>
+ <section class="dc dc-wide"><header><h3>Quản lý chất lượng</h3><span class="dc-tag">lấy từ module Chất lượng · Miễn dịch và Vi sinh</span></header>
+ <div class="dc-strip q24-strip">${tile('Miễn dịch · % đạt 30 ngày',pc(pctOf(md.L)),md.L.length+' kết quả')}${tile('Vi sinh · % đạt 30 ngày',pc(pctOf(vs.L)),vs.L.length+' kết quả')}${tile('Không đạt 7 ngày',rj(md.w1)+' · '+rj(vs.w1),'Miễn dịch · Vi sinh',rj(md.w1)+rj(vs.w1)?'t-warn':'t-ok')}${tile('Ngoại kiểm đã nhập',ex.filter(x=>x&&x.kind!=='VS').length+' · '+ex.filter(x=>x&&x.kind==='VS').length,'Miễn dịch · Vi sinh')}${tile('Cảnh báo chưa xử lý',open,'Miễn dịch',open?'t-warn':'t-ok')}</div></section>
+ <div class="dc-grid">${qCard('md','Chất lượng · Miễn dịch','qa-md')}${qCard('vs','Chất lượng · Vi sinh','qa-vs')}</div>`;}
+function renderLink(){const el=document.getElementById('view-q2429-link');if(!el)return;
+ el.innerHTML=`<section class="dc dc-wide q24-conn"><div class="q24-mark" aria-hidden="true">QMS</div><div class="q24-txt"><h2>SMARTLAB QMS — Quản lý chất lượng 2429</h2><p class="q24-tag">QUALITY MANAGEMENT SYSTEM</p>
+ <p>Hệ thống quản lý chất lượng phòng xét nghiệm của Khoa Vi sinh - Miễn dịch, Bệnh viện Phong - Da liễu Trung ương Quy Hòa, xây dựng theo định hướng Quality · Compliance · Improvement.</p>
+ <ul class="dc-ul"><li>SMART VSMD số hóa hoạt động chuyên môn hằng ngày: nội kiểm, hóa chất, thiết bị, trực CLS.</li><li>SMARTLAB QMS tập trung quản lý chất lượng theo bộ tiêu chí QĐ 2429/QĐ-BYT; hai ứng dụng dùng bổ trợ cho nhau.</li></ul>
+ <a class="btn primary q24-btn" href="${LINK}" target="_blank" rel="noopener noreferrer">Kết nối SMARTLAB QMS</a>
+ <p class="avs-note">Ứng dụng mở ở tab mới và cần đăng nhập bằng tài khoản của SMARTLAB QMS. Trang này chỉ hiển thị, không lưu dữ liệu vào SMART VSMD.</p></div></section>`;}
+const _rv7=renderView;renderView=function(v){if(v==='q2429-intro'){renderIntro();return;}if(v==='q2429-link'){renderLink();return;}_rv7(v);};
+})();
+
 /* bộ canh: đảm bảo thanh phân hệ, menu và Dashboard luôn đúng kể cả khi mã khác ghi đè hàm go */
 let __fix=0;setInterval(()=>{try{if(typeof currentView==='undefined'||!currentView||!document.getElementById('modBar'))return;const m=modOf(currentView);
  if(NEWV.includes(currentView)&&!document.getElementById('view-'+currentView)){go(currentView);return;}
@@ -18716,7 +19035,61 @@ let __fix=0;setInterval(()=>{try{if(typeof currentView==='undefined'||!currentVi
  h.ondblclick=()=>{if(col())tg();set(260);};
  h.onkeydown=ev=>{if(mob())return;const w=sb.getBoundingClientRect().width;if(ev.key==='ArrowRight'){if(col())tg();set(w+16);}if(ev.key==='ArrowLeft')set(w-16);};})();
 
-const _qsAud=queueSave;queueSave=function(){try{audTidyHead();}catch(x){console.warn('audTidyHead',x);}return _qsAud.apply(this,arguments);};
+const _qsAud=queueSave;queueSave=function(){try{audTidyHead();if(state&&Array.isArray(state.audit)&&state.audit.length>500)state.audit.length=500;}catch(x){console.warn('audTidyHead',x);}return _qsAud.apply(this,arguments);};
 })();
 
 </script>
+<script id="vsmd-mobile-js">
+/* Giao diện điện thoại: nhận diện thiết bị, thanh tab dưới, chip điều hướng. Không ảnh hưởng máy tính. */
+(function(){
+'use strict';
+var de=document.documentElement, real=window.matchMedia.bind(window), eff=0;
+function dev(){var sw=Math.min(screen.width||0,screen.height||0),coarse=false;try{coarse=real('(pointer:coarse)').matches||navigator.maxTouchPoints>0;}catch(e){}return {sw:sw,coarse:coarse};}
+function isPhone(){var d=dev();return (d.coarse&&d.sw>0&&d.sw<=600)||window.innerWidth<=820;}
+/* Trình duyệt điện thoại bật "trang web cho máy tính": bề rộng bố cục ~980px -> thu về bề rộng thiết bị bằng zoom */
+function fitDesktopMode(){var d=dev(),k=1;eff=0;
+  if(d.coarse&&d.sw>0&&d.sw<=600&&window.innerWidth>d.sw*1.3&&window.innerWidth>=900){k=window.innerWidth/d.sw;eff=d.sw;}
+  de.style.zoom=k>1?String(k):'';fixMedia();}
+function fixMedia(){if(!eff)return;try{for(var i=0;i<document.styleSheets.length;i++){var rs;try{rs=document.styleSheets[i].cssRules;}catch(e){continue;}
+  for(var j=0;j<rs.length;j++){var r=rs[j];if(r.type===4&&r.media&&!r.__vm){var t=r.media.mediaText;if(/print/.test(t))continue;var m=/\(max-width:\s*(\d+)px\)/.exec(t);if(m&&+m[1]>=eff&&+m[1]<window.innerWidth&&!/min-width/.test(t)){r.__vm=1;try{r.media.mediaText=t.replace(/\(max-width:\s*\d+px\)/,'all');}catch(e){}}}}}}catch(e){}}
+window.matchMedia=function(q){try{var m=/^\s*\(max-width:\s*(\d+)px\)\s*$/.exec(q);if(m&&eff)return real(eff<=+m[1]?'all':'not all');}catch(e){}return real(q);};
+function apply(){fitDesktopMode();de.classList.toggle('vsmd-m',isPhone());sync();}
+/* --- thanh tab dưới + bảng Thêm + chip --- */
+var IC={home:'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',quality:'M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3',chem:'M8 3h8M9 3v4L4.5 15A4 4 0 0 0 8 21h8a4 4 0 0 0 3.5-6L15 7V3',equip:'M4 6h16v10H4zM8 20h8M12 16v4',ops:'M9 11l3 3 8-8M5 5h6M5 12h2M5 19h10',report:'M6 3h9l4 4v14H6zM9 13h6M9 17h6',duty:'M4 4h16v16H4zM8 9h8M8 13h8M8 17h5',docs:'M4 5h6l2 2h8v12H4z',admin:'M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z',q2429:'M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7zM9 12l2 2 4-4',more:'M5 12h.01M12 12h.01M19 12h.01'};
+function svg(id){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(IC[id]||IC.docs)+'"/></svg>';}
+var MAIN=['home','quality','ops','chem'];
+function mods(){return [].map.call(document.querySelectorAll('#modBar .mod-btn:not(.find)'),function(b){var m=/VP\.mod\('([^']+)'\)/.exec(b.getAttribute('onclick')||'');return m?{id:m[1],n:b.textContent.trim(),cur:b.getAttribute('aria-current')==='page'}:null;}).filter(Boolean);}
+function ensure(){if(document.getElementById('vmTabs'))return;var app=document.getElementById('app');if(!app)return;
+  var t=document.createElement('nav');t.id='vmTabs';t.setAttribute('aria-label','Điều hướng chính');app.appendChild(t);
+  var s=document.createElement('div');s.id='vmSheet';s.innerHTML='<div class="vm-scrim"></div><div class="vm-panel" role="dialog" aria-label="Tất cả phân hệ"><div class="vm-grab"></div><h4>Tất cả phân hệ</h4><div class="vm-grid"></div><div class="vm-wide"></div></div>';app.appendChild(s);
+  s.querySelector('.vm-scrim').addEventListener('click',closeSheet);
+  var c=document.createElement('div');c.id='vmChips';var main=document.querySelector('.main'),hd=main&&main.querySelector('.header');if(hd)hd.insertAdjacentElement('afterend',c);}
+function closeSheet(){var s=document.getElementById('vmSheet');if(s)s.classList.remove('open');}
+function openSheet(){sync();var s=document.getElementById('vmSheet');if(s)s.classList.add('open');}
+function pick(id){closeSheet();if(window.VP&&VP.mod)VP.mod(id);}
+function sync(){if(!de.classList.contains('vsmd-m'))return;ensure();var t=document.getElementById('vmTabs');if(!t)return;var ms=mods();if(!ms.length)return;var cur=(ms.find(function(m){return m.cur;})||{}).id;
+  var main=MAIN.map(function(id){return ms.find(function(m){return m.id===id;});}).filter(Boolean),rest=ms.filter(function(m){return MAIN.indexOf(m.id)<0;});
+  t.innerHTML=main.map(function(m){return '<button type="button" data-m="'+m.id+'"'+(m.id===cur?' aria-current="page"':'')+'>'+svg(m.id)+'<span>'+m.n+'</span></button>';}).join('')+'<button type="button" data-more="1"'+(rest.some(function(m){return m.id===cur;})?' aria-current="page"':'')+'>'+svg('more')+'<span>Thêm</span></button>';
+  [].forEach.call(t.querySelectorAll('button'),function(b){b.onclick=function(){if(b.dataset.more)openSheet();else pick(b.dataset.m);};});
+  var g=document.querySelector('#vmSheet .vm-grid');if(g){g.innerHTML=rest.map(function(m){return '<button type="button" class="vm-tile'+(m.id===cur?' on':'')+'" data-m="'+m.id+'">'+svg(m.id)+'<span>'+m.n+'</span></button>';}).join('');[].forEach.call(g.querySelectorAll('button'),function(b){b.onclick=function(){pick(b.dataset.m);};});}
+  var w=document.querySelector('#vmSheet .vm-wide');if(w){var st=document.querySelector('#modBar .vp-q');w.innerHTML='<button type="button" class="btn" data-a="find">Tìm nhanh</button>'+(st?'<button type="button" class="btn" data-a="storage">Dung lượng dữ liệu</button>':'')+'<button type="button" class="btn" data-a="out">Đăng xuất</button>';w.onclick=function(ev){var a=ev.target.closest('button');if(!a)return;closeSheet();var k=a.dataset.a;if(k==='find'&&window.VP&&VP.cmd)VP.cmd();else if(k==='storage')go('storage');else if(k==='out')doLogout();};}
+  chips();}
+function chips(){var c=document.getElementById('vmChips');if(!c)return;var items=[].slice.call(document.querySelectorAll('#navList .nav-item')),subs=[].slice.call(document.querySelectorAll('#navList .nav-subitem'));
+  function chip(el,sub){var sp=el.querySelectorAll('span'),lab=(sp[1]||sp[0]||el).textContent.trim(),ic=!sub&&el.querySelector('.ic')?el.querySelector('.ic').innerHTML:'';return {lab:lab,on:el.classList.contains('active'),el:el,ic:ic};}
+  var a=items.map(function(e){return chip(e,0);}),b=subs.map(function(e){return chip(e,1);});
+  if(a.length<2&&!b.length){c.innerHTML='';return;}
+  c.innerHTML='<div class="vm-row">'+a.map(function(x,i){return '<button type="button" class="vm-chip'+(x.on?' on':'')+'" data-i="'+i+'">'+x.ic+'<span>'+x.lab+'</span></button>';}).join('')+'</div>'+(b.length?'<div class="vm-row sub">'+b.map(function(x,i){return '<button type="button" class="vm-chip'+(x.on?' on':'')+'" data-s="'+i+'">'+x.lab+'</button>';}).join('')+'</div>':'');
+  [].forEach.call(c.querySelectorAll('button'),function(btn){btn.onclick=function(){var x=btn.dataset.s!==undefined?b[+btn.dataset.s]:a[+btn.dataset.i];if(x&&x.el)x.el.click();};});
+  var on=c.querySelectorAll('.vm-chip.on');[].forEach.call(on,function(o){try{o.scrollIntoView({inline:'center',block:'nearest'});}catch(e){}});}
+var timer=null;function later(){clearTimeout(timer);timer=setTimeout(sync,60);}
+function boot(){apply();var mb=document.getElementById('modBar'),nv=document.getElementById('navList');
+  if(mb)new MutationObserver(later).observe(mb,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-current']});
+  if(nv)new MutationObserver(later).observe(nv,{childList:true,subtree:true});
+  setInterval(function(){if(de.classList.contains('vsmd-m'))sync();},1500);}
+window.addEventListener('resize',function(){clearTimeout(window.__vmR);window.__vmR=setTimeout(apply,200);});
+window.addEventListener('orientationchange',function(){setTimeout(apply,300);});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+setTimeout(apply,1200);
+})();
+</script>
+
