@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0E6BA8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -19338,7 +19338,7 @@ const _qsAud=queueSave;queueSave=function(){try{audTidyHead();if(state&&Array.is
 'use strict';
 var de=document.documentElement, real=window.matchMedia.bind(window), eff=0;
 function dev(){var sw=Math.min(screen.width||0,screen.height||0),coarse=false;try{coarse=real('(pointer:coarse)').matches||navigator.maxTouchPoints>0;}catch(e){}return {sw:sw,coarse:coarse};}
-function isPhone(){var d=dev();return (d.coarse&&d.sw>0&&d.sw<=600)||window.innerWidth<=820;}
+function isPhone(){return eff>0||window.innerWidth<=900;} /* theo bề rộng vùng hiển thị (khớp CSS 900px); eff>0 = điện thoại bật "trang web cho máy tính" */
 /* Trình duyệt điện thoại bật "trang web cho máy tính": bề rộng bố cục ~980px -> thu về bề rộng thiết bị bằng zoom */
 function fitDesktopMode(){var d=dev(),k=1;eff=0;
   if(d.coarse&&d.sw>0&&d.sw<=600&&window.innerWidth>d.sw*1.3&&window.innerWidth>=900){k=window.innerWidth/d.sw;eff=d.sw;}
@@ -19425,4 +19425,121 @@ function build(){var sc=document.getElementById('loginScreen');if(!sc||sc.queryS
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
 })();
 </script>
+<style id="vsmd-responsive">
+/* =====================================================================
+   SMART VSMD — KHỐI RESPONSIVE DUY NHẤT (thêm cuối file, không đổi màu / phông / nội dung)
+   Breakpoint theo bề rộng vùng hiển thị:
+     ≤359 · 360–430 · 431–600 · 601–900 · 901–1100 · ≥1101
+   Chế độ điện thoại/máy tính bảng nhỏ (html.vsmd-m) bật khi bề rộng ≤ 900px (xem isPhone()).
+   ===================================================================== */
 
+/* ---------- A. Mọi kích thước: chống co hẹp, chống tràn ---------- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.main,.content,.card,.card-body,.modal,.modal-body,.field,.form-grid>*,.dc-main>*,.dc-grid>*,.dc-halves>*,.two-col>*{min-width:0}
+.content{overflow-wrap:break-word}
+img,canvas,video{max-width:100%}
+input,select,textarea{max-width:100%}
+/* Form 2/3 cột: cột đều nhau, không bị ô ngày/giờ làm lệch */
+.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.form-grid.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.form-grid .span2{grid-column:1/-1}
+/* Hàng tiêu đề + nút luôn được phép xuống dòng thay vì tràn */
+.card-head,.btn-row,.exp-bar,.vp-bar,.cls-final-heading,.td-report-header,.q24-hero,.q24-conn,.dh-sync{flex-wrap:wrap}
+.td-header-right{width:auto;flex:0 1 240px;min-width:0;max-width:100%}
+/* Bảng: cuộn ngang riêng trong khung, không kéo cả trang */
+.table-wrap,.vp-wrap{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+/* Modal: luôn nằm trong vùng nhìn thấy, có vùng cuộn riêng */
+.modal{display:flex;flex-direction:column;max-height:calc(100vh - 32px);max-height:calc(var(--vsmd-vvh,100dvh) - 32px)}
+.modal-head,.modal-foot{flex:none}
+.modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+dialog.vs-dlg{max-height:calc(100vh - 24px);max-height:calc(var(--vsmd-vvh,100dvh) - 24px)}
+
+/* ---------- B. 901–1100px: tablet lớn / cửa sổ desktop thu nhỏ ---------- */
+@media (min-width:901px) and (max-width:1100px){
+  .form-grid.c3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .content{padding:18px}
+  .header{gap:8px;padding-left:16px;padding-right:16px}
+  .sys-status{padding:4px 8px}
+  .dash-hero{grid-template-columns:minmax(0,1fr)!important}
+  .dh-sync{justify-content:flex-start}
+  .chem-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ---------- C. ≤900px: máy tính bảng dọc và điện thoại (html.vsmd-m) ---------- */
+html.vsmd-m .main{min-width:0}
+html.vsmd-m .header{height:auto;min-height:54px;flex-wrap:nowrap}
+html.vsmd-m .header>div:not(.header-spacer){min-width:0;flex:1 1 auto}
+html.vsmd-m .view-title{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;max-width:none!important;line-height:1.25;overflow-wrap:anywhere}
+html.vsmd-m .icon-btn,html.vsmd-m .hamburger{min-width:40px;min-height:40px;flex:none}
+/* Nút bấm cảm ứng */
+html.vsmd-m #content button,html.vsmd-m #content .btn,html.vsmd-m #content .dc-open,html.vsmd-m #modalRoot button,html.vsmd-m #modalRoot .btn{min-height:40px}
+html.vsmd-m #content .chem-mini-btn,html.vsmd-m #content #cls_date_pick{min-height:38px;min-width:38px}
+html.vsmd-m #content td button,html.vsmd-m #content td .btn{min-height:36px}
+html.vsmd-m .btn-row,html.vsmd-m .vp-bar,html.vsmd-m .exp-bar{gap:10px}
+/* Bảng nhiều cột: cuộn ngang trong khung, giữ đủ cột và thao tác */
+html.vsmd-m .table-wrap>table:not(.vp-table):has(thead th:nth-child(6)){min-width:720px}
+html.vsmd-m .table-wrap>table:not(.vp-table):has(thead th:nth-child(9)){min-width:960px}
+html.vsmd-m .table-wrap{max-height:none}
+/* Tab dưới: nhãn tiếng Việt hiển thị đủ, xuống dòng thay vì cắt */
+html.vsmd-m #vmTabs button{padding-left:1px;padding-right:1px;font-size:10.5px}
+html.vsmd-m #vmTabs button span{white-space:normal;overflow:visible;text-overflow:clip;text-align:center;line-height:1.1}
+/* Bàn phím mở: ẩn thanh tab dưới để không che ô nhập / nút lưu */
+html.vsmd-m body:has(#content input:focus,#content select:focus,#content textarea:focus,#modalRoot input:focus,#modalRoot select:focus,#modalRoot textarea:focus) #vmTabs{display:none}
+html.vsmd-m input,html.vsmd-m select,html.vsmd-m textarea{scroll-margin-block:96px}
+html.vsmd-m .modal-foot{position:sticky;bottom:0;background:var(--surface)}
+html.vsmd-m dialog.vs-dlg .vs-foot{position:sticky;bottom:0;background:var(--surface)}
+
+/* ---------- D. ≤600px: điện thoại ---------- */
+@media (max-width:600px){
+  html.vsmd-m #content .form-grid,html.vsmd-m #content .form-grid.c3{grid-template-columns:minmax(0,1fr)!important}
+  html.vsmd-m #content .form-grid .span2{grid-column:auto}
+  html.vsmd-m .td-header-right{flex:1 1 100%;width:100%}
+  html.vsmd-m .cls-final-heading>label{margin-left:0}
+  html.vsmd-m .cls-final-heading .btn{margin-left:0}
+  html.vsmd-m .chem-hub-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:359px){
+  html.vsmd-m #vmTabs button{font-size:10px}
+  html.vsmd-m .content{padding-left:10px!important;padding-right:10px!important}
+}
+
+/* ---------- E. Chiều cao thấp (điện thoại xoay ngang, cửa sổ thấp, zoom lớn) ---------- */
+@media (max-height:520px){
+  html.vsmd-m .header{position:static}
+  html.vsmd-m #vmChips{position:static}
+  html.vsmd-m #vmTabs button{flex-direction:row;justify-content:center;gap:6px;min-height:40px;padding-top:4px;padding-bottom:4px}
+  html.vsmd-m #vmTabs button svg{width:18px;height:18px}
+  html.vsmd-m .content{padding-bottom:calc(60px + env(safe-area-inset-bottom))!important}
+  .modal{max-height:calc(100vh - 12px);max-height:calc(var(--vsmd-vvh,100dvh) - 12px)}
+}
+</style>
+<script id="vsmd-responsive-js">
+/* SMART VSMD — vsmd-responsive-js: chỉ điều khiển hiển thị (sidebar tablet, vùng nhìn thấy khi có bàn phím).
+   Không đọc/ghi dữ liệu nghiệp vụ, không gọi Supabase, không đổi sự kiện của ứng dụng. */
+(function(){
+  'use strict';
+  var KEY='smartqc_sidebar_collapsed', de=document.documentElement, autoCollapsed=false;
+  var ARROW_L='<span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></span>',
+      ARROW_R='<span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>';
+  function pref(){try{return localStorage.getItem(KEY);}catch(e){return null;}}
+  /* 901–1100px: tự thu gọn sidebar nếu người dùng chưa chọn; người dùng bấm nút thì tôn trọng lựa chọn đó */
+  function fitSidebar(){
+    var sb=document.getElementById('sidebar'); if(!sb||pref()!==null) return;
+    var tablet=window.innerWidth>900&&window.innerWidth<=1100, btn=sb.querySelector('.sidebar-toggle');
+    if(tablet&&!sb.classList.contains('collapsed')){sb.classList.add('collapsed');autoCollapsed=true;if(btn)btn.innerHTML=ARROW_R;}
+    else if(!tablet&&autoCollapsed){sb.classList.remove('collapsed');autoCollapsed=false;if(btn)btn.innerHTML=ARROW_L;}
+  }
+  /* Bàn phím ảo: đặt chiều cao vùng nhìn thấy thực để modal không bị che */
+  function vv(){var v=window.visualViewport; if(!v) return; de.style.setProperty('--vsmd-vvh',Math.round(v.height)+'px');}
+  window.addEventListener('resize',function(){fitSidebar();vv();});
+  window.addEventListener('orientationchange',function(){setTimeout(function(){fitSidebar();vv();},300);});
+  if(window.visualViewport){window.visualViewport.addEventListener('resize',vv);}
+  /* Khi chạm vào ô nhập trên điện thoại, cuộn ô đó vào vùng nhìn thấy sau khi bàn phím mở */
+  document.addEventListener('focusin',function(e){
+    var t=e.target; if(!de.classList.contains('vsmd-m')||!t||!t.matches||!t.matches('input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea')) return;
+    setTimeout(function(){try{t.scrollIntoView({block:'center',behavior:'smooth'});}catch(x){}},320);
+  });
+  function start(){fitSidebar();vv();setTimeout(fitSidebar,1500);}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+</script>
