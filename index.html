@@ -11569,7 +11569,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   }
   function normalizeCLS(raw){
     const r=clone(raw||{});if(!r.id)r.id=typeof uid==='function'?uid('CLS'):'CLS-'+Date.now();if(!r.date)r.date=typeof todayISO==='function'?todayISO():new Date().toISOString().slice(0,10);if(!r.weekday)r.weekday=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][new Date().getDay()];
-    ['doctor','staff','outsideHours','totalPatients','totalVSMD','immunologyTest','microbiologyTest','sampleFollowup','sampleFollowupTest','sampleFollowupNo','sampleFollowupId','machineIssue','compLeave'].forEach(k=>{if(r[k]===undefined||r[k]===null)r[k]='';});
+    ['doctor','staff','outsideHours','totalPatients','totalVSMD','immunologyTest','microbiologyTest','sampleFollowup','sampleFollowupTest','sampleFollowupNo','sampleFollowupId','machineIssue','visitNote','compLeave'].forEach(k=>{if(r[k]===undefined||r[k]===null)r[k]='';});
     if(!Array.isArray(r.sampleFollowupRows)){const legacy=(r.sampleFollowupTest||r.sampleFollowupNo||r.sampleFollowupId)?[{test:r.sampleFollowupTest||'',sampleNo:r.sampleFollowupNo||'',id:r.sampleFollowupId||''}]:[];r.sampleFollowupRows=legacy;}
     r.sampleFollowupRows=r.sampleFollowupRows.map(x=>({test:(()=>{const t=x?.test||x?.name||'';const a=renamed('imm',t),b=renamed('mic',t);return a!==trim(t)?a:b;})(),sampleNo:x?.sampleNo??x?.no??'',id:x?.id??''}));while(r.sampleFollowupRows.length<5)r.sampleFollowupRows.push({test:'',sampleNo:'',id:''});
     mergeRows('imm',r);mergeRows('mic',r);r.followups=Array.isArray(r.followups)?r.followups:[];r.emergencies=Array.isArray(r.emergencies)?r.emergencies:[];
@@ -11578,7 +11578,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
   }
   function saveCLSDraft(r){state.clsDraft=clone(r);if(typeof queueSave==='function')queueSave();}
   function readCLSForm(){
-    const r=normalizeCLS(state.clsDraft||{});['weekday','date','doctor','staff','outsideHours','totalPatients','totalVSMD','immunologyTest','microbiologyTest','machineIssue'].forEach(k=>{const e=document.getElementById('cls_'+k);if(e)r[k]=e.value;});
+    const r=normalizeCLS(state.clsDraft||{});['weekday','date','doctor','staff','outsideHours','totalPatients','totalVSMD','immunologyTest','microbiologyTest','machineIssue','visitNote'].forEach(k=>{const e=document.getElementById('cls_'+k);if(e)r[k]=e.value;});
     {const _cw=document.getElementById('cls_compLeave'),_cwr=document.getElementById('cls_compLeave_wrap');if(_cw&&_cwr)r.compLeave=(_cwr.style.display!=='none'&&_cw.value)?_cw.value:'';}
     {const _ohSel=document.getElementById('cls_outsideHours'),_ohMan=document.getElementById('cls_outsideHoursManual');if(_ohSel&&_ohMan)r.outsideHours=[_ohSel.value.trim(),_ohMan.value.trim()].filter(Boolean).join(', ');}
     const sampleRows=[...document.querySelectorAll('[data-sample-row]')].map(row=>({test:row.querySelector('[data-sample-field="test"]')?.value||'',sampleNo:row.querySelector('[data-sample-field="sampleNo"]')?.value||'',id:row.querySelector('[data-sample-field="id"]')?.value||''}));if(sampleRows.length)r.sampleFollowupRows=sampleRows; r.sampleFollowup=sampleRows.filter(x=>x.test||x.sampleNo||x.id).map((x,i)=>`${i+1}. ${x.test}${x.sampleNo?' | Số mẫu: '+x.sampleNo:''}${x.id?' | ID: '+x.id:''}`).join('\n');
@@ -11634,7 +11634,7 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
       <section class="cls-sec cls-sample-followup-section"><h4>II/ Mẫu lưu – hẹn KQ</h4><datalist id="cls_sampleTestOptions">${[...listFor('imm',r),...listFor('mic',r)].filter((n,i,a)=>a.indexOf(n)===i).map(n=>`<option value="${esc(n)}"></option>`).join('')}</datalist><div class="table-wrap"><table class="cls-sample-followup-table"><thead><tr><th>STT</th><th>TÊN XÉT NGHIỆM</th><th>SỐ MẪU</th><th>ID</th></tr></thead><tbody id="cls-sample-followup-rows">${r.sampleFollowupRows.map((x,i)=>`<tr data-sample-row><td>${i+1}</td><td><input data-sample-filter list="cls_sampleTestOptions" value="${esc(x.test)}" placeholder="Lọc/chọn xét nghiệm…" autocomplete="off"><input data-sample-field="test" type="hidden" value="${esc(x.test)}"></td><td><input data-sample-field="sampleNo" value="${esc(x.sampleNo)}" placeholder="Số mẫu"></td><td><input data-sample-field="id" value="${esc(x.id)}" placeholder="ID"></td></tr>`).join('')}</tbody></table></div><div class="btn-row" style="margin-top:8px"><button type="button" class="btn ghost sm" id="cls-add-sample-row">+ Thêm hàng</button></div></section>
       <section class="cls-sec"><h4>III/ Xét nghiệm theo dõi</h4><div class="table-wrap"><table><thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead><tbody>${renderCaseRows(r.followups,'fu')}</tbody></table></div><div class="btn-row" style="margin-top:8px"><button type="button" class="btn ghost sm" id="cls-add-fu-row">+ Thêm hàng</button></div></section>
       <section class="cls-sec"><h4>IV/ Xét nghiệm cấp cứu</h4><div class="table-wrap"><table><thead><tr><th>STT</th><th>Họ và tên bệnh nhân</th><th>Năm sinh</th><th>Khoa/Phòng</th><th>Chẩn đoán</th><th>Xét nghiệm</th></tr></thead><tbody>${renderCaseRows(r.emergencies,'em')}</tbody></table></div><div class="btn-row" style="margin-top:8px"><button type="button" class="btn ghost sm" id="cls-add-em-row">+ Thêm hàng</button></div></section>
-      <section class="cls-sec"><h4 style="font-weight:400">* Tình hình trong khoa ổn định</h4><div>Máy móc hoạt động bình thường.</div><textarea id="cls_machineIssue" rows="2" placeholder="Nếu có lỗi, nhập thông tin lỗi.">${esc(r.machineIssue)}</textarea></section>
+      <section class="cls-sec"><h4 style="font-weight:400">* Tình hình trong khoa ổn định</h4><div>Máy móc hoạt động bình thường.</div><textarea id="cls_machineIssue" rows="2" placeholder="Nếu có lỗi, nhập thông tin lỗi.">${esc(r.machineIssue)}</textarea><textarea id="cls_visitNote" rows="2" placeholder="Nếu có kỹ sư sửa máy hoặc công ty đến gặp phòng xét nghiệm, nhập thông tin." style="margin-top:10px">${esc(r.visitNote)}</textarea></section>
       <div class="btn-row cls-bottom-actions"><button class="btn primary" id="cls-save-final">Lưu phiếu trực CLS</button><button class="btn" id="cls-new-final">Phiếu mới</button></div></div></div>`;
     const recent=`<div class="card" style="margin-top:14px"><div class="card-head"><h3>Danh sách đã nhập gần đây</h3></div><div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Thứ</th><th>Bác Sĩ</th><th>Người trực</th><th>Tổng BN</th><th></th></tr></thead><tbody>${smartRecentAsc(state.clsReports,x=>x.date,0).map(o=>o.item).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.weekday)}</td><td>${esc(x.doctor)}</td><td>${esc(x.staff)}</td><td>${esc(x.totalPatients)}</td><td><button class="btn ghost sm" data-final-edit="${esc(x.id)}">Sửa</button> <button class="btn sm" data-final-export="pdf" data-final-id="${esc(x.id)}">In PDF</button> <button class="btn sm" data-final-export="word" data-final-id="${esc(x.id)}">Word</button> <button class="btn sm" data-final-export="excel" data-final-id="${esc(x.id)}">Excel</button> <button class="btn sm" data-final-delete="${esc(x.id)}">Xóa</button></td></tr>`).join('')}</tbody></table></div></div>`;
     el.innerHTML=card+recent;
@@ -12719,10 +12719,10 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       <p class="center">(Áp dụng cho các khoa cận lâm sàng)</p>
 
       <!-- Hành chính: 2 cột thẳng hàng trái/phải, không có ô viền. -->
-      <table class="word-no-border cls-meta-v3" data-word-border="0" data-word-widths="60,40">
-        ${H(r.weekday)||H(r.date)?`<tr><td class="left">${H(r.weekday)?`Thứ: ${E(r.weekday)}`:''}</td><td class="center">${H(r.date)?`Ngày/tháng/năm: ${E(r.date)}`:''}</td></tr>`:''}
-        <tr><td class="left">XN: Vi sinh - Miễn dịch</td><td class="center">${H(r.doctor)?`Bác Sĩ: ${E(r.doctor)}`:''}</td></tr>
-        ${H(r.staff)?`<tr><td></td><td class="center">Người trực: ${E(r.staff)}</td></tr>`:''}
+      <table class="word-no-border cls-meta-v3" data-word-border="0" data-word-widths="70,30">
+        ${H(r.weekday)||H(r.date)?`<tr><td class="left">${H(r.weekday)?`Thứ: ${E(r.weekday)}`:''}</td><td class="left">${H(r.date)?`Ngày/tháng/năm: ${E(r.date)}`:''}</td></tr>`:''}
+        <tr><td class="left">XN: Vi sinh - Miễn dịch</td><td class="left">${H(r.doctor)?`Bác Sĩ: ${E(r.doctor)}`:''}</td></tr>
+        ${H(r.staff)?`<tr><td></td><td class="left">Người trực: ${E(r.staff)}</td></tr>`:''}
       </table>
 
       <div class="cls-section-v3">
@@ -12742,6 +12742,7 @@ const navStyle=document.createElement('style');navStyle.textContent='.nav-item.a
       <div class="cls-section-v3">
         <h2 style="font-weight:400">* Tình hình trong khoa ổn định</h2>
         <div class="cls-note-v3">${H(r.machineIssue)?`Lỗi: ${E(r.machineIssue)}`:'Máy móc hoạt động bình thường.'}</div>
+        ${H(r.visitNote)?`<div class="cls-note-v3">Kỹ sư / công ty: ${E(r.visitNote).replace(/\r?\n/g,'<br>')}</div>`:''}
       </div>
 
       <!-- Người trực: chính giữa 1/3 giữa của A4, không lệch sang phải. -->
@@ -14642,7 +14643,7 @@ body{margin:0}
       if(has(r.sampleFollowup))a.push([],['II/ Mẫu lưu – hẹn KQ',r.sampleFollowup]);
       const addCases=(label,rows)=>{if(!rows.length)return;a.push([], [label],['STT','Họ và tên bệnh nhân','Năm sinh','Khoa/Phòng','Chẩn đoán','Xét nghiệm']);rows.forEach((x,i)=>a.push([i+1,x.patient,x.year,x.dept,x.diagnosis,x.test]));};
       addCases('III/ Xét nghiệm theo dõi',fu);addCases('IV/ Xét nghiệm cấp cứu',em);
-      a.push([],['* Tình hình trong khoa ổn định',has(r.machineIssue)?r.machineIssue:'Máy móc hoạt động bình thường.'],['KHOA VI SINH - MIỄN DỊCH'],['Người trực','(Đã ký)',r.staff||'']);
+      a.push([],['* Tình hình trong khoa ổn định',has(r.machineIssue)?r.machineIssue:'Máy móc hoạt động bình thường.']);if(has(r.visitNote))a.push(['Kỹ sư / công ty',r.visitNote]);a.push(['KHOA VI SINH - MIỄN DỊCH'],['Người trực','(Đã ký)',r.staff||'']);
       if(has(r.outsideHours))a.push(['Ngoài giờ','',r.outsideHours]);
       const ws=XLSX.utils.aoa_to_sheet(a);ws['!cols']=[{wch:8},{wch:38},{wch:14},{wch:18},{wch:24},{wch:24}];
       const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Truc CLS');
@@ -15542,8 +15543,8 @@ html body .cls-export-v3.cls-export-v3 th:empty{background:transparent!important
 /* --- 1. Khối hành chính --- */
 html body .cls-export-v3.cls-export-v3 table.cls-meta-v3{width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;border-spacing:0!important}
 html body .cls-export-v3.cls-export-v3 table.cls-meta-v3 td{border:0!important;background:transparent!important;border-radius:0!important;padding-left:0!important;padding-right:0!important}
-html body .cls-export-v3.cls-export-v3 table.cls-meta-v3 td:first-child{width:60%!important;text-align:left!important}
-html body .cls-export-v3.cls-export-v3 table.cls-meta-v3 td:last-child{width:40%!important;text-align:center!important}
+html body .cls-export-v3.cls-export-v3 table.cls-meta-v3 td:first-child{width:70%!important;text-align:left!important}
+html body .cls-export-v3.cls-export-v3 table.cls-meta-v3 td:last-child{width:30%!important;text-align:left!important}
 
 /* --- 2. Khối ký tên --- */
 html body .cls-export-v3.cls-export-v3 table.cls-sign-v3{width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;border-spacing:0!important;margin-left:0!important;margin-right:0!important}
