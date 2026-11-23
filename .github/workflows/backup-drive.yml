@@ -2,8 +2,14 @@ name: Sao luu SMART VSMD len Google Drive
 
 on:
   schedule:
-    - cron: '0 17 * * *'
+    # Mỗi tháng một lần: 19:00 UTC ngày 1 = 02:00 sáng ngày mùng 2 (giờ Việt Nam)
+    - cron: '0 19 1 * *'
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'true = luôn tạo bản mới, kể cả khi dữ liệu không đổi'
+        required: false
+        default: 'false'
 
 concurrency:
   group: backup-drive
@@ -36,3 +42,5 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          BACKUP_KEEP: ${{ secrets.BACKUP_KEEP }}
+          BACKUP_FORCE: ${{ github.event.inputs.force }}
