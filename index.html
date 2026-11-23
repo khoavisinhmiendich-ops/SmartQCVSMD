@@ -2927,7 +2927,7 @@ function openDriveBackup(){
   const th='padding:5px 8px;border:1px solid var(--border);text-align:left;vertical-align:top;';
   const secrets=[['SUPABASE_URL','Địa chỉ dự án Supabase (https://xxxx.supabase.co)'],['SUPABASE_ANON_KEY + SUPABASE_EMAIL + SUPABASE_PASSWORD','Khuyên dùng: khóa anon và tài khoản riêng dành cho sao lưu (để trống SUPABASE_SERVICE_ROLE_KEY)'],['SUPABASE_SERVICE_ROLE_KEY','Chỉ dùng khi không dùng tài khoản riêng; khóa toàn quyền, chỉ để trong GitHub Secrets'],['GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN','Quyền truy cập Google Drive (loại OAuth client “TVs and Limited Input devices”, quyền drive.file)'],['BACKUP_PASSPHRASE','Mật khẩu mã hóa file sao lưu (nên đặt, cất kỹ ở nơi khác)'],['SUPABASE_WORKSPACE_ID','Không bắt buộc: tên workspace nếu chỉ sao lưu một workspace']].map(x=>`<tr><td style="${th}"><code>${x[0]}</code></td><td style="${th}">${x[1]}</td></tr>`).join('');
   showModal('Sao lưu Google Drive',`
-    <div style="font-size:12.5px;color:var(--text-muted);line-height:1.65;margin-bottom:10px;">Mỗi tuần (mặc định <b>02:00 sáng Chủ nhật</b>, giờ Việt Nam) GitHub tự đọc toàn bộ dữ liệu trên Supabase, nén (và mã hóa), tải lên thư mục <b>“SMART VSMD Backup”</b> trong Google Drive, kiểm tra lại tệp rồi dọn bản cũ. <b>Chỉ đọc</b> Supabase — không xóa, không sửa dữ liệu. App chỉ hiển thị kết quả bên dưới.</div>
+    <div style="font-size:12.5px;color:var(--text-muted);line-height:1.65;margin-bottom:10px;">Mỗi tháng một lần (mặc định <b>02:00 sáng ngày mùng 2</b> hằng tháng, giờ Việt Nam) GitHub tự đọc toàn bộ dữ liệu trên Supabase, nén (và mã hóa), tải lên thư mục <b>“SMART VSMD Backup”</b> trong Google Drive, kiểm tra lại tệp rồi dọn bản cũ. <b>Chỉ đọc</b> Supabase — không xóa, không sửa dữ liệu. App chỉ hiển thị kết quả bên dưới.</div>
     <div id="dbStatus"></div>
     <div class="btn-row" style="margin:10px 0 4px;"><button class="btn ghost sm" onclick="loadDriveBackupStatus()">Làm mới trạng thái</button><button class="btn ghost sm" onclick="closeModal()">Đóng</button></div>
     ${sec(1,'Thiết lập lần đầu (làm một lần)',`
@@ -2937,11 +2937,11 @@ function openDriveBackup(){
       <table style="border-collapse:collapse;width:100%;margin-top:6px;font-size:12px;">${secrets}</table>
       <b>Chạy thử:</b> tab <b>Actions → “Sao luu SMART VSMD len Google Drive” → Run workflow</b>. Có dấu ✓ và thấy thư mục trong Drive là đạt. Sau đó đối chiếu số dòng với <code>select count(*) from public.smartqc_records;</code> trong Supabase — hai số phải bằng nhau.`,false)}
     ${sec(2,'Cách hoạt động và các cơ chế an toàn',`
-      • Giữ <b>8 bản gần nhất</b> và <b>bản cuối mỗi tháng</b> trong 12 tháng. Mỗi bản sau nén khoảng 1 MB.<br>
+      • Chạy mỗi tháng một lần và <b>bỏ qua nếu dữ liệu không đổi</b> so với bản gần nhất; chỉ giữ <b>6 bản gần nhất</b> (khoảng 6 tháng) để tiết kiệm dung lượng Drive. Mỗi bản sau nén khoảng 1 MB.<br>
       • Chỉ dọn bản cũ <b>sau khi</b> bản mới đã tải lên và kiểm tra kích thước + MD5 khớp.<br>
       • Số dòng giảm hơn 50% so với lần trước: vẫn lưu bản mới nhưng <b>không xóa bản cũ</b> và báo lỗi (GitHub gửi email).<br>
       • Bảng dữ liệu chính trả về 0 dòng (ví dụ quyền bị chặn): <b>không tạo bản sao lưu rỗng</b>, báo lỗi.<br>
-      • Đang có người nhập dữ liệu giữa lúc đọc: tự đọc lại tối đa 3 lần. Lỗi mạng tạm thời: tự thử lại.<br>
+      • Lỗi mạng tạm thời: tác vụ báo lỗi (GitHub gửi email); bấm Run workflow để chạy lại ngay.<br>
       • Đây là <b>ảnh chụp theo thời điểm</b>: dữ liệu nhập sau lần chạy gần nhất chưa có trong bản sao lưu.<br>
       • Khi app xóa một bản ghi, nội dung trên Supabase bị xóa; bản trên Drive là nơi duy nhất còn giữ lại nội dung đó.`,false)}
     ${sec(3,'Bảng trạng thái trong Supabase (để app hiển thị phần trạng thái ở trên)',`
@@ -5687,7 +5687,7 @@ function renderSystem(){
         <div class="card-body settings-list">
           <div class="row"><div><div class="t">Lưu trữ tự động</div><div class="d">Mọi thao tác được lưu lại ngay; khi kết nối Supabase, dữ liệu tự đồng bộ lâu dài giữa máy tính và điện thoại</div></div><span class="pill pass"><span class="dot"></span>Đang bật</span></div>
           <div class="row"><div><div class="t">Đồng bộ Supabase</div><div class="d">${escapeHtml(cloudStatusText())}</div></div><button class="btn ghost sm" onclick="openCloudSetup()">Thiết lập</button></div>
-          <div class="row"><div><div class="t">Sao lưu Google Drive</div><div class="d">Tự động sao lưu hằng tuần toàn bộ dữ liệu từ Supabase lên Google Drive (chạy trên GitHub). Xem lần sao lưu gần nhất và hướng dẫn thiết lập</div></div><button class="btn ghost sm" onclick="openDriveBackup()">Xem</button></div>
+          <div class="row"><div><div class="t">Sao lưu Google Drive</div><div class="d">Tự động sao lưu mỗi tháng một lần toàn bộ dữ liệu từ Supabase lên Google Drive (chạy trên GitHub). Xem lần sao lưu gần nhất và hướng dẫn thiết lập</div></div><button class="btn ghost sm" onclick="openDriveBackup()">Xem</button></div>
           <div class="row"><div><div class="t">Cài ứng dụng SMART VSMD</div><div class="d">Cài biểu tượng SMART VSMD lên màn hình chính điện thoại hoặc máy tính như một ứng dụng</div></div><button class="btn ghost sm" onclick="installPWA()">Cài ứng dụng</button></div>
           <div class="row"><div><div class="t">Tổng số bản ghi QC</div><div class="d">Toàn bộ lịch sử đã lưu</div></div><b class="mono">${state.results.length}</b></div>
           <div class="row"><div><div class="t">Khôi phục danh mục gốc</div><div class="d">Xoá toàn bộ QC/cảnh báo hiện tại và khôi phục danh mục máy/xét nghiệm ban đầu (theo hồ sơ máy)</div></div>
@@ -16338,6 +16338,8 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
   const UNIT_ALIAS={'HBsAg (R)':['HBsAg'],'Anti-HCV (R)':['HCV'],'HBeAg (R)':['HBeAg'],'Anti-HBs định lượng':['HBsAb'],'Định lượng Pro-calcitonin [Máu]':['PCT'],'HBsAg miễn dịch tự động':['HBsAg'],'Anti-HCV miễn dịch tự động':['HCV'],'HBeAg miễn dịch tự động':['HBeAg'],'CP_IgM miễn dịch tự động':['CP_IgM'],'Định lượng T3':['T3'],'Định lượng FT4':['FT4'],'Định lượng TSH':['TSH'],'Định lượng CA 19-9':['CA 19-9'],'Định lượng CA 72-4':['CA 72-4'],'Định lượng CYFRA 21-1':['CYFRA 21-1'],'Định lượng NT-proBNP':['NT-proBNP'],'Định lượng Cortisol':['Cortisol'],'Định lượng CA 125':['CA 125'],'Định lượng CA 15-3':['CA 15-3'],'PSA total':['PSA'],'Định lượng Tg-Ab':['Tg-Ab']};
   const UNIT_DEFAULT={'T3':'ng/mL','FT4':'pg/mL','TSH':'µIU/mL','HBsAg':'IU/mL','HCV':'COI','PCT':'ng/mL','HBeAg':'COI','CP_IgM':'COI','CA 19-9':'U/mL','CA 72-4':'U/mL','CYFRA 21-1':'ng/mL','NT-proBNP':'pg/mL'};
   function unitOf(name){
+    const sfx=/\s*\((iflash 9000|DxI 800)\)\s*$/i.exec(name);
+    if(sfx&&typeof window.__smqUnitFor==='function'){const uu=window.__smqUnitFor(name.slice(0,sfx.index),/iflash/i.test(sfx[1])?'iflash':'dxi');if(uu)return uu;name=name.slice(0,sfx.index);}
     const cands=(UNIT_ALIAS[name]||[]).concat([name,name.replace(/\s*\(R\)\s*$/i,'')]);
     const tests=(typeof state!=='undefined'&&state&&Array.isArray(state.tests))?state.tests:[];
     for(const c of cands){const h=tests.find(t=>T(t.name).toLowerCase()===c.toLowerCase()&&T(t.unit));if(h)return T(h.unit);}
@@ -16347,7 +16349,7 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
 
   function lineOf(it){
     if(it.t==='free')return T(it.v);
-    const lb=label(it.n),v=T(it.v);
+    const lb=label(it.n)+(T(it.s)?' ('+T(it.s)+')':''),v=T(it.v);
     if(it.t==='mic')return v?lb+' : '+v:lb;
     if(it.t==='auto'){const u=T(it.u);return v?lb+' : '+v+(u?' '+u:''):lb;}
     if(it.t==='selnum'){const num=T(it.v2),u=T(it.u);const p=[v,num?num+(u?' '+u:''):''].filter(Boolean);return p.length?lb+' : '+p.join(', '):lb;}
@@ -16357,10 +16359,16 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
   function parseItems(x){
     let a=x&&x.testItems;
     if(typeof a==='string'){try{a=JSON.parse(a);}catch(e){a=null;}}
-    if(Array.isArray(a)&&a.length)return a.filter(o=>o&&o.t).map(o=>({t:(o.t==='free'||o.t==='mic')?o.t:kindOf('imm',o.n||''),n:o.n||'',v:o.v||'',v2:o.v2||''}));
+    if(Array.isArray(a)&&a.length)return a.filter(o=>o&&o.t).map(o=>({t:(o.t==='free'||o.t==='mic')?o.t:kindOf('imm',o.n||''),n:o.n||'',v:o.v||'',v2:o.v2||'',s:o.s||''}));
     return String((x&&x.test)||'').split(/\r?\n/).map(T).filter(Boolean).map(l=>({t:'free',n:'',v:l,v2:''}));
   }
 
+  /* Xét nghiệm có trị số tham chiếu chia Nam / Nữ (hsTroponin I, NT-proBNP): hiện ô chọn giới tính */
+  function sexHTML(it){
+    if(!(typeof window.__smqSexSplit==='function'&&window.__smqSexSplit(it.n)))return '';
+    const s=T(it.s);
+    return `<div class="cls-xn-sexrow"><select class="cls-xn-sex"><option value="">— Chọn giới tính —</option><option value="Nam"${s==='Nam'?' selected':''}>Nam</option><option value="Nữ"${s==='Nữ'?' selected':''}>Nữ</option></select><div class="cls-xn-refhint"></div></div>`;
+  }
   function itemHTML(it){
     const u=(it.t==='auto'||it.t==='selnum')?unitOf(it.n):'';
     const attrs=`class="cls-xn-item" data-t="${esc(it.t)}" data-n="${esc(it.n)}" data-u="${esc(u)}"`;
@@ -16371,7 +16379,7 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
     let body='';
     if(it.t==='sel')body=selHTML();
     else if(it.t==='selnum')body=selHTML()+`<div style="margin-top:4px">${numRow('cls-xn-v2',it.v2)}</div>`;
-    else if(it.t==='auto')body=numRow('cls-xn-v',it.v);
+    else if(it.t==='auto')body=sexHTML(it)+numRow('cls-xn-v',it.v);
     else body=`<input class="cls-xn-v" value="${esc(it.v)}" placeholder="Kết quả">`;
     return `<div ${attrs}><div class="cls-xn-head"><span class="cls-xn-name">${esc(label(it.n))}</span>${del}</div>${body}</div>`;
   }
@@ -16379,17 +16387,17 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
   window.__smartXnCellHTML=function(x,i,type){
     const items=parseItems(x).map(o=>Object.assign({u:(o.t==='auto'||o.t==='selnum')?unitOf(o.n):''},o));
     const text=items.map(lineOf).filter(Boolean).join('\n');
-    return `<div class="cls-xn-cell" data-xn-cell><input type="text" class="cls-xn-filter" placeholder="Lọc xét nghiệm…" autocomplete="off"><div class="cls-xn-items">${items.map(itemHTML).join('')}</div><textarea class="cls-xn-hold" hidden data-final-case="${type}" data-i="${i}" data-k="test">\n${esc(text)}</textarea><input type="hidden" class="cls-xn-json" data-final-case="${type}" data-i="${i}" data-k="testItems" value="${esc(JSON.stringify(items.map(o=>({t:o.t,n:o.n,v:o.v,v2:o.v2}))))}"></div>`;
+    return `<div class="cls-xn-cell" data-xn-cell><input type="text" class="cls-xn-filter" placeholder="Lọc xét nghiệm…" autocomplete="off"><div class="cls-xn-items">${items.map(itemHTML).join('')}</div><textarea class="cls-xn-hold" hidden data-final-case="${type}" data-i="${i}" data-k="test">\n${esc(text)}</textarea><input type="hidden" class="cls-xn-json" data-final-case="${type}" data-i="${i}" data-k="testItems" value="${esc(JSON.stringify(items.map(o=>({t:o.t,n:o.n,v:o.v,v2:o.v2,s:o.s||''}))))}"></div>`;
   };
 
   function sync(cell){
     const items=[...cell.querySelectorAll('.cls-xn-item')].map(el=>({
       t:el.dataset.t,n:el.dataset.n,u:el.dataset.u||'',
-      v:(el.querySelector('.cls-xn-v')||{}).value||'',v2:(el.querySelector('.cls-xn-v2')||{}).value||''}));
+      v:(el.querySelector('.cls-xn-v')||{}).value||'',v2:(el.querySelector('.cls-xn-v2')||{}).value||'',s:(el.querySelector('.cls-xn-sex')||{}).value||''}));
     const hold=cell.querySelector('.cls-xn-hold'),js=cell.querySelector('.cls-xn-json');
     if(!hold||!js)return;
     hold.value=items.map(lineOf).filter(Boolean).join('\n');
-    js.value=JSON.stringify(items.map(o=>({t:o.t,n:o.n,v:o.v,v2:o.v2})));
+    js.value=JSON.stringify(items.map(o=>({t:o.t,n:o.n,v:o.v,v2:o.v2,s:o.s||''})));
     hold.dispatchEvent(new Event('input',{bubbles:false}));   /* kích hoạt lưu nháp có sẵn của form */
     hold.dispatchEvent(new Event('change',{bubbles:false}));
   }
@@ -16428,7 +16436,11 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
     const q=fold(curFilter.value);
     if(!CAT)CAT=catalog();
     const m=n=>!q||fold(n).includes(q);
-    const im=CAT.imm.filter(m),mi=CAT.mic.filter(m);
+    const hold=(curFilter.closest('[data-xn-cell]')||document).querySelector('.cls-xn-hold'),isEm=!!(hold&&hold.dataset&&hold.dataset.finalCase==='em');
+    const MN={iflash:'iflash 9000',dxi:'DxI 800'};
+    /* Xét nghiệm miễn dịch tự động có ở CẢ HAI máy -> tách 2 lựa chọn kèm tên máy để đối chiếu đúng trị số tham chiếu */
+    const expand=n=>{if(!isEm||kindOf('imm',n)!=='auto'||typeof window.__smqMachines!=='function')return [n];const ms=window.__smqMachines(n);return ms.length>1?ms.map(k=>n+' ('+MN[k]+')'):[n];};
+    const im=CAT.imm.reduce((a,n)=>a.concat(expand(n)),[]).filter(m),mi=CAT.mic.filter(m);
     let h='';
     if(im.length)h+='<div class="cls-xn-grp">1/ Miễn dịch</div>'+im.map(n=>`<div class="cls-xn-opt" data-g="imm" data-n="${esc(n)}">${esc(n)}</div>`).join('');
     if(mi.length)h+='<div class="cls-xn-grp">2/ Vi sinh</div>'+mi.map(n=>`<div class="cls-xn-opt" data-g="mic" data-n="${esc(n)}">${esc(n)}</div>`).join('');
@@ -16469,10 +16481,10 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
   document.addEventListener('input',e=>{
     const t=e.target;if(!t||!t.classList)return;
     if(t.classList.contains('cls-xn-filter')){curFilter=t;render();return;}
-    if(t.classList.contains('cls-xn-v')||t.classList.contains('cls-xn-v2')){const c=t.closest('[data-xn-cell]');if(c)sync(c);}
+    if(t.classList.contains('cls-xn-v')||t.classList.contains('cls-xn-v2')||t.classList.contains('cls-xn-sex')){const c=t.closest('[data-xn-cell]');if(c)sync(c);}
   });
   document.addEventListener('change',e=>{
-    const t=e.target;if(t&&t.classList&&(t.classList.contains('cls-xn-v')||t.classList.contains('cls-xn-v2'))){const c=t.closest('[data-xn-cell]');if(c)sync(c);}
+    const t=e.target;if(t&&t.classList&&(t.classList.contains('cls-xn-v')||t.classList.contains('cls-xn-v2')||t.classList.contains('cls-xn-sex'))){const c=t.closest('[data-xn-cell]');if(c)sync(c);}
   });
   document.addEventListener('click',e=>{
     const b=e.target.closest&&e.target.closest('.cls-xn-del');
@@ -19236,18 +19248,18 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       '<table class="word-no-border cls-meta-v3" data-word-border="0" data-word-widths="50,50"><tr>'+
         '<td class="center" style="text-align:center!important;">'+chk(r.routine)+' <b>Thường quy</b></td><td class="center" style="text-align:center!important;">'+chk(r.sudden)+' <b>Đột xuất</b></td></tr></table>'+
       '<div class="cls-section-v3"><h2>I/ Đoàn kiểm tra</h2>'+
-        r.members.map((m,i)=>'<p>'+(i+1)+'. '+E(T(m))+'</p>').join('')+'</div>'+
+        r.members.filter(m=>T(m)).map((m,i)=>'<p>'+(i+1)+'. '+E(T(m))+'</p>').join('')+'</div>'+
       '<div class="cls-section-v3"><h2>II/ Nội dung kiểm tra</h2><div class="cls-note-v3">'+textParas(r.content,5)+'</div></div>'+
       '<div class="cls-section-v3"><h2>III/ Nhận xét và đề nghị</h2><div class="cls-note-v3">'+textParas(r.remarks,5)+'</div></div>'+
       '<table class="word-no-border cls-sign-v3" data-word-border="0" data-word-widths="4,40,12,40,4"><tr>'+
-        '<td style="width:4%;"></td><td class="sig" style="width:40%;"><b>TRƯỞNG KHOA</b><br><br><br><br><b>'+E(HEAD_NAME)+'</b></td><td style="width:12%;"></td>'+
-        '<td class="sig" style="width:40%;"><b>ĐOÀN KIỂM TRA</b><br><br><br><br><b>'+E(ld)+'</b></td><td style="width:4%;"></td></tr></table>'+
+        '<td style="width:3.1%!important;"></td><td class="sig" style="width:27.8%!important;"><b>TRƯỞNG KHOA</b><br><br><br><br><b>'+E(HEAD_NAME)+'</b></td><td style="width:38.5%!important;"></td>'+
+        '<td class="sig" style="width:27.8%!important;"><b>ĐOÀN KIỂM TRA</b><br><br><br><br><b>'+E(ld)+'</b></td><td style="width:2.8%!important;"></td></tr></table>'+
     '</div>';
   }
   function buildAOA(r){
     const a=[[MS],['BỘ Y TẾ'],['BỆNH VIỆN PHONG – DA LIỄU TW QUY HÒA'],['KHOA VI SINH – MIỄN DỊCH'],['SỔ KIỂM TRA'],['(ĐOÀN KIỂM TRA)'],[],['BIÊN BẢN KIỂM TRA'],[monthText(r)],
       [chk(r.routine)+' Thường quy','','',chk(r.sudden)+' Đột xuất'],[],['I/ Đoàn kiểm tra']];
-    r.members.forEach((m,i)=>a.push([(i+1)+'. '+T(m)]));
+    r.members.filter(m=>T(m)).forEach((m,i)=>a.push([(i+1)+'. '+T(m)]));
     const lines=v=>T(v)?String(v).replace(/\r/g,'').split('\n'):[''];
     a.push([],['II/ Nội dung kiểm tra']);lines(r.content).forEach(l=>a.push([l]));
     a.push([],['III/ Nhận xét và đề nghị']);lines(r.remarks).forEach(l=>a.push([l]));
@@ -19633,10 +19645,54 @@ MODS.length=0;MODS.push(
  {id:'report',n:'Báo cáo',go:'reports',g:[['Miễn dịch',['reports']],['Vi sinh',['reports-vs']]]},
  {id:'duty',n:'Trực CLS',go:'reports-cls',g:[['Trực CLS',['reports-cls','duty-summary','hop-giao-ban','so-kiem-tra']]]},
  {id:'docs',n:'Tài liệu',go:'docs',g:[['Tài liệu',['docs']]]},
- {id:'admin',n:'Quản trị',go:'audit',g:[['Hệ thống',['audit','users','system']],['Sáng kiến',['impact','storage']]]});
+ {id:'admin',n:'Quản trị',go:'audit',g:[['Hệ thống',['audit','users','system']],['Sáng kiến',['gioi-thieu-app','impact','storage']]]});
 const VM={'qa-md':['Chất lượng · Miễn dịch','Thống kê, biểu đồ và phân tích xu hướng QC miễn dịch'],'qa-vs':['Chất lượng · Vi sinh','Thống kê, biểu đồ và phân tích xu hướng QC vi sinh'],'chart-hub':['Biểu đồ QC','Biểu đồ nội kiểm Miễn dịch và Vi sinh'],'chart-vs':['Biểu đồ QC Vi sinh','Tỷ trọng phiếu QC giữa các module vi sinh'],'assess':['Đánh giá','Westgard, cảnh báo, xử lý QC không đạt, sự cố và khắc phục'],'ops-md':['Nhập QC Miễn dịch','Chọn loại phiếu cần nhập'],'tests-vs':['Xét nghiệm Vi sinh','Danh sách xét nghiệm vi sinh (mapping)'],'reports-vs':['Báo cáo QC Vi sinh','Tổng hợp theo module; in và xuất PDF, Word, Excel tại từng phiếu'],'docs':['Tài liệu','PDF, Word, Excel — thêm, cập nhật, xóa, tìm kiếm']};
 Object.assign(VIEW_META,VM);
 VIEW_META['machine-vs']=[REG['machine-vs'].label,REG['machine-vs'].sub];
+flat['gioi-thieu-app']={id:'gioi-thieu-app',label:'Giới thiệu app',icon:iconDoc()};VIEW_META['gioi-thieu-app']=['Giới thiệu app','Đề án sáng kiến SMART VSMD · Áp dụng từ 01/10/2026'];
+function renderGioiThieuApp(){
+  const el=document.getElementById('view-gioi-thieu-app');if(!el)return;
+  const P=t=>'<p style="margin:0 0 8px">'+t+'</p>',H=t=>'<h4 style="margin:18px 0 6px">'+t+'</h4>';
+  const UL=a=>'<ul style="margin:0 0 8px;padding-left:20px">'+a.map(x=>'<li style="margin-bottom:3px">'+x+'</li>').join('')+'</ul>';
+  const OL=a=>'<ol style="margin:0 0 8px;padding-left:22px">'+a.map(x=>'<li style="margin-bottom:3px">'+x+'</li>').join('')+'</ol>';
+  const TB=(h,rows)=>'<div class="table-wrap"><table><thead><tr>'+h.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map((c,i)=>i===0?'<td><b>'+c+'</b></td>':'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+  el.innerHTML='<div class="card"><div class="card-head"><div><h3>SMART VSMD – Số hóa công tác quản lý và hoạt động chuyên môn</h3><span class="hint">Đề án sáng kiến · Khoa Vi sinh - Miễn dịch · Bệnh viện Phong - Da liễu Trung ương Quy Hòa</span></div><span class="tag">Áp dụng từ 01/10/2026</span></div><div style="padding:4px 16px 18px;line-height:1.65">'+
+  H('1. Thực trạng và vấn đề đặt ra')+
+  P('Hằng ngày khoa thực hiện nhiều xét nghiệm miễn dịch và vi sinh, kèm theo khối lượng lớn công tác quản lý chất lượng và hồ sơ: nội kiểm (QC), ngoại kiểm, theo dõi hóa chất – lot, theo dõi thiết bị, sổ trực, sổ họp giao ban, sổ kiểm tra. Phần lớn các công việc này đang được ghi chép trên sổ giấy và bảng tính rời rạc, dẫn tới các vấn đề:')+
+  UL(['Nhập liệu và tính toán thủ công (Mean, SD, quy tắc Westgard) mất thời gian, dễ sai sót; phát hiện QC bất thường chậm.','Số liệu nằm ở nhiều nơi (sổ, tệp Excel, máy cá nhân), khó tổng hợp, khó truy vết khi cần đối chiếu hoặc khi đoàn kiểm tra yêu cầu.','Lập báo cáo trực, báo cáo tháng, hồ sơ phục vụ đánh giá chất lượng tốn nhiều giờ công và nhiều giấy in.','Hóa chất, lot, thiết bị, hạn sử dụng chưa có cảnh báo chủ động; nguy cơ bỏ sót hạn dùng hoặc hạn hiệu chuẩn.','Nguy cơ mất dữ liệu khi lưu trữ bằng giấy hoặc tệp cục bộ, khó chia sẻ giữa các nhân viên và giữa các ca trực.'])+
+  H('2. Lý do thực hiện đề án')+
+  UL(['Yêu cầu quản lý chất lượng xét nghiệm theo ISO 15189 và các quy định của Bộ Y tế: số liệu phải đầy đủ, nhất quán, truy vết được.','Chuyển đổi số trong bệnh viện: giảm giấy tờ, chuẩn hóa quy trình, tăng tính minh bạch.','Cần một công cụ do chính khoa xây dựng, đúng với quy trình thực tế của khoa, chi phí thấp, dễ bảo trì và dễ mở rộng.','Giải phóng thời gian của nhân viên để tập trung cho chuyên môn và an toàn người bệnh.'])+
+  H('3. Sơ lược về ứng dụng SMART VSMD')+
+  P('SMART VSMD là ứng dụng web (chạy trên máy tính và điện thoại) giúp số hóa toàn bộ công tác quản lý chất lượng và hồ sơ của khoa. Dữ liệu được lưu an toàn trên thiết bị, đồng bộ lên đám mây để dùng chung nhiều máy, và được sao lưu định kỳ lên Google Drive. Các phân hệ chính:')+
+  TB(['Phân hệ','Chức năng chính'],[
+   ['Tổng quan','Dashboard điều hành, công việc cần chú ý, giới thiệu khoa.'],
+   ['Chất lượng','Biểu đồ Levey-Jennings, đánh giá quy tắc Westgard, cảnh báo, xử lý QC không đạt, ngoại kiểm, sự cố và khắc phục.'],
+   ['Vận hành (Nhập QC)','Nhập QC miễn dịch, vi sinh thủ công/tự động, test nhanh, test nước; tự tính và tự đánh giá kết quả.'],
+   ['Hóa chất','Danh mục xét nghiệm kèm trị số tham chiếu và đơn vị, lot QC, quản lý hóa chất miễn dịch và vi sinh, cảnh báo hạn dùng.'],
+   ['Thiết bị','Hồ sơ máy miễn dịch và vi sinh, kết nối WHONET.'],
+   ['Báo cáo','Báo cáo QC miễn dịch và vi sinh; in và xuất PDF, Word, Excel.'],
+   ['Trực CLS','Báo cáo trực, tổng hợp trực, sổ họp giao ban BV, sổ kiểm tra (đoàn kiểm tra).'],
+   ['Tài liệu và QĐ-2429/BYT','Lưu trữ tài liệu PDF, Word, Excel; nội dung và liên kết theo Quyết định 2429/QĐ-BYT.'],
+   ['Quản trị','Người dùng, phân quyền, nhật ký hoạt động, cấu hình hệ thống, đồng bộ cloud, sao lưu Google Drive, thông báo Gmail.']])+
+  H('4. Hướng dẫn sử dụng')+
+  OL(['<b>Đăng nhập:</b> chọn người dùng và vai trò đúng với tài khoản, nhập mã bảo mật/khóa truy cập của khoa.','<b>Chọn phân hệ:</b> bấm vào thanh phân hệ phía trên màn hình (Chất lượng, Vận hành, Hóa chất, Thiết bị, Báo cáo, Trực CLS...); các mục chi tiết nằm ở thanh bên trái. Có thể dùng “Tìm nhanh” (Ctrl K) để đến thẳng chức năng.','<b>Nhập QC hằng ngày:</b> vào Vận hành, chọn loại phiếu, chọn máy – xét nghiệm – lot, nhập kết quả. Hệ thống tự so sánh với Mean/SD và báo kết quả đạt hay không đạt theo Westgard.','<b>Theo dõi chất lượng:</b> vào Chất lượng để xem biểu đồ, cảnh báo và xử lý các QC không đạt (ghi nguyên nhân, hành động khắc phục).','<b>Hóa chất và thiết bị:</b> cập nhật nhập – xuất, lot, hạn dùng, lịch bảo trì; hệ thống nhắc các mục sắp hết hạn.','<b>Sổ trực và hồ sơ:</b> vào Trực CLS để lập báo cáo trực, sổ họp giao ban, sổ kiểm tra; bấm Lưu rồi In PDF hoặc xuất Word, Excel khi cần.','<b>Sao lưu và an toàn dữ liệu:</b> dữ liệu tự lưu và tự đồng bộ; trưởng khoa/quản trị theo dõi trạng thái sao lưu Google Drive tại Quản trị → Hệ thống → Dữ liệu.'])+
+  H('5. Ưu điểm và nhược điểm')+
+  '<div class="table-wrap"><table><thead><tr><th style="width:50%">Ưu điểm</th><th>Nhược điểm / hạn chế (và hướng khắc phục)</th></tr></thead><tbody><tr><td style="vertical-align:top">'+
+  UL(['Số hóa đúng quy trình thực tế của khoa; giao diện tiếng Việt, dễ dùng trên máy tính và điện thoại.','Tự động tính toán, đánh giá Westgard, cảnh báo sớm; giảm sai sót thủ công.','Dữ liệu tập trung, truy vết được qua nhật ký hoạt động; phân quyền theo vai trò.','Tạo báo cáo, in và xuất PDF, Word, Excel nhanh, thống nhất mẫu biểu.','Chi phí thấp, tự chủ phát triển, dễ điều chỉnh khi quy trình thay đổi.','Có đồng bộ đám mây và sao lưu định kỳ ra Google Drive để phòng mất dữ liệu.'])+
+  '</td><td style="vertical-align:top">'+
+  UL(['Phụ thuộc vào việc nhập liệu của nhân viên; chất lượng dữ liệu phụ thuộc người nhập (khắc phục: tập huấn, kiểm tra chéo, nhật ký hoạt động).','Cần kết nối Internet để đồng bộ đám mây, tải thư viện xuất Word/Excel và sao lưu (khắc phục: vẫn nhập và lưu tạm trên máy khi mất mạng).','Dung lượng gói đám mây miễn phí có giới hạn (khắc phục: theo dõi mục Dung lượng & lưu trữ, sao lưu và dọn dữ liệu cũ định kỳ).','Chưa liên thông trực tiếp với HIS/LIS của bệnh viện (hướng phát triển).','Cần người phụ trách kỹ thuật bảo trì, cập nhật và quản lý tài khoản, mật khẩu.'])+
+  '</td></tr></tbody></table></div>'+
+  H('6. Hiệu quả dự kiến')+
+  UL(['<b>Chuyên môn – chất lượng:</b> phát hiện sớm QC bất thường, xử lý kịp thời; giảm sai sót nhập liệu và tính toán; hồ sơ đầy đủ, sẵn sàng cho đánh giá chất lượng và đoàn kiểm tra.','<b>Thời gian:</b> rút ngắn thời gian nhập QC, lập báo cáo trực và báo cáo tháng, chuẩn bị hồ sơ đánh giá.','<b>Kinh tế:</b> giảm giấy in, sổ sách và chi phí lưu trữ; tiết kiệm giờ công của nhân viên.','<b>Quản lý:</b> trưởng khoa nắm tình hình theo thời gian thực; truy vết nhanh; dữ liệu an toàn nhờ sao lưu.'])+
+  P('Các chỉ số sẽ được đo trước và sau khi áp dụng (từ ngày 01/10/2026) và tự tổng hợp tại mục <b>Hiệu quả sáng kiến</b>: thời gian nhập một lượt QC, thời gian lập báo cáo tháng, số lỗi nhập liệu/tính toán mỗi tháng, thời gian chuẩn bị hồ sơ đánh giá, lượng giấy in – lưu trữ, mức hài lòng của nhân viên.')+
+  H('7. Thời điểm áp dụng')+
+  P('Đề án được áp dụng chính thức tại Khoa Vi sinh - Miễn dịch từ ngày <b>01/10/2026</b>.')+
+  '</div></div>';
+}
+
+{const _rv3=renderView;renderView=function(v){if(v==='gioi-thieu-app')return renderGioiThieuApp();_rv3(v);};
+const _go3=go;go=function(v){if(v==='gioi-thieu-app'&&!document.getElementById('view-gioi-thieu-app')){const d=document.createElement('div');d.className='view';d.id='view-gioi-thieu-app';document.getElementById('content').appendChild(d);}_go3(v);};}
+
 /* ---------- tiện ích ---------- */
 const A0=a=>Array.isArray(a)?a:[],ymOf=t=>String(t).slice(0,7);
 const mName=r=>{try{const m=byId(state.machines,r.machineId);return (m&&m.name)||'';}catch(x){return '';}};
@@ -20075,15 +20131,15 @@ const icMail=()=>'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" st
 flat['mail-notice']=I('mail-notice','Thông báo Gmail',icMail());
 MODS.find(m=>m.id==='admin').g.find(g=>g[0]==='Hệ thống')[1].push('mail-notice');
 NEWV.push('mail-notice');
-VIEW_META['mail-notice']=['Thông báo Gmail','Nhắc giao ban khoa (thứ 2 và thứ 6), cảnh báo nuôi cấy mọc và các thông báo quan trọng gửi qua Gmail'];
-const D0=()=>({gb:{on:true,days:[1,5],time:'07:30',subject:'Nhắc giao ban Khoa Vi sinh - Miễn dịch',body:'Kính gửi các anh/chị trong khoa,\n\nNhắc giao ban khoa vào hôm nay. Đề nghị các anh/chị sắp xếp thời gian tham dự đầy đủ và đúng giờ.\n\nTrân trọng.\nKhoa Vi sinh - Miễn dịch'},cult:{on:true,subject:'CẢNH BÁO: {loai} — {ketqua}',body:'Kính gửi các anh/chị trong khoa,\n\nPhiếu trực CLS ngày {ngay} ghi nhận kết quả {loai}: {ketqua}.\n\nBệnh nhân: {benhnhan} · Năm sinh: {namsinh}\nKhoa/Phòng: {khoa}\nChẩn đoán: {chandoan}\nXét nghiệm: {xetnghiem}\n\nĐề nghị các anh/chị kiểm tra, báo bác sĩ điều trị và theo dõi theo quy trình.\n\nTrân trọng.\nKhoa Vi sinh - Miễn dịch'},cultSent:{},items:[]});
+VIEW_META['mail-notice']=['Thông báo Gmail','Cảnh báo nuôi cấy máu / nấm mọc và các thông báo quan trọng gửi qua Gmail'];
+const D0=()=>({gb:{on:false,days:[1,5],time:'07:30',subject:'Nhắc giao ban Khoa Vi sinh - Miễn dịch',body:'Kính gửi các anh/chị trong khoa,\n\nNhắc giao ban khoa vào hôm nay. Đề nghị các anh/chị sắp xếp thời gian tham dự đầy đủ và đúng giờ.\n\nTrân trọng.\nKhoa Vi sinh - Miễn dịch'},cult:{on:true,subject:'CẢNH BÁO: {loai} — {ketqua}',body:'Kính gửi các anh/chị trong khoa,\n\nPhiếu trực CLS ngày {ngay} ghi nhận kết quả {loai}: {ketqua}.\n\nBệnh nhân: {benhnhan} · Năm sinh: {namsinh}\nKhoa/Phòng: {khoa}\nChẩn đoán: {chandoan}\nXét nghiệm: {xetnghiem}\n\nĐề nghị các anh/chị kiểm tra, báo bác sĩ điều trị và theo dõi theo quy trình.\n\nTrân trọng.\nKhoa Vi sinh - Miễn dịch'},cultSent:{},items:[]});
 /* Dữ liệu Gmail (email nhận, CC, BCC) KHÔNG nằm trong state: chỉ lưu trên thiết bị này và trên Google Script của khoa, nên không tính vào dung lượng app */
 const AKEY='vsmd_mail_addr_v1';
 const A=()=>{let a={};try{a=JSON.parse(localStorage.getItem(AKEY)||'{}')||{};}catch(x){}a.to=a.to||'';a.cc=a.cc||'';a.ito=a.ito||{};a.bcc=a.bcc||{on:false,list:[]};if(!Array.isArray(a.bcc.list))a.bcc.list=[];return a;};
 const setA=a=>{try{localStorage.setItem(AKEY,JSON.stringify(a));}catch(x){toast('error','Không lưu được','Bộ nhớ thiết bị đã đầy hoặc bị chặn.');}};
 const ito=id=>A().ito[id]||'';
 const isSys=()=>state&&state.settings&&state.settings.currentRole==='Quản trị hệ thống';
-const cfg=()=>{const m=state.vsmdMail=state.vsmdMail||D0();m.gb=Object.assign(D0().gb,m.gb||{});m.cult=Object.assign(D0().cult,m.cult||{});if(!m.cultSent||typeof m.cultSent!=='object')m.cultSent={};m.items=Array.isArray(m.items)?m.items:[];
+const cfg=()=>{const m=state.vsmdMail=state.vsmdMail||D0();m.gb=Object.assign(D0().gb,m.gb||{});m.gb.on=false;m.cult=Object.assign(D0().cult,m.cult||{});if(!m.cultSent||typeof m.cultSent!=='object')m.cultSent={};m.items=Array.isArray(m.items)?m.items:[];
  if(m.to||m.cc||m.items.some(i=>i.to)){const a=A();a.to=a.to||m.to||'';a.cc=a.cc||m.cc||'';m.items.forEach(i=>{if(i.to){a.ito[i.id]=i.to;delete i.to;}});delete m.to;delete m.cc;setA(a);queueSave();}
  return m;};
 const conn=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(x){return {};}};
@@ -20103,6 +20159,7 @@ async function sync(silent){if(!connected()){if(!silent)toast('warning','Chưa k
  try{await post({action:'sync',cfg:payload});toast('success','Đã gửi lịch lên Gmail','Bấm “Kiểm tra kết nối” để xác nhận.');return true;}
  catch(x){toast('error','Không gửi được lịch','Kiểm tra mạng và địa chỉ Web App.');return false;}}
 VP.mlSaveConn=async()=>{const u=v('mlUrl'),t=v('mlToken');if(!URLRE.test(u)){toast('warning','Địa chỉ chưa đúng','Địa chỉ phải dạng https://script.google.com/macros/s/…/exec');return;}if(!t){toast('warning','Thiếu mã bảo mật','Nhập đúng mã đã đặt trong script.');return;}if(!readTo())return;setConn({url:u,token:t});toast('success','Đã lưu kết nối','Đã lưu địa chỉ Web App, mã bảo mật và email nhận trên thiết bị này.');if(connected())await sync(true);redo();};
+VP.mlSaveTo=async()=>{if(!readTo())return;toast('success','Đã lưu email nhận','Email nhận đã được lưu trên thiết bị này.');if(connected())await pushQuiet();redo();};
 VP.mlClearConn=()=>{if(!confirm('Xóa kết nối Gmail khỏi thiết bị này?'))return;setConn({});redo();};
 VP.mlSaveCfg=async()=>{const m=cfg();const to=v('mlTo'),cc=v('mlCc');if(!mailOk(to)||!mailOk(cc)){toast('warning','Email chưa đúng','Nhiều địa chỉ ngăn cách bằng dấu phẩy.');return;}
  {const a=A();a.to=to;a.cc=cc;setA(a);}m.gb.on=!!document.getElementById('mlGbOn').checked;m.gb.days=[...document.querySelectorAll('.ml-day:checked')].map(x=>+x.value);m.gb.time=v('mlGbTime')||'07:30';m.gb.subject=v('mlGbSub')||D0().gb.subject;m.gb.body=document.getElementById('mlGbBody').value.trim()||D0().gb.body;
@@ -20113,7 +20170,7 @@ VP.mlSync=()=>sync(false);
 VP.mlStatus=async()=>{const c=conn();if(!connected()){toast('warning','Chưa kết nối','');return;}const box=document.getElementById('mlStat');if(box)box.textContent='Đang kiểm tra…';
  try{const r=await fetch(c.url+'?action=status&token='+encodeURIComponent(c.token));const j=await r.json();if(!j.ok)throw new Error(j.error||'lỗi');
   let ch=0;const m=cfg();m.items.forEach(i=>{const s=j.sent&&j.sent[i.id];if(s&&i.status==='Chờ gửi'){i.status=s==='missed'?'Bỏ lỡ':'Đã gửi';i.sentAt=s==='missed'?'':s;ch++;}});if(ch)queueSave();
-  const txt='Kết nối tốt · Lịch chạy nền: '+(j.trigger?'đang bật':'chưa bật')+' · Thông báo chờ trên Gmail: '+j.pending+(j.bccOn?' · BCC: bật ('+j.bccCount+' người)':'')+(j.sent&&j.sent.gb?' · Nhắc giao ban gần nhất: '+j.sent.gb.split('-').reverse().join('/'):'');
+  const txt='Kết nối tốt · Lịch chạy nền: '+(j.trigger?'đang bật':'chưa bật')+' · Thông báo chờ trên Gmail: '+j.pending+(j.bccOn?' · BCC: bật ('+j.bccCount+' người)':'');
   if(ch)redo();const b2=document.getElementById('mlStat');if(b2)b2.textContent=txt;}
  catch(x){const b2=document.getElementById('mlStat');if(b2)b2.textContent='Không đọc được trạng thái (việc gửi thư vẫn có thể hoạt động). Kiểm tra lại địa chỉ, mã bảo mật và quyền truy cập “Bất kỳ ai”.';}};
 VP.mlAdd=async()=>{const m=cfg(),t=v('mlT'),b=document.getElementById('mlB').value.trim(),at=v('mlAt'),to=v('mlTo2');
@@ -20150,7 +20207,8 @@ VP.mlBccLoad=async()=>{if(!isSys())return;const c=conn();if(!connected()){toast(
 const stChip=s=>pchip(s==='Đã gửi'?'ok':s==='Bỏ lỡ'?'bad':'warn',s);
 function render(){const el=document.getElementById('view-mail-notice');if(!el)return;
  if(!isAdm()){el.innerHTML='<div class="card vp-pad"><p>Mục này dành cho Trưởng khoa và Quản trị hệ thống.</p></div>';return;}
- const m=cfg(),c=conn(),ok=connected(),ed=VP._mlEd?m.items.find(i=>i.id===VP._mlEd&&i.status==='Chờ gửi'):null,t0=nowLocal();
+ try{if(connected()&&!localStorage.getItem('vsmd_gb_off_v1')){localStorage.setItem('vsmd_gb_off_v1','1');pushQuiet();}}catch(x){}
+  const m=cfg(),c=conn(),ok=connected(),ed=VP._mlEd?m.items.find(i=>i.id===VP._mlEd&&i.status==='Chờ gửi'):null,t0=nowLocal();
  const rows=m.items.length?m.items.map(i=>`<tr>${td_('Tiêu đề',`<b>${e(i.title)}</b>`)}${td_('Thời gian gửi',fmtAt(i.at))}${td_('Người nhận',e(ito(i.id)||A().to||'—'))}${td_('Trạng thái',stChip(i.status)+(i.status==='Chờ gửi'&&i.at<t0?' <small class="vs-hint">quá giờ, chờ lượt chạy kế tiếp</small>':''))}<td class="vp-act">${i.status==='Chờ gửi'?`<button class="btn sm" onclick="VP.mlEdit('${i.id}')">Sửa</button>`:`<button class="btn sm" onclick="VP.mlEdit('${i.id}')">Nhân bản</button>`}<button class="btn sm ghost" onclick="VP.mlNow('${i.id}')">Gửi ngay</button><button class="btn sm ghost" onclick="VP.mlGmail('${i.id}')">Mở Gmail</button><button class="btn sm ghost" onclick="VP.mlDel('${i.id}')">Xóa</button></td></tr>`).join(''):'<tr><td colspan="5" class="vp-empty">Chưa có thông báo. Điền biểu mẫu phía trên để thêm.</td></tr>';
  const f=ed||(VP._mlEd?m.items.find(i=>i.id===VP._mlEd):null)||{};
  const bc=A().bcc,bccSec=isSys()?`<section class="dc dc-wide"><header><h3>BCC · Gmail nhân viên</h3><span class="dc-tag">chỉ Quản trị hệ thống xem được</span></header>
@@ -20159,12 +20217,13 @@ function render(){const el=document.getElementById('view-mail-notice');if(!el)re
  <div class="vp-bar"><button class="btn primary" onclick="VP.mlBccAdd()">Thêm Gmail (tự động lưu)</button><button class="btn" onclick="VP.mlBccLoad()">Tải danh sách từ Gmail</button></div>
  ${tblH(['STT','Họ tên','Gmail',''],bc.list.length?bc.list.map((x,i)=>`<tr>${td_('STT',i+1)}${td_('Họ tên',e(x.n||'—'))}${td_('Gmail',e(x.e))}<td class="vp-act"><button class="btn sm ghost" onclick="VP.mlBccDel('${e(x.e)}')">Xóa</button></td></tr>`).join(''):'<tr><td colspan="4" class="vp-empty">Chưa có Gmail nhân viên. Nhập từng địa chỉ rồi bấm Thêm.</td></tr>')}
  <p class="avs-note">${bc.list.length} địa chỉ · Danh sách chỉ lưu trên thiết bị này và trên Google Script của khoa, không lưu vào dữ liệu hay dung lượng của app. Mỗi lô gửi tối đa 45 địa chỉ BCC (Google giới hạn 50 người nhận mỗi thư).</p></section>`:'';
- el.innerHTML=`<div class="dc-strip ml-strip">${`<div class="dc-tile ${ok?'t-ok':'t-warn'}"><span>Kết nối Gmail</span><b>${ok?'Đã nhập':'Chưa kết nối'}</b><small>${ok?'Web App Google Apps Script':'cần cài script một lần'}</small></div>`}<div class="dc-tile"><span>Nhắc giao ban</span><b>${m.gb.on?'Bật':'Tắt'}</b><small>${m.gb.days.length?DAYS.filter(d=>m.gb.days.includes(d[1])).map(d=>d[0]).join(', ')+' · '+m.gb.time:'chưa chọn ngày'}</small></div><div class="dc-tile"><span>Thông báo chờ gửi</span><b>${m.items.filter(i=>i.status==='Chờ gửi').length}</b><small>đã gửi ${m.items.filter(i=>i.status==='Đã gửi').length}</small></div></div>
+ el.innerHTML=`<div class="dc-strip ml-strip">${`<div class="dc-tile ${ok?'t-ok':'t-warn'}"><span>Kết nối Gmail</span><b>${ok?'Đã nhập':'Chưa kết nối'}</b><small>${ok?'Web App Google Apps Script':'cần cài script một lần'}</small></div>`}<div class="dc-tile"><span>Thông báo chờ gửi</span><b>${m.items.filter(i=>i.status==='Chờ gửi').length}</b><small>đã gửi ${m.items.filter(i=>i.status==='Đã gửi').length}</small></div></div>
  <details class="card vs-proc" ${ok?'':'open'}><summary>Hướng dẫn cài đặt gửi Gmail tự động (làm một lần)</summary><ol><li>Vào <b>script.google.com</b> bằng Gmail của khoa → Dự án mới → xóa mã mẫu và dán mã bên dưới. Đổi dòng <code>TOKEN</code> thành một mã bí mật riêng.</li><li>Chọn hàm <code>setup</code> → Chạy → cấp quyền Gmail cho tài khoản (lần đầu).</li><li>Triển khai → Triển khai mới → loại <b>Ứng dụng web</b> → Thực thi với tư cách: <b>Tôi</b>; Quyền truy cập: <b>Bất kỳ ai</b> → Triển khai → sao chép địa chỉ kết thúc bằng <code>/exec</code>.</li><li>Dán địa chỉ và mã bí mật vào mục “Kết nối Gmail” dưới đây → Lưu → “Gửi thư thử”.</li></ol><p class="avs-note">Thư gửi từ chính Gmail của chủ dự án và chịu giới hạn gửi của Gmail/Google. Script kiểm tra lịch mỗi 5 phút nên thư có thể trễ vài phút. Địa chỉ Web App, mã bí mật và mọi địa chỉ email (nhận, CC, BCC) chỉ lưu trên thiết bị này và trên Google Script, không đồng bộ lên Supabase và không tính vào dung lượng app. Nếu bạn đã cài script phiên bản cũ, hãy dán mã mới (có hỗ trợ BCC) và triển khai lại.</p><div class="vp-bar"><button class="btn" onclick="VP.mlCopy()">Sao chép mã script</button></div><textarea id="mlCode" class="ml-code" readonly rows="10">${e(GAS)}</textarea></details>
- <div class="dc-grid"><section class="dc dc-wide"><header><h3>Kết nối Gmail</h3><span class="dc-tag">${ok?'đã lưu trên thiết bị':'chưa kết nối'}</span></header><div class="vs-grid ml-grid"><label class="vs-fld vs-w2"><span class="vs-lb">Địa chỉ Web App (…/exec)</span><input id="mlUrl" type="url" value="${e(c.url||'')}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label><label class="vs-fld"><span class="vs-lb">Mã bảo mật (TOKEN trong script)</span><input id="mlToken" type="password" value="${e(c.token||'')}" autocomplete="off"></label><label class="vs-fld"><span class="vs-lb">Email nhận chung (nhiều địa chỉ ngăn cách bằng dấu phẩy)</span><input id="mlTo" type="text" value="${e(A().to)}" placeholder="khoa@example.com, bs@example.com"></label><label class="vs-fld"><span class="vs-lb">Email CC (nếu có)</span><input id="mlCc" type="text" value="${e(A().cc)}"></label></div>
+ <div class="dc-grid"><section class="dc dc-wide"><header><h3>Kết nối Gmail</h3><span class="dc-tag">${ok?'đã lưu trên thiết bị':'chưa kết nối'}</span></header><div class="vs-grid ml-grid"><label class="vs-fld vs-w2"><span class="vs-lb">Địa chỉ Web App (…/exec)</span><input id="mlUrl" type="url" value="${e(c.url||'')}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label><label class="vs-fld"><span class="vs-lb">Mã bảo mật (TOKEN trong script)</span><input id="mlToken" type="password" value="${e(c.token||'')}" autocomplete="off"></label></div>
  <div class="vp-bar"><button class="btn primary" onclick="VP.mlSaveConn()">Lưu kết nối</button><button class="btn" onclick="VP.mlStatus()">Kiểm tra kết nối</button><button class="btn" onclick="VP.mlTest()">Gửi thư thử</button>${ok?'<button class="btn ghost" onclick="VP.mlClearConn()">Xóa kết nối</button>':''}</div><p class="avs-note" id="mlStat">${ok?'Bấm “Kiểm tra kết nối” để xem trạng thái.':'Chưa kết nối. Có thể dùng nút “Mở Gmail” để soạn sẵn thư và tự bấm gửi.'}</p></section>
- ${bccSec}<section class="dc dc-wide"><header><h3>Nhắc giao ban khoa (tự động)</h3><span class="dc-tag">${m.gb.on?'đang bật':'đang tắt'}</span></header><div class="vs-grid ml-grid"><label class="vs-chk ml-chk vs-w2"><input type="checkbox" id="mlGbOn" ${m.gb.on?'checked':''}><span>Bật nhắc giao ban tự động</span></label><div class="vs-fld"><span class="vs-lb">Gửi vào các ngày</span><div class="ml-days">${DAYS.map(d=>`<label class="ml-chk"><input type="checkbox" class="ml-day" value="${d[1]}" ${m.gb.days.includes(d[1])?'checked':''}><span>${d[0]}</span></label>`).join('')}</div></div><label class="vs-fld"><span class="vs-lb">Giờ gửi</span><input id="mlGbTime" type="time" value="${e(m.gb.time)}"></label><label class="vs-fld vs-w2"><span class="vs-lb">Tiêu đề thư</span><input id="mlGbSub" type="text" value="${e(m.gb.subject)}"></label><label class="vs-fld vs-w2"><span class="vs-lb">Nội dung thư</span><textarea id="mlGbBody" rows="6">${e(m.gb.body)}</textarea></label></div>
- <div class="vp-bar"><button class="btn primary" onclick="VP.mlSaveCfg()">Lưu cấu hình</button><button class="btn" onclick="VP.mlGbNow()">Gửi nhắc ngay</button><button class="btn ghost" onclick="VP.mlGmail('gb')">Mở Gmail</button></div><p class="avs-note">Mặc định nhắc vào thứ 2 và thứ 6. Lưu cấu hình sẽ tự đồng bộ lịch lên Gmail khi đã kết nối.</p></section>
+  <section class="dc dc-wide"><header><h3>Email nhận thông báo</h3><span class="dc-tag">${A().to?'đã nhập':'chưa nhập'}</span></header><div class="vs-grid ml-grid"><label class="vs-fld vs-w2"><span class="vs-lb">Email nhận chung (nhiều địa chỉ ngăn cách bằng dấu phẩy)</span><input id="mlTo" type="text" value="${e(A().to)}" placeholder="khoa@example.com, bs@example.com" autocomplete="off"></label><label class="vs-fld vs-w2"><span class="vs-lb">Email CC (nếu có)</span><input id="mlCc" type="text" value="${e(A().cc)}" autocomplete="off"></label></div>
+  <div class="vp-bar"><button class="btn primary" onclick="VP.mlSaveTo()">Lưu email nhận</button></div><p class="avs-note">Cảnh báo nuôi cấy máu / nấm mọc và các thông báo quan trọng sẽ được gửi tới những người có địa chỉ ở đây. Địa chỉ chỉ lưu trên thiết bị này và trên Google Script của khoa, không lưu vào dữ liệu của app.</p></section>
+ ${bccSec}
   <section class="dc dc-wide"><header><h3>Cảnh báo nuôi cấy máu / nấm mọc (tự động)</h3><span class="dc-tag">${m.cult.on?'đang bật':'đang tắt'}</span></header><div class="vs-grid ml-grid"><label class="vs-chk ml-chk vs-w2"><input type="checkbox" id="mlCuOn" ${m.cult.on?'checked':''}><span>Tự gửi Gmail khi phiếu trực ghi nhận Nuôi cấy máu: mọc vi khuẩn hoặc Nuôi cấy nấm: mọc nấm</span></label><label class="vs-fld vs-w2"><span class="vs-lb">Tiêu đề thư</span><input id="mlCuSub" type="text" value="${e(m.cult.subject)}"></label><label class="vs-fld vs-w2"><span class="vs-lb">Nội dung thư</span><textarea id="mlCuBody" rows="9">${e(m.cult.body)}</textarea></label></div>
   <div class="vp-bar"><button class="btn primary" onclick="VP.mlCultSave()">Lưu cảnh báo</button><button class="btn" onclick="VP.mlCultTest()">Gửi thư thử</button></div><p class="avs-note">Các từ khóa tự điền: {loai} {ketqua} {benhnhan} {namsinh} {khoa} {chandoan} {xetnghiem} {ngay}. Thư được gửi khi bấm <b>Lưu phiếu trực CLS</b> và chỉ gửi một lần cho mỗi ca. Thiết bị chưa kết nối Gmail sẽ tạo thông báo chờ gửi để thiết bị quản trị gửi lên Gmail. Nếu không muốn đưa thông tin người bệnh vào thư, hãy xóa các từ khóa {benhnhan}, {namsinh}, {khoa}, {chandoan}, {xetnghiem} khỏi nội dung.</p></section>
  <section class="dc dc-wide"><header><h3>${VP._mlEd?(ed?'Sửa thông báo':'Nhân bản thông báo'):'Thông báo quan trọng'}</h3><span class="dc-tag">tự điền nội dung và ngày giờ</span></header><div class="vs-grid ml-grid"><label class="vs-fld vs-w2"><span class="vs-lb">Tiêu đề</span><input id="mlT" type="text" value="${e(f.title||'')}" placeholder="Ví dụ: Thông báo lịch đánh giá nội bộ"></label><label class="vs-fld vs-w2"><span class="vs-lb">Nội dung</span><textarea id="mlB" rows="5">${e(f.body||'')}</textarea></label><label class="vs-fld"><span class="vs-lb">Ngày giờ gửi</span><input id="mlAt" type="datetime-local" value="${e(f.at||'')}" min="${t0.slice(0,10)}T00:00"></label><label class="vs-fld"><span class="vs-lb">Người nhận riêng (để trống = dùng email chung)</span><input id="mlTo2" type="text" value="${e(f.id?ito(f.id):'')}"></label></div>
@@ -20498,9 +20557,11 @@ setTimeout(boot,1500);
 .sr-tag-m{background:var(--surface-2);color:var(--text-muted)}
 </style>
 <style id="smart-ref-highlight-css">
-.smq-abn{color:#c00000!important;font-weight:700!important;text-decoration:underline!important}
-.cls-xn-item.smq-abn .cls-xn-name,.cls-xn-item.smq-abn .cls-xn-unit{color:#c00000;font-weight:700;text-decoration:underline}
-.cls-xn-item.smq-abn .cls-xn-v,.cls-xn-item.smq-abn .cls-xn-v2{color:#c00000;font-weight:700;text-decoration:underline;border-color:#c00000}
+.smq-abn{font-weight:800!important}
+.cls-xn-item.smq-abn .cls-xn-name,.cls-xn-item.smq-abn .cls-xn-unit{font-weight:900}
+.cls-xn-item.smq-abn .cls-xn-v,.cls-xn-item.smq-abn .cls-xn-v2{font-weight:900;text-decoration:underline}
+.cls-xn-sexrow{margin-bottom:4px}
+.cls-xn-refhint{font-size:11.5px;color:var(--text-muted);margin-top:3px;line-height:1.35}
 #view-tests .machine-catalog-table td:nth-child(7){white-space:normal!important}
 .smq-ref-cell{white-space:pre-line;min-width:120px;font-size:12.5px}
 </style>
@@ -20582,53 +20643,91 @@ if(typeof _st==='function'){window.submitTest=function(ev,id){const f=document.g
   return r;};try{submitTest=window.submitTest;}catch(e){}}
 
 /* ---- Đánh giá vượt ngưỡng (xét nghiệm miễn dịch tự động) & Dương tính (test nhanh) ---- */
-const R={ // [thấp, cao, true = "<cao"]
+const R={ // [thấp, cao, true = "<cao"] · i = iFlash 9000, d = DxI 800 (theo file danh sách xét nghiệm)
  t3:{i:[.79,1.96],d:[.87,1.78]},ft4:{i:[9.26,16.8],d:[.61,1.12]},tsh:{i:[.306,4.527],d:[.34,5.6]},hbsag:{i:[0,.05],d:[0,1]},hbs:{i:[0,10],d:[0,10]},
  ca724:{i:[0,7,1]},cyfra:{i:[0,3.3]},ca199:{i:[0,37]},hcv:{i:[0,1]},cpigm:{i:[0,1.1]},hbeag:{i:[0,1]},pct:{i:[0,.05]},
- ca153:{d:[0,31.4,1]},ca125:{d:[0,35,1]},trop:{d:[0,11.6,1]},cortisol:{d:[0,22.6]},psa:{d:[0,3]},afp:{d:[0,10]},cea:{d:[0,4]},bhcg:{d:[.5,2.67]},tgab:{d:[0,4]}};
-/* NT-proBNP theo tuổi; dữ liệu trực không ghi giới tính nên lấy ngưỡng thấp hơn của Nam/Nữ ở mỗi nhóm tuổi */
-const NT=[[1,6,320.64],[7,12,301.25],[13,17,197.56],[18,44,81.59],[45,54,120.87],[55,64,210.64],[65,74,312.85],[75,999,495.22]];
+ ca153:{d:[0,31.4,1]},ca125:{d:[0,35,1]},cortisol:{d:[0,10,1]}, /* báo trực chỉ từ 17h nên Cortisol lấy trị số buổi chiều: <10 */
+ psa:{d:[0,3]},afp:{d:[0,10]},cea:{d:[0,4]},bhcg:{d:[.5,2.67]},tgab:{d:[0,4]}};
+/* Xét nghiệm chia Nam / Nữ: hsTroponin I (DxI 800) và NT-proBNP (iFlash 9000, theo nhóm tuổi) */
+const SEXSPLIT={trop:1,nt:1};
+const TROP={'Nữ':11.6,'Nam':19.8};
+const NTB=[[1,6],[7,12],[13,17],[18,44],[45,54],[55,64],[65,74],[75,999]];
+const NTV={'Nam':[320.64,301.25,197.56,81.59,120.87,210.64,365.90,495.22],'Nữ':[320.64,301.25,197.56,133.79,243.28,280.10,312.85,742.88]};
 function keyOf(label){
   const raw=T(label),f=fold(raw);
   if(/pro-?calcitonin|\bpct\b/.test(f)&&/dinh luong|\[mau\]/.test(f))return 'pct';
   const k=key(f.replace(/\(.*?\)|\[.*?\]/g,'').replace(/dinh luong|mien dich tu dong|total/g,''));
-  const M={t3:'t3',ft4:'ft4',tsh:'tsh',hbsag:'hbsag',antihbs:'hbs',hbs:'hbs',antihcv:'hcv',hcv:'hcv',hbeag:'hbeag',cpigm:'cpigm',ca199:'ca199',ca724:'ca724',cyfra211:'cyfra',ntprobnp:'nt',ca153:'ca153',ca125:'ca125',hstroponini:'trop',cortisol:'cortisol',psa:'psa',afp:'afp',cea:'cea',bhcg:'bhcg',tgab:'tgab'};
+  const M={t3:'t3',ft4:'ft4',tsh:'tsh',hbsag:'hbsag',antihbs:'hbs',hbs:'hbs',hbsab:'hbs',antihcv:'hcv',hcv:'hcv',hbeag:'hbeag',cpigm:'cpigm',ca199:'ca199',ca724:'ca724',cyfra211:'cyfra',ntprobnp:'nt',ca153:'ca153',ca125:'ca125',hstroponini:'trop',cortisol:'cortisol',psa:'psa',afp:'afp',cea:'cea',bhcg:'bhcg',tgab:'tgab',pct:'pct'};
   return M[k]||null;
 }
-function abnNum(k,val,year){
+const machOfLabel=l=>/iflash/i.test(l)?'i':(/dxi/i.test(l)?'d':'');
+const sexOfLabel=l=>{const m=/\(\s*(Nam|Nữ)\s*\)/i.exec(T(l));return m?(/^nam$/i.test(m[1])?'Nam':'Nữ'):'';};
+const ageOf=year=>{const y=+year;return y?(new Date().getFullYear()-y):NaN;};
+function abnNum(k,val,year,mach,sex){
   const m=/[-+]?\d+(?:[.,]\d+)?/.exec(val);if(!m)return false;
   const n=parseFloat(m[0].replace(',','.')),op=(/^\s*([<>≤≥])/.exec(val)||[])[1]||'';
-  if(k==='nt'){const age=year?(new Date().getFullYear()-(+year)):NaN;if(!(age>=1))return false;const b=NT.find(x=>age>=x[0]&&age<=x[1]);return !!b&&(op==='<'||op==='≤'?false:n>=b[2]);}
+  const lt=(op==='<'||op==='≤');
+  if(k==='nt'){const age=ageOf(year),i=NTB.findIndex(b=>age>=b[0]&&age<=b[1]);if(!NTV[sex]||i<0)return false;return lt?false:n>=NTV[sex][i];}
+  if(k==='trop'){if(!TROP[sex])return false;return lt?false:n>=TROP[sex];}
   const e=R[k];if(!e)return false;
-  const useD=/ng\/dL|µUI|S\/CO/i.test(val)&&e.d;const r=(useD?e.d:(e.i||e.d));
+  let r;
+  if(mach==='d')r=e.d||e.i;else if(mach==='i')r=e.i||e.d;
+  else{const useD=/ng\/dL|µUI|S\/CO/i.test(val)&&e.d;r=useD?e.d:(e.i||e.d);}
   const lo=r[0],hi=r[1],strict=!!r[2];
   if(op==='>'||op==='≥')return n>=hi;
-  if(op==='<'||op==='≤')return lo>0&&n<=lo;
+  if(lt)return lo>0&&n<=lo;
   return strict?n>=hi:(n>hi||(lo>0&&n<lo));
 }
 function abnLine(line,year){
   const s=T(line);if(!s)return false;
   if(/dương\s*tính/i.test(s))return true;
   const m=/^(.*?)\s*[:：]\s*(.+)$/.exec(s);if(!m)return false;
-  const k=keyOf(m[1]);return !!k&&abnNum(k,m[2],year);
+  const k=keyOf(m[1]);return !!k&&abnNum(k,m[2],year,machOfLabel(m[1]),sexOfLabel(m[1]));
 }
 window.__smqAbnLine=abnLine;
+/* ---- Dùng cho bộ chọn xét nghiệm: máy nào có xét nghiệm này, đơn vị theo từng máy, xét nghiệm chia giới tính ---- */
+const kindOfMachine=id=>machOf((state.machines||[]).find(m=>m.id===id));
+window.__smqMachines=function(name){
+  try{const k=keyOf(name);if(!k)return [];const out=[];
+    (state.tests||[]).forEach(t=>{if(keyOf(t.name)!==k)return;const mk=kindOfMachine(t.machineId);if(mk&&!out.includes(mk))out.push(mk);});
+    return ['iflash','dxi'].filter(x=>out.includes(x));}catch(e){return [];}
+};
+window.__smqUnitFor=function(name,mach){
+  try{const k=keyOf(name);if(!k)return '';const t=(state.tests||[]).find(x=>keyOf(x.name)===k&&kindOfMachine(x.machineId)===mach&&T(x.unit));return t?T(t.unit):'';}catch(e){return '';}
+};
+window.__smqSexSplit=function(name){const k=keyOf(name);return !!(k&&SEXSPLIT[k]);};
 /* Form nhập: tô nổi bật từng xét nghiệm */
+function refCatalog(k,mach){
+  try{const L=(state.tests||[]).filter(t=>keyOf(t.name)===k&&T(t.refRange));
+    const pick=(mach?L.find(t=>kindOfMachine(t.machineId)===(mach==='d'?'dxi':'iflash')):null)||L[0];
+    return pick?T(pick.refRange).replace(/\n+/g,'; '):'';}catch(e){return '';}
+}
+function showHint(it,k,year,sex){
+  const box=it.querySelector('.cls-xn-refhint');if(!box)return;
+  let tx='Chọn giới tính để hiện trị số tham chiếu.';
+  if(sex&&k==='trop')tx='Trị số tham chiếu ('+sex+'): <'+TROP[sex]+' pg/mL';
+  else if(sex&&k==='nt'){const age=ageOf(year),i=NTB.findIndex(b=>age>=b[0]&&age<=b[1]);
+    tx=i<0?'Chọn năm sinh của bệnh nhân để xác định nhóm tuổi.':'Trị số tham chiếu ('+sex+', '+(NTB[i][1]>=999?'≥75':NTB[i][0]+'–'+NTB[i][1])+' tuổi): <'+NTV[sex][i].toFixed(2)+' pg/mL';}
+  box.textContent=tx;
+}
 function refreshItem(it){
   const v=(it.querySelector('.cls-xn-v')||{}).value||'',v2=(it.querySelector('.cls-xn-v2')||{}).value||'';
   const row=it.closest('tr'),ys=row&&row.querySelector('select[data-k="year"]'),year=ys?ys.value:'';
-  const n=it.dataset.n||'',t=it.dataset.t;let ab=false;
+  const n=it.dataset.n||'',t=it.dataset.t,sex=(it.querySelector('.cls-xn-sex')||{}).value||'',mach=machOfLabel(n);let ab=false;
+  const k=keyOf(n);
   if(t==='free')ab=abnLine(v,year);
   else if(/dương\s*tính/i.test(v+' '+v2))ab=true;
-  else{const k=keyOf(n),num=(t==='selnum')?v2:v;ab=!!k&&!!T(num)&&abnNum(k,num+' '+(it.dataset.u||''),year);}
+  else{const num=(t==='selnum')?v2:v;ab=!!k&&!!T(num)&&abnNum(k,num+' '+(it.dataset.u||''),year,mach,sex);}
   it.classList.toggle('smq-abn',!!ab);
+  if(k&&SEXSPLIT[k])showHint(it,k,year,sex);
+  else if(k&&t==='auto'){const inp=it.querySelector('.cls-xn-v'),rf=refCatalog(k,mach);if(inp)inp.title=rf?'Trị số tham chiếu'+(mach?' ('+(mach==='d'?'DxI 800':'iflash 9000')+')':'')+': '+rf:'';}
 }
 const refreshAll=()=>document.querySelectorAll('.cls-xn-item').forEach(refreshItem);
 ['input','change'].forEach(ev=>document.addEventListener(ev,e=>{const t=e.target;if(!t||!t.closest)return;
   const it=t.closest('.cls-xn-item');if(it){refreshItem(it);return;}
   if(t.matches&&t.matches('select[data-k="year"]')){const r=t.closest('tr');if(r)r.querySelectorAll('.cls-xn-item').forEach(refreshItem);}},true));
 /* In / xuất / hiển thị đã lưu: tô nổi bật trong bảng "IV/ Xét nghiệm cấp cứu" */
-const STY='color:#c00000;font-weight:700;text-decoration:underline';
+const STY='font-weight:700';
 function emergencyTable(tb){
   const cap=T((tb.querySelector('caption')||{}).textContent);if(/cấp cứu/i.test(cap))return true;
   let el=tb;
@@ -20639,19 +20738,34 @@ function emergencyTable(tb){
     el=el.parentElement;}
   return false;
 }
-function markCell(td,year){
+const SEXT=/\s*\((?:Nam|Nữ)\)(?=\s*[:：])/,SEXG=/\s*\((?:Nam|Nữ)\)(?=\s*[:：])/g;
+/* Dòng vượt ngưỡng / dương tính: cả dòng in đậm, riêng KẾT QUẢ (sau dấu ":") gạch chân. strip=true (in / xuất): bỏ "(Nam)" "(Nữ)" khỏi tên xét nghiệm */
+function markCell(td,year,strip){
+  let changed=false;
   const w=document.createTreeWalker(td,NodeFilter.SHOW_TEXT),nodes=[];let x;while((x=w.nextNode()))nodes.push(x);
   nodes.forEach(tn=>{
-    if(!T(tn.nodeValue)||(tn.parentElement&&tn.parentElement.closest('.smq-abn')))return;
-    const parts=tn.nodeValue.split('\n');if(!parts.some(p=>abnLine(p,year)))return;
+    if(!T(tn.nodeValue))return;
+    if(tn.parentElement&&tn.parentElement.closest('.smq-abn')){
+      if(strip&&SEXT.test(tn.nodeValue)){tn.nodeValue=tn.nodeValue.replace(SEXG,'');changed=true;}
+      return;}
+    const parts=tn.nodeValue.split('\n');
+    if(!parts.some(p=>abnLine(p,year)||(strip&&SEXT.test(p))))return;
     const fr=document.createDocumentFragment();
     parts.forEach((p,i)=>{
       if(i)fr.appendChild(document.createTextNode('\n'));
-      if(abnLine(p,year)){const sp=document.createElement('span');sp.className='smq-abn';sp.setAttribute('style',STY);const b=document.createElement('b'),u=document.createElement('u');u.textContent=p;b.appendChild(u);sp.appendChild(b);fr.appendChild(sp);}
-      else fr.appendChild(document.createTextNode(p));});
-    tn.parentNode.replaceChild(fr,tn);});
+      const disp=strip?p.replace(SEXG,''):p;
+      if(abnLine(p,year)){
+        const sp=document.createElement('span');sp.className='smq-abn';sp.setAttribute('style',STY);
+        const m=/^(.*?[:：]\s*)(\S[\s\S]*)$/.exec(disp);
+        if(m){const b1=document.createElement('b');b1.textContent=m[1];sp.appendChild(b1);
+          const b2=document.createElement('b'),u=document.createElement('u');u.textContent=m[2];b2.appendChild(u);sp.appendChild(b2);}
+        else{const b=document.createElement('b'),u=document.createElement('u');u.textContent=disp;b.appendChild(u);sp.appendChild(b);}
+        fr.appendChild(sp);
+      }else fr.appendChild(document.createTextNode(disp));});
+    tn.parentNode.replaceChild(fr,tn);changed=true;});
+  return changed;
 }
-function markRoot(root){
+function markRoot(root,strip){
   let n=0;
   root.querySelectorAll('table').forEach(tb=>{
     if(tb.querySelector('input,select,textarea,.cls-xn-cell'))return;
@@ -20660,7 +20774,7 @@ function markRoot(root){
     const ix=hs.findIndex(h=>/^Xét nghiệm$/i.test(h)),iy=hs.findIndex(h=>/Năm sinh/i.test(h));
     if(ix<0||!emergencyTable(tb))return;
     tb.querySelectorAll('tr').forEach(tr=>{if(tr===hr||tr.parentElement.tagName==='THEAD')return;const c=tr.children[ix];if(!c)return;
-      const yr=iy>=0&&tr.children[iy]?T(tr.children[iy].textContent):'';markCell(c,yr);n++;});
+      const yr=iy>=0&&tr.children[iy]?T(tr.children[iy].textContent):'';if(markCell(c,yr,strip))n++;});
   });
   return n;
 }
@@ -20669,7 +20783,7 @@ function markHtml(html){
   if(typeof html!=='string'||!/cấp cứu/i.test(html)||!/Xét nghiệm/.test(html))return html;
   try{const full=/<html[\s>]/i.test(html)||/<!doctype/i.test(html);
     const d=new DOMParser().parseFromString(full?html:'<!doctype html><body>'+html,'text/html');
-    if(!markRoot(d.body)||!d.querySelector('.smq-abn'))return html;
+    if(!markRoot(d.body,true))return html;
     return full?'<!DOCTYPE html>'+d.documentElement.outerHTML:d.body.innerHTML;
   }catch(e){return html;}
 }
@@ -20678,7 +20792,11 @@ if(typeof _ow==='function'){window.officeWordDownload=function(title,html,orient
 ['__smartDoPrint','doPrint','printNew','printWithClass','openPrint'].forEach(nm=>{const fn=window[nm];if(typeof fn!=='function')return;
   window[nm]=function(){const a=Array.from(arguments),i=(nm==='openPrint')?1:0;if(typeof a[i]==='string')a[i]=markHtml(a[i]);return fn.apply(this,a);};});
 const _pr=window.print;
-if(typeof _pr==='function'){window.print=function(){try{const h=document.getElementById('newPrintHost');if(h)markRoot(h);}catch(e){}return _pr.apply(this,arguments);};}
+if(typeof _pr==='function'){window.print=function(){try{const h=document.getElementById('newPrintHost');if(h)markRoot(h,true);}catch(e){}return _pr.apply(this,arguments);};}
+try{if(window.XLSX&&XLSX.utils&&typeof XLSX.utils.aoa_to_sheet==='function'&&!XLSX.utils.aoa_to_sheet.__smqSex){
+  const f0=XLSX.utils.aoa_to_sheet;
+  const g0=function(a){try{if(Array.isArray(a))a=a.map(r=>Array.isArray(r)?r.map(c=>typeof c==='string'?c.replace(SEXG,''):c):r);}catch(e){}return f0.apply(this,[a].concat([].slice.call(arguments,1)));};
+  g0.__smqSex=1;XLSX.utils.aoa_to_sheet=g0;}}catch(e){}
 let tm=null;
 function scan(){
   try{
