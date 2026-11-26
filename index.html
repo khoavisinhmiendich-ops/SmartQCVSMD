@@ -18731,6 +18731,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   const DEF_ATT='Toàn thể nhân viên K. VSMD';
   const DEF_CHAIR='Nguyễn Thị Bình';
   const DEF_SEC='Nguyễn Thái Hòa';
+  const DEF_PROP='Không';
+  const DEF_CONC='Toàn thể nhân viên Khoa thống nhất 100% nội dung trên. Không ai ý kiến gì khác';
   const FALLBACK_STAFF=["Nguyễn Thị Bình","Nguyễn Thái Hòa","Bùi Thị Tiến Phước","Nguyễn Thị Tú","Trần Thị Cẩm Ly","Nguyễn Thị Ngọc Trâm","Nguyễn Thị Kim Phượng","Nguyễn Thị Thùy Linh","Lê Diệu Đan","Nguyễn Thị Bích Phượng","Nguyễn Gia Khang","Nguyễn Hồng Lợi"];
 
   /* ---------- tiện ích ---------- */
@@ -18764,13 +18766,21 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     if(!d.drafts||typeof d.drafts!=='object'||Array.isArray(d.drafts))d.drafts={};
     return d;
   }
-  function blank(date){return{id:'',date:date||'',attendeesExtra:'',chair:DEF_CHAIR,secretary:DEF_SEC,secretaryExtra:'',proposals:'',conclusion:''};}
+  /* VI/ VII: ô cố định (có nội dung mặc định, được sửa) + ô trống tự điền. Ô trống có nội dung → in/xuất lấy ô trống, không lấy ô cố định. */
+  function blank(date){return{id:'',date:date||'',attendeesExtra:'',chair:DEF_CHAIR,secretary:DEF_SEC,secretaryExtra:'',proposals:DEF_PROP,conclusion:DEF_CONC,proposalsExtra:'',conclusionExtra:'',meetStart:'',meetEnd:'',fx:1};}
   function normRec(r){
+    const legacy=!(r&&r.fx);
     const b=blank(r&&r.date);
     const o=Object.assign(b,clone(r));
-    ['attendeesExtra','chair','secretary','secretaryExtra','proposals','conclusion'].forEach(k=>{if(o[k]==null)o[k]='';});
+    ['attendeesExtra','chair','secretary','secretaryExtra','proposals','conclusion','proposalsExtra','conclusionExtra','meetStart','meetEnd'].forEach(k=>{if(o[k]==null)o[k]='';});
+    if(legacy){if(!T(o.proposals))o.proposals=DEF_PROP;if(!T(o.conclusion))o.conclusion=DEF_CONC;}
+    o.fx=1;
     return o;
   }
+  const effProp=r=>H(r&&r.proposalsExtra)?r.proposalsExtra:(r&&r.proposals);
+  const effConc=r=>H(r&&r.conclusionExtra)?r.conclusionExtra:(r&&r.conclusion);
+  const fmtHM=v=>{const m=/^(\d{1,2}):(\d{2})/.exec(T(v));return m?pad(+m[1])+'h'+m[2]:'…h…';};
+  const meetSentence=r=>'Cuộc họp bắt đầu lúc '+fmtHM(r&&r.meetStart)+', kết thúc lúc '+fmtHM(r&&r.meetEnd)+' cùng ngày.';
   const ui={date:''};
   function ensureDate(){
     const d=hg();if(!d)return today();
@@ -18783,12 +18793,13 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     let r=d.drafts[iso];
     if(!r||typeof r!=='object'){const s=savedFor(iso);r=d.drafts[iso]=s?normRec(s):blank(iso);}
     r.date=iso;
+    if(!r.fx){const n=normRec(r);Object.keys(n).forEach(k=>{r[k]=n[k];});}
     return r;
   }
   function isDirty(iso){
     const s=savedFor(iso),r=draftFor(iso);
-    const pick=x=>JSON.stringify(['attendeesExtra','chair','secretary','secretaryExtra','proposals','conclusion'].map(k=>T(x&&x[k])));
-    return s?pick(s)!==pick(r):pick(r)!==pick(blank(iso));
+    const pick=x=>JSON.stringify(['attendeesExtra','chair','secretary','secretaryExtra','proposals','conclusion','proposalsExtra','conclusionExtra','meetStart','meetEnd'].map(k=>T(x&&x[k])));
+    return s?pick(normRec(s))!==pick(r):pick(r)!==pick(blank(iso));
   }
 
   /* ---------- lấy nội dung từ Báo cáo trực CLS (mapping theo ngày) ---------- */
@@ -18927,8 +18938,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       '</div>'+
       '<div class="cls-section-v3"><h2>'+E(NUM.content)+'</h2></div>'+
       contentBlocks(duty)+laterBlocks(duty)+
-      '<div class="cls-section-v3"><h2>'+E(NUM.prop)+'</h2><div class="cls-note-v3">'+textParas(rec.proposals,3)+'</div></div>'+
-      '<div class="cls-section-v3"><h2>'+E(NUM.concl)+'</h2><div class="cls-note-v3">'+textParas(rec.conclusion,3)+'</div></div>'+
+      '<div class="cls-section-v3"><h2>'+E(NUM.prop)+'</h2><div class="cls-note-v3">'+textParas(effProp(rec),3)+'</div></div>'+
+      '<div class="cls-section-v3"><h2>'+E(NUM.concl)+'</h2><div class="cls-note-v3">'+textParas(effConc(rec),3)+'<p>'+E(meetSentence(rec))+'</p></div></div>'+
       '<table class="word-no-border cls-sign-v3" data-word-border="0" data-word-widths="4,40,12,40,4"><tr>'+
         '<td style="width:3.1%!important;"></td><td class="sig" style="width:27.8%!important;">'+sigCell('CHỦ TRÌ',P.chair)+'</td><td style="width:38.5%!important;"></td>'+
         '<td class="sig" style="width:27.8%!important;">'+sigCell('THƯ KÝ',P.sec)+'</td><td style="width:2.8%!important;"></td></tr></table>'+
@@ -18976,8 +18987,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       addCases(NUM.follow,'Xét nghiệm theo dõi',fu,duty.followupNote);
       addCases(NUM.emerg,'Xét nghiệm cấp cứu',em,duty.emergencyNote);
     }
-    a.push([]);head(NUM.prop);a.push(['',T(rec.proposals)]);
-    a.push([]);head(NUM.concl);a.push(['',T(rec.conclusion)]);
+    a.push([]);head(NUM.prop);a.push(['',T(effProp(rec))]);
+    a.push([]);head(NUM.concl);a.push(['',T(effConc(rec))]);a.push(['',meetSentence(rec)]);
     /* chữ ký: chỉ đặt dấu (Đã ký) khi người đó CÓ chữ ký trong hệ thống → không bao giờ lấy nhầm chữ ký người khác */
     a.push([],['','CHỦ TRÌ','','','THƯ KÝ']);
     a.push(['',P.chair.key?'(Đã ký)':'','','',P.sec.key?'(Đã ký)':'']);
@@ -19124,8 +19135,12 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       '<section class="cls-sec hgb-sec"><h4>'+E(NUM.sample)+'</h4><div id="hgb_sample">'+sampleScreen(duty)+'</div></section>'+
       '<section class="cls-sec hgb-sec"><h4>'+E(NUM.follow)+'</h4><div id="hgb_follow">'+followScreen(duty)+'</div></section>'+
       '<section class="cls-sec hgb-sec"><h4>'+E(NUM.emerg)+'</h4><div id="hgb_emerg">'+emergScreen(duty)+'</div></section>'+
-      '<section class="cls-sec hgb-sec"><h4>VI/ Ý kiến đề xuất</h4><textarea id="hgb_proposals" data-hgb="proposals" rows="4">'+E(rec.proposals)+'</textarea></section>'+
-      '<section class="cls-sec hgb-sec"><h4>VII/ Kết luận</h4><textarea id="hgb_conclusion" data-hgb="conclusion" rows="4">'+E(rec.conclusion)+'</textarea></section>'+
+      '<section class="cls-sec hgb-sec"><h4>VI/ Ý kiến đề xuất</h4><textarea id="hgb_proposals" data-hgb="proposals" rows="4">'+E(rec.proposals)+'</textarea>'+
+        '<textarea id="hgb_proposals_extra" class="hgb-extra" data-hgb="proposalsExtra" rows="3" placeholder="Ô trống: nhập thông tin (nếu có). Có nội dung thì in/xuất lấy ô này, không lấy ô trên.">'+E(rec.proposalsExtra)+'</textarea></section>'+
+      '<section class="cls-sec hgb-sec"><h4>VII/ Kết luận</h4><textarea id="hgb_conclusion" data-hgb="conclusion" rows="4">'+E(rec.conclusion)+'</textarea>'+
+        '<textarea id="hgb_conclusion_extra" class="hgb-extra" data-hgb="conclusionExtra" rows="3" placeholder="Ô trống: nhập thông tin (nếu có). Có nội dung thì in/xuất lấy ô này, không lấy ô trên.">'+E(rec.conclusionExtra)+'</textarea>'+
+        '<div class="hgb-time"><label class="field"><span class="fl-label">Cuộc họp bắt đầu lúc</span><input type="time" data-hgb="meetStart" value="'+E(rec.meetStart)+'"></label>'+
+        '<label class="field"><span class="fl-label">Kết thúc lúc (cùng ngày)</span><input type="time" data-hgb="meetEnd" value="'+E(rec.meetEnd)+'"></label></div></section>'+
       '<div class="btn-row cls-bottom-actions"><button class="btn primary" id="hgb-save">Lưu sổ họp giao ban</button><button class="btn" id="hgb-new">Sổ mới</button>'+
         '<button class="btn" data-hgb-exp="pdf">In PDF</button><button class="btn" data-hgb-exp="word">Word</button><button class="btn" data-hgb-exp="excel">Excel</button></div>'+
     '</div></div>'+
@@ -19229,6 +19244,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     '#view-hop-giao-ban .hgb-sec h4{margin:14px 0 8px;font-size:14px}'
     +'#view-hop-giao-ban .hgb-sec:first-child h4{margin-top:0}'
     +'#view-hop-giao-ban textarea{width:100%;min-height:92px;resize:vertical}'
+    +'#view-hop-giao-ban textarea.hgb-extra{margin-top:8px;min-height:70px}'
+    +'#view-hop-giao-ban .hgb-time{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:10px}'
     +'#view-hop-giao-ban .hgb-hint{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:12.5px;line-height:1.45}'
     +'#view-hop-giao-ban .hgb-muted{color:var(--text-muted)}'
     +'#view-hop-giao-ban .hgb-sig-ok{color:#15803d}#view-hop-giao-ban .hgb-sig-no{color:#b45309}'
@@ -19256,7 +19273,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
      MODULE MỚI: SỔ KIỂM TRA (ĐOÀN KIỂM TRA) — MS: 26/BV-01 (nằm trong Trực CLS)
      - Chỉ hiển thị / truy cập được với: Nguyễn Thị Bình, Nguyễn Thái Hòa, Nguyễn Gia Khang.
      - Biên bản kiểm tra: Tháng/năm, Thường quy / Đột xuất (tích chọn), I/ Đoàn kiểm tra (8 hàng),
-       II/ Nội dung kiểm tra, III/ Nhận xét và đề nghị; ký tên TRƯỞNG KHOA – ĐOÀN KIỂM TRA (ký sống, không add chữ ký).
+       II/ Nội dung kiểm tra, III/ Nhận xét và đề nghị; ký tên TRƯỞNG KHOA – ĐOÀN KIỂM TRA (chữ ký TRƯỞNG KHOA thêm sẵn; chữ ký Trưởng đoàn có thể add từ file PDF đã ký).
      - In PDF / Word / Excel dùng đúng bộ in – bộ xuất và lớp CSS cls-export-v3 của Báo cáo trực.
      - Chỉ thêm module mới, không thay đổi dữ liệu hay giao diện của các module khác.
      ====================================================================== */
@@ -19301,17 +19318,20 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   }
   function blank(){
     const n=new Date();
-    return{id:'',month:pad(n.getMonth()+1),year:String(n.getFullYear()),routine:false,sudden:false,members:Array.from({length:ROWS},()=>''),content:'',remarks:''};
+    return{id:'',month:pad(n.getMonth()+1),year:String(n.getFullYear()),routine:false,sudden:false,members:Array.from({length:ROWS},()=>''),content:'',remarks:'',workStart:'',workEnd:'',leaderSig:'',leaderSigAR:0};
   }
   function normRec(r){
     const o=Object.assign(blank(),clone(r));
     o.members=Array.from({length:ROWS},(_,i)=>String((o.members||[])[i]==null?'':o.members[i]));
     o.routine=!!o.routine;o.sudden=!!o.sudden;
     o.content=String(o.content==null?'':o.content);o.remarks=String(o.remarks==null?'':o.remarks);
+    o.workStart=String(o.workStart==null?'':o.workStart);o.workEnd=String(o.workEnd==null?'':o.workEnd);
+    o.leaderSig=/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(String(o.leaderSig||''))?String(o.leaderSig):'';
+    o.leaderSigAR=(+o.leaderSigAR>0&&isFinite(+o.leaderSigAR))?+o.leaderSigAR:0;
     return o;
   }
   function draft(){const d=sk();if(!d)return blank();if(!d.draft||typeof d.draft!=='object')d.draft=blank();d.draft=normRec(d.draft);return d.draft;}
-  const sig=r=>JSON.stringify([r.month,r.year,r.routine,r.sudden,r.members.map(T),T(r.content),T(r.remarks)]);
+  const sig=r=>JSON.stringify([r.month,r.year,r.routine,r.sudden,r.members.map(T),T(r.content),T(r.remarks),T(r.workStart),T(r.workEnd)]);
   function isDirty(){
     const d=sk(),r=draft(),s=d.records.find(x=>x&&x.id&&x.id===r.id);
     return s?sig(normRec(s))!==sig(r):sig(r)!==sig(blank());
@@ -19332,6 +19352,23 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   const MS='MS: 26/BV-01';
   const monthText=r=>'Tháng '+pad(+r.month||0)+'/'+r.year;
   const chk=v=>v?'☑':'☐';
+  /* Đoàn kiểm tra bắt đầu / kết thúc làm việc (ngày tháng năm giờ phút) */
+  const fmtDT=v=>{const m=/^(\d{4})-(\d{2})-(\d{2})[T ](\d{1,2}):(\d{2})/.exec(T(v));return m?pad(+m[4])+'h'+m[5]+' ngày '+m[3]+'/'+m[2]+'/'+m[1]:'…h… ngày …/…/……';};
+  const workSentence=r=>'Đoàn kiểm tra bắt đầu làm việc lúc '+fmtDT(r.workStart)+' và kết thúc làm việc lúc '+fmtDT(r.workEnd)+'.';
+  /* Chữ ký Trưởng đoàn (ảnh trích từ file PDF đã ký) */
+  /* Chữ ký TRƯỞNG KHOA (ThS. Nguyễn Thị Bình): thêm sẵn, không ký sống */
+  const HEAD_KEY='Nguyễn Thị Bình';
+  function headSigData(){try{const m=window.SMART_QC_SIGNATURES_DATA||{};return m[HEAD_KEY]||'';}catch(e){return '';}}
+  function headSigBlock(){
+    let h='';
+    try{if(typeof window.SMART_QC_SIGNATURE_HTML==='function')h=window.SMART_QC_SIGNATURE_HTML(HEAD_KEY)||'';}catch(e){}
+    return h?'<i>'+h+'</i><br><br>':'<br><br><br>';
+  }
+  function sigBlock(r){
+    if(!r.leaderSig)return '<br><br><br>';
+    const ar=r.leaderSigAR>0?r.leaderSigAR:3,w=Math.max(30,Math.min(150,Math.round(55*ar))),h=Math.max(10,Math.round(w/ar));
+    return '<i><img data-smart-signature="1" src="'+r.leaderSig+'" alt="Chữ ký" width="'+w+'" height="'+h+'" style="display:block;width:'+w+'px;height:'+h+'px;object-fit:contain;object-position:center;margin:2px auto;vertical-align:middle;border:0;background:transparent;"></i><br><br>';
+  }
   function textParas(v,minLines){
     const lines=T(v)?String(v).replace(/\r/g,'').split('\n'):[];
     if(!lines.length){let o='';for(let i=0;i<minLines;i++)o+='<p>&nbsp;</p>';return o;}
@@ -19351,10 +19388,10 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       '<div class="cls-section-v3"><h2>I/ Đoàn kiểm tra</h2>'+
         r.members.filter(m=>T(m)).map((m,i)=>'<p>'+(i+1)+'. '+E(T(m))+'</p>').join('')+'</div>'+
       '<div class="cls-section-v3"><h2>II/ Nội dung kiểm tra</h2><div class="cls-note-v3">'+textParas(r.content,5)+'</div></div>'+
-      '<div class="cls-section-v3"><h2>III/ Nhận xét và đề nghị</h2><div class="cls-note-v3">'+textParas(r.remarks,5)+'</div></div>'+
+      '<div class="cls-section-v3"><h2>III/ Nhận xét và đề nghị</h2><div class="cls-note-v3">'+textParas(r.remarks,5)+'<p>'+E(workSentence(r))+'</p></div></div>'+
       '<table class="word-no-border cls-sign-v3" data-word-border="0" data-word-widths="4,40,12,40,4"><tr>'+
-        '<td style="width:3.1%!important;"></td><td class="sig" style="width:27.8%!important;"><b>TRƯỞNG KHOA</b><br><br><br><br><b>'+E(HEAD_NAME)+'</b></td><td style="width:38.5%!important;"></td>'+
-        '<td class="sig" style="width:27.8%!important;"><b>ĐOÀN KIỂM TRA</b><br><br><br><br><b>'+E(ld)+'</b></td><td style="width:2.8%!important;"></td></tr></table>'+
+        '<td style="width:3.1%!important;"></td><td class="sig" style="width:27.8%!important;"><b>TRƯỞNG KHOA</b><br>'+headSigBlock()+'<b>'+E(HEAD_NAME)+'</b></td><td style="width:38.5%!important;"></td>'+
+        '<td class="sig" style="width:27.8%!important;"><b>ĐOÀN KIỂM TRA</b><br>'+sigBlock(r)+'<b>'+E(ld)+'</b></td><td style="width:2.8%!important;"></td></tr></table>'+
     '</div>';
   }
   function buildAOA(r){
@@ -19363,17 +19400,40 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     r.members.filter(m=>T(m)).forEach((m,i)=>a.push([(i+1)+'. '+T(m)]));
     const lines=v=>T(v)?String(v).replace(/\r/g,'').split('\n'):[''];
     a.push([],['II/ Nội dung kiểm tra']);lines(r.content).forEach(l=>a.push([l]));
-    a.push([],['III/ Nhận xét và đề nghị']);lines(r.remarks).forEach(l=>a.push([l]));
+    a.push([],['III/ Nhận xét và đề nghị']);lines(r.remarks).forEach(l=>a.push([l]));a.push([workSentence(r)]);
     a.push([],['','TRƯỞNG KHOA','','','ĐOÀN KIỂM TRA'],[],[],[],['',HEAD_NAME,'','',leader(r)]);
     return a;
   }
   function downloadBlob(blob,name){const u=URL.createObjectURL(blob),el=document.createElement('a');el.href=u;el.download=name;document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);}
-  function exportExcel(r){
+  async function exportExcel(r){
     if(!window.XLSX){toast2('warning','Chưa tải được mô-đun Excel','Vui lòng kiểm tra kết nối rồi thử lại.');return;}
-    const ws=XLSX.utils.aoa_to_sheet(buildAOA(r));
+    const aoa=buildAOA(r),fname='So_kiem_tra_'+r.year+'-'+pad(+r.month||0)+'.xlsx';
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols']=[{wch:8},{wch:38},{wch:14},{wch:18},{wch:28},{wch:28}];
     const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'So kiem tra');
-    XLSX.writeFile(wb,'So_kiem_tra_'+r.year+'-'+pad(+r.month||0)+'.xlsx');
+    /* có chữ ký Trưởng đoàn → nhúng ảnh chữ ký vào ô ký ĐOÀN KIỂM TRA (cần ExcelJS) */
+    const hs=headSigData();
+    if((r.leaderSig||hs)&&window.ExcelJS){
+      try{
+        const wb2=new ExcelJS.Workbook();wb2.creator='SMART VSMD';
+        const w2=wb2.addWorksheet('So kiem tra');
+        aoa.forEach((row,ri)=>row.forEach((v,ci)=>{if(v!==''&&v!=null)w2.getCell(ri+1,ci+1).value=v;}));
+        [8,38,14,18,28,28].forEach((w,i)=>{w2.getColumn(i+1).width=w;});
+        const hi=aoa.findIndex(row=>row[4]==='ĐOÀN KIỂM TRA');
+        if(hi>=0){
+          if(hs){const idH=wb2.addImage({base64:hs,extension:'png'});w2.addImage(idH,{tl:{col:1.1,row:hi+1.1},ext:{width:130,height:48}});}
+          if(r.leaderSig){
+            const ar=r.leaderSigAR>0?r.leaderSigAR:3,w=Math.max(30,Math.min(150,Math.round(55*ar))),h=Math.max(10,Math.round(w/ar));
+            const id=wb2.addImage({base64:r.leaderSig,extension:'png'});
+            w2.addImage(id,{tl:{col:4.1,row:hi+1.1},ext:{width:w,height:h}});
+          }
+        }
+        const buf=await wb2.xlsx.writeBuffer();
+        downloadBlob(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),fname);
+        return;
+      }catch(e){console.warn('so-kiem-tra excel signature',e);}
+    }
+    XLSX.writeFile(wb,fname);
   }
   async function doExport(type,rec){
     try{
@@ -19390,10 +19450,147 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
         if(typeof window.officeWordDownload!=='function')throw new Error('Không tìm thấy bộ xuất Word.');
         await window.officeWordDownload('So_kiem_tra',body,'portrait');return;
       }
-      if(type==='excel'){exportExcel(r);return;}
+      if(type==='excel'){await exportExcel(r);return;}
     }catch(err){console.error(err);toast2('danger','Xuất thất bại',(err&&err.message)||'Không thể xuất file.');}
   }
   window.soKiemTraBuildBody=function(rec){return buildBody(normRec(rec));};
+
+  /* ---------- Add chữ ký: tự nhận diện chữ ký Trưởng đoàn (phần ĐOÀN KIỂM TRA) trong file PDF đã ký ---------- */
+  let pdfReady=null;
+  function loadScript(src){return new Promise((res,rej)=>{const el=document.createElement('script');el.src=src;el.onload=res;el.onerror=()=>rej(new Error('load '+src));document.head.appendChild(el);});}
+  function ensurePdfJs(){
+    if(window.pdfjsLib&&window.__smqPdfWorkerSet)return Promise.resolve(window.pdfjsLib);
+    if(pdfReady)return pdfReady;
+    const V='3.11.174';
+    const sources=[
+      ['https://cdn.jsdelivr.net/npm/pdfjs-dist@'+V+'/build/pdf.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@'+V+'/build/pdf.worker.min.js'],
+      ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+V+'/pdf.min.js','https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+V+'/pdf.worker.min.js']
+    ];
+    pdfReady=(async()=>{
+      for(const [lib,worker] of sources){
+        try{
+          if(!window.pdfjsLib)await loadScript(lib);
+          if(!window.pdfjsLib)throw new Error('pdfjsLib missing');
+          try{const txt=await (await fetch(worker)).text();window.pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([txt],{type:'text/javascript'}));}
+          catch(e){window.pdfjsLib.GlobalWorkerOptions.workerSrc=worker;}
+          window.__smqPdfWorkerSet=true;
+          return window.pdfjsLib;
+        }catch(e){}
+      }
+      pdfReady=null;
+      throw new Error('Không tải được thư viện đọc PDF (kiểm tra kết nối mạng).');
+    })();
+    return pdfReady;
+  }
+  const plain=v=>strip(v).replace(/[^a-z0-9]+/g,' ').trim();
+  /* Tìm dòng tiêu đề "ĐOÀN KIỂM TRA" (khối ký, chữ in hoa, nằm thấp nhất ở trang cuối có tiêu đề này) */
+  function findHeading(items){
+    const rows=[];
+    items.slice().sort((a,b)=>a.y-b.y||a.x-b.x).forEach(it=>{const row=rows.find(r=>Math.abs(r.y-it.y)<=3);if(row)row.list.push(it);else rows.push({y:it.y,list:[it]});});
+    let best=null;
+    rows.forEach(row=>{
+      const l=row.list.sort((a,b)=>a.x-b.x);
+      for(let i=0;i<l.length;i++){
+        let raw='';
+        for(let j=i;j<l.length&&j<i+5;j++){
+          raw=(raw?raw+' ':'')+l[j].str.trim();
+          const p=plain(raw);
+          if(p==='doan kiem tra'){
+            if(raw===raw.toUpperCase()&&!/[()]/.test(raw)){
+              const x0=l[i].x,x1=l[j].x+l[j].w;
+              if(!best||row.y>best.y)best={x0,x1,y:row.y,h:l[i].h};
+            }
+            break;
+          }
+          if(p.length>13)break;
+        }
+      }
+    });
+    return best;
+  }
+  async function extractLeaderSignature(file){
+    const lib=await ensurePdfJs();
+    const pdf=await lib.getDocument({data:await file.arrayBuffer()}).promise;
+    const SC=3;
+    for(let p=pdf.numPages;p>=1;p--){
+      const page=await pdf.getPage(p);
+      const vp=page.getViewport({scale:1});
+      const tc=await page.getTextContent();
+      const items=tc.items.filter(it=>it&&typeof it.str==='string'&&it.str.trim()!=='').map(it=>{
+        const pt=vp.convertToViewportPoint(it.transform[4],it.transform[5]);
+        return{str:it.str,x:pt[0],y:pt[1],w:it.width||0,h:Math.abs(it.height)||Math.hypot(it.transform[2],it.transform[3])||10};
+      });
+      const head=findHeading(items);
+      if(!head)continue;
+      /* tên người ký ngay dưới tiêu đề (để đối chiếu + làm mốc dưới của vùng chữ ký) */
+      const below=items.filter(it=>it.y>head.y+8&&it.x+it.w>head.x0-60&&it.x<head.x1+60).sort((a,b)=>a.y-b.y||a.x-b.x);
+      const nameItem=below[0]||null;
+      const signer=nameItem?below.filter(it=>Math.abs(it.y-nameItem.y)<=3).sort((a,b)=>a.x-b.x).map(it=>it.str.trim()).join(' ').trim():'';
+      const cx=(head.x0+head.x1)/2,half=Math.max(vp.width*0.17,(head.x1-head.x0)*0.9);
+      const x0=Math.max(0,cx-half),x1=Math.min(vp.width,cx+half);
+      const yTop=head.y+3;
+      let yBot=nameItem?Math.min(nameItem.y-nameItem.h-1,yTop+150):yTop+110;
+      yBot=Math.min(yBot,vp.height);
+      if(yBot-yTop<12||x1-x0<20)throw new Error('Không xác định được vùng chữ ký của ĐOÀN KIỂM TRA trong file PDF.');
+      const vpS=page.getViewport({scale:SC});
+      const cv=document.createElement('canvas');cv.width=Math.ceil(vpS.width);cv.height=Math.ceil(vpS.height);
+      const ctx=cv.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
+      await page.render({canvasContext:ctx,viewport:vpS}).promise;
+      const cx0=Math.floor(x0*SC),cy0=Math.floor(yTop*SC),cw=Math.max(1,Math.floor((x1-x0)*SC)),ch=Math.max(1,Math.floor((yBot-yTop)*SC));
+      const img=ctx.getImageData(cx0,cy0,cw,ch),d=img.data;
+      let minX=cw,minY=ch,maxX=-1,maxY=-1,cnt=0;
+      for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){
+        const i=(y*cw+x)*4,lum=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+        const a=lum>=215?0:(lum<=150?255:Math.round((215-lum)/65*255));
+        d[i+3]=a;
+        if(a>70){cnt++;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}
+      }
+      if(cnt<80||maxX<0)throw new Error('Không phát hiện chữ ký trong phần ĐOÀN KIỂM TRA của file PDF. Hãy kiểm tra file đã được ký chưa.');
+      const tmp=document.createElement('canvas');tmp.width=cw;tmp.height=ch;tmp.getContext('2d').putImageData(img,0,0);
+      const pad2=6,sx=Math.max(0,minX-pad2),sy=Math.max(0,minY-pad2),sw=Math.min(cw,maxX+pad2+1)-sx,sh=Math.min(ch,maxY+pad2+1)-sy;
+      const ratio=sw>520?520/sw:1,ow=Math.max(1,Math.round(sw*ratio)),oh=Math.max(1,Math.round(sh*ratio));
+      const out=document.createElement('canvas');out.width=ow;out.height=oh;
+      out.getContext('2d').drawImage(tmp,sx,sy,sw,sh,0,0,ow,oh);
+      return{dataUrl:out.toDataURL('image/png'),ar:ow/oh,signer};
+    }
+    throw new Error('Không tìm thấy phần ký “ĐOÀN KIỂM TRA” trong file PDF. Hãy dùng file PDF được in từ Sổ kiểm tra.');
+  }
+  async function addSignatureFromPdf(file){
+    if(!allowed())return;
+    const d=sk(),r=draft(),btn=document.getElementById('sk-addsig');
+    if(!file)return;
+    if(!/\.pdf$/i.test(file.name||'')&&file.type!=='application/pdf'){toast2('warning','Sai định dạng','Vui lòng chọn file PDF.');return;}
+    const ld=leader(r);
+    if(!ld){toast2('warning','Chưa có Trưởng đoàn','Hãy ghi “(Trưởng đoàn)” sau tên người ký ở phần I/ Đoàn kiểm tra trước khi add chữ ký.');return;}
+    const old=btn?btn.textContent:'';
+    if(btn){btn.disabled=true;btn.textContent='Đang đọc PDF…';}
+    try{
+      const res=await extractLeaderSignature(file);
+      if(res.signer){
+        const a=nrm(res.signer),b=nrm(ld);
+        if(a&&b&&a.indexOf(b)<0&&b.indexOf(a)<0&&!window.confirm('Tên người ký trong file PDF (“'+res.signer+'”) khác Trưởng đoàn của biên bản (“'+ld+'”).\nVẫn add chữ ký này?'))return;
+      }
+      r.leaderSig=res.dataUrl;r.leaderSigAR=res.ar;
+      /* file đã lưu trước đó: chỉ thêm chữ ký, giữ nguyên toàn bộ nội dung đã lưu */
+      const saved=r.id?d.records.find(x=>x&&x.id===r.id):null;
+      if(saved){saved.leaderSig=res.dataUrl;saved.leaderSigAR=res.ar;}
+      saveState();render();
+      toast2('pass','Đã add chữ ký Trưởng đoàn',saved?'Biên bản đã lưu được cập nhật thành file có chữ ký.':'Chữ ký đã được thêm. Bấm “Lưu biên bản” để lưu kèm chữ ký.');
+    }catch(err){
+      console.error(err);toast2('danger','Không add được chữ ký',(err&&err.message)||'Không đọc được file PDF.');
+    }finally{
+      const b2=document.getElementById('sk-addsig');if(b2){b2.disabled=false;b2.textContent=old||'Add chữ ký';}
+    }
+  }
+  function removeSignature(){
+    const d=sk(),r=draft();
+    if(!r.leaderSig)return;
+    if(!window.confirm('Xóa chữ ký Trưởng đoàn khỏi biên bản này?'))return;
+    r.leaderSig='';r.leaderSigAR=0;
+    const saved=r.id?d.records.find(x=>x&&x.id===r.id):null;
+    if(saved){saved.leaderSig='';saved.leaderSigAR=0;}
+    saveState();render();
+  }
 
   /* ---------- giao diện ---------- */
   function ensureShell(){
@@ -19423,11 +19620,14 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       '</section>'+
       '<section class="cls-sec sk-sec"><h4>I/ Đoàn kiểm tra</h4><div class="sk-members">'+
         r.members.map((m,i)=>'<label class="sk-member"><span class="sk-no">'+(i+1)+'.</span><input data-sk-member="'+i+'" value="'+E(m)+'" placeholder="Họ và tên" autocomplete="off"></label>').join('')+
-      '</div><div class="sk-hint" id="sk_leader">'+leaderHint(r)+'</div></section>'+
+      '</div><div class="sk-hint" id="sk_leader">'+leaderHint(r)+'</div>'+
+        (r.leaderSig?'<div class="sk-hint" id="sk_sig"><span class="sk-ok">✔ Đã add chữ ký Trưởng đoàn</span> <img src="'+r.leaderSig+'" alt="Chữ ký" style="height:34px;vertical-align:middle;background:#fff;border:1px solid var(--border);border-radius:6px;padding:2px 6px"> <button type="button" class="btn ghost sm" id="sk-delsig">Xóa chữ ký</button></div>':'')+'</section>'+
       '<section class="cls-sec sk-sec"><h4>II/ Nội dung kiểm tra</h4><textarea data-sk="content" rows="6">'+E(r.content)+'</textarea></section>'+
-      '<section class="cls-sec sk-sec"><h4>III/ Nhận xét và đề nghị</h4><textarea data-sk="remarks" rows="6">'+E(r.remarks)+'</textarea></section>'+
+      '<section class="cls-sec sk-sec"><h4>III/ Nhận xét và đề nghị</h4><textarea data-sk="remarks" rows="6">'+E(r.remarks)+'</textarea>'+
+        '<div class="sk-time"><label class="field"><span class="fl-label">Đoàn kiểm tra bắt đầu làm việc lúc</span><input type="datetime-local" data-sk="workStart" value="'+E(r.workStart)+'"></label>'+
+        '<label class="field"><span class="fl-label">Kết thúc làm việc lúc</span><input type="datetime-local" data-sk="workEnd" value="'+E(r.workEnd)+'"></label></div></section>'+
       '<div class="btn-row cls-bottom-actions"><button class="btn primary" id="sk-save">Lưu biên bản</button><button class="btn" id="sk-new">Biên bản mới</button>'+
-        '<button class="btn" data-sk-exp="pdf">In PDF</button><button class="btn" data-sk-exp="word">Word</button><button class="btn" data-sk-exp="excel">Excel</button></div>'+
+        '<button class="btn" data-sk-exp="pdf">In PDF</button><button class="btn" data-sk-exp="word">Word</button><button class="btn" data-sk-exp="excel">Excel</button><button class="btn" id="sk-addsig" type="button">Add chữ ký</button><input type="file" id="sk_sig_file" accept="application/pdf,.pdf" style="display:none"></div>'+
     '</div></div>'+
     '<div class="card" style="margin-top:14px"><div class="card-head"><h3>Danh sách biên bản kiểm tra đã lưu</h3></div><div class="table-wrap"><table><thead><tr><th>Tháng/năm</th><th>Diện kiểm tra</th><th>Trưởng đoàn</th><th></th></tr></thead><tbody>'+
       (list.length?list.map(x=>{const n=normRec(x);return '<tr><td>'+pad(+n.month||0)+'/'+E(n.year)+'</td><td>'+E([n.routine?'Thường quy':'',n.sudden?'Đột xuất':''].filter(Boolean).join(', ')||'—')+'</td><td>'+E(leader(n)||'—')+'</td><td>'+
@@ -19461,6 +19661,12 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       if(isDirty()&&!window.confirm('Biên bản hiện tại có nội dung chưa lưu.\nTạo biên bản mới và bỏ nội dung chưa lưu?'))return;
       sk().draft=blank();saveState();render();
     };
+    const as=document.getElementById('sk-addsig'),af=document.getElementById('sk_sig_file');
+    if(as&&af){
+      as.onclick=()=>{af.value='';af.click();};
+      af.onchange=()=>{const fl=af.files&&af.files[0];if(fl)addSignatureFromPdf(fl);};
+    }
+    const ds=document.getElementById('sk-delsig');if(ds)ds.onclick=removeSignature;
     el.querySelectorAll('[data-sk-exp]').forEach(b=>b.onclick=()=>doExport(b.dataset.skExp,draft()));
     el.querySelectorAll('[data-sk-lexp]').forEach(b=>b.onclick=()=>{const x=sk().records.find(a=>String(a.id)===String(b.dataset.skId));if(x)doExport(b.dataset.skLexp,x);});
     el.querySelectorAll('[data-sk-edit]').forEach(b=>b.onclick=()=>{const d=sk(),x=d.records.find(a=>String(a.id)===String(b.dataset.skEdit));if(!x)return;d.draft=normRec(x);saveState();render();window.scrollTo(0,0);});
@@ -19511,6 +19717,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     +'#view-so-kiem-tra .sk-no{width:24px;text-align:right;font-weight:600}'
     +'#view-so-kiem-tra .sk-member input{flex:1}'
     +'#view-so-kiem-tra .sk-hint{margin-top:8px;font-size:12.5px;line-height:1.45}'
+    +'#view-so-kiem-tra .sk-time{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:10px}'
     +'#view-so-kiem-tra .sk-muted{color:var(--text-muted)}#view-so-kiem-tra .sk-ok{color:#15803d}'
     +'#view-so-kiem-tra .sk-chip{display:inline-block;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600;background:rgba(100,116,139,.12);color:var(--text-muted)}'
     +'#view-so-kiem-tra .sk-chip-ok{background:rgba(22,163,74,.13);color:#15803d}'
