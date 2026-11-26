@@ -17267,24 +17267,25 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   const isWeekend=iso=>{const a=parseISO(iso);if(!a)return false;const w=a.getDay();return w===0||w===6;};
   const dutyLabel=x=>{const a=parseISO(x),w=a?a.getDay():-1,h=holLabel(x),p=[];if(w===6)p.push('Thứ 7');else if(w===0)p.push('CN');if(h)p.push(h);return dd(x)+(p.length?' ('+p.join(', ')+')':'');};
   function rowTexts(r){
-    const nWe=r.duty.filter(isWeekend).length,nWd=r.duty.length-nWe;
+    const nLe=r.duty.filter(x=>!!holLabel(x)).length,nWe=r.duty.filter(x=>!holLabel(x)&&isWeekend(x)).length,nWd=r.duty.length-nWe-nLe;
     return {
       duty:r.duty.length?r.duty.map(x=>dutyLabel(x)).join('\n'):NONE,
       ot:r.ot.length?r.ot.map(x=>dd(x)).join('\n'):NONE,
       dutyWd:nWd?daysText(nWd):NONE,
       dutyWe:nWe?daysText(nWe):NONE,
+      dutyLe:nLe?daysText(nLe):NONE,
       otN:r.ot.length?daysText(r.ot.length):NONE,
       bu:linesText(leaveLines(r.bu)),
       phep:linesText(leaveLines(r.phep))
     };
   }
   function totals(rows){
-    const t={wd:0,we:0,ot:0,bu:0,phep:0};
-    rows.forEach(r=>{r.duty.forEach(d=>{if(isWeekend(d))t.we++;else t.wd++;});t.ot+=r.ot.length;t.bu+=r.buDays;t.phep+=r.phepDays;});
-    return {dutyWd:t.wd?daysText(t.wd):NONE,dutyWe:t.we?daysText(t.we):NONE,otN:t.ot?daysText(t.ot):NONE,bu:t.bu?daysText(t.bu):NONE,phep:t.phep?daysText(t.phep):NONE};
+    const t={wd:0,we:0,le:0,ot:0,bu:0,phep:0};
+    rows.forEach(r=>{r.duty.forEach(d=>{if(holLabel(d))t.le++;else if(isWeekend(d))t.we++;else t.wd++;});t.ot+=r.ot.length;t.bu+=r.buDays;t.phep+=r.phepDays;});
+    return {dutyWd:t.wd?daysText(t.wd):NONE,dutyWe:t.we?daysText(t.we):NONE,dutyLe:t.le?daysText(t.le):NONE,otN:t.ot?daysText(t.ot):NONE,bu:t.bu?daysText(t.bu):NONE,phep:t.phep?daysText(t.phep):NONE};
   }
-  const HEADERS=['STT','Họ và tên nhân viên','Ngày trực','Ngày làm ngoài giờ','Ngày thường','Thứ 7 & CN','Tổng hợp ngoài giờ','Nghỉ bù','Nghỉ phép'];
-  const GROUP='Tổng hợp trực';  /* tiêu đề nhóm phủ 2 cột: Ngày thường | Thứ 7 & CN */
+  const HEADERS=['STT','Họ và tên nhân viên','Ngày trực','Ngày làm ngoài giờ','Ngày thường','Thứ 7 & CN','Tổng hợp ngoài giờ','Nghỉ bù','Nghỉ phép','Lễ & Tết'];
+  const GROUP='Tổng hợp trực';  /* tiêu đề nhóm phủ 3 cột: Ngày thường | Thứ 7 & CN | Lễ & Tết */
   const monthTitle=(y,m)=>'Tháng '+pad(m)+' năm '+y;
   const todayVN=()=>{const n=new Date();return pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear();};
 
@@ -17293,9 +17294,9 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     const TD='border:1px solid #333;padding:4px 6px;vertical-align:middle;font-size:10pt;color:#111;';
     const TH='border:1px solid #333;padding:5px 6px;vertical-align:middle;text-align:center;font-weight:700;font-size:10pt;background:#EAF3FB;color:#111;text-transform:none;letter-spacing:0;';
     const nl=t=>esc(t).replace(/\n/g,'<br>');
-    const W=['4%','15%','17%','7%','7%','15%','8%','14%','13%'];
+    const W=['4%','14%','15%','7%','7%','7%','13%','8%','13%','12%'];
     /* thứ tự cột khi in: STT | Họ tên | Ngày trực | Tổng hợp trực (Ngày thường, Thứ 7 & CN) | Ngày làm ngoài giờ | Tổng hợp ngoài giờ | Nghỉ bù | Nghỉ phép */
-    const PH=[HEADERS[0],HEADERS[1],HEADERS[2],HEADERS[4],HEADERS[5],HEADERS[3],HEADERS[6],HEADERS[7],HEADERS[8]];
+    const PH=[HEADERS[0],HEADERS[1],HEADERS[2],HEADERS[4],HEADERS[5],HEADERS[9],HEADERS[3],HEADERS[6],HEADERS[7],HEADERS[8]];
     const body=rows.map((r,i)=>{
       const t=rowTexts(r);
       return '<tr>'
@@ -17304,6 +17305,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.duty)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.dutyWd)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.dutyWe)+'</td>'
+        +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.dutyLe)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.ot)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.otN)+'</td>'
         +'<td class="center" style="'+TD+'text-align:center;">'+nl(t.bu)+'</td>'
@@ -17315,6 +17317,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       +'<td colspan="3" class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">TỔNG CỘNG</td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.dutyWd)+'</td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.dutyWe)+'</td>'
+      +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.dutyLe)+'</td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;"></td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.otN)+'</td>'
       +'<td class="center" style="'+TD+'text-align:center;font-weight:700;background:#F5F5F5;">'+esc(tt.bu)+'</td>'
@@ -17330,7 +17333,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       +'<h2 style="text-align:center;font-size:12.5pt;font-weight:400;margin:0 0 10px;">'+monthTitle(y,m)+'</h2>'
       +'<table style="width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #333;">'
       +'<colgroup>'+W.map(w=>'<col style="width:'+w+'">').join('')+'</colgroup>'
-      +'<thead><tr>'+PH.map((h,i)=>i===3?'<th colspan="2" style="'+TH+'">'+esc(GROUP)+'</th>':(i===4?'':'<th style="border:none;background:#fff;padding:0;"></th>')).join('')+'</tr>'
+      +'<thead><tr>'+PH.map((h,i)=>i===3?'<th colspan="3" style="'+TH+'">'+esc(GROUP)+'</th>':((i===4||i===5)?'':'<th style="border:none;background:#fff;padding:0;"></th>')).join('')+'</tr>'
       +'<tr>'+PH.map(h=>'<th style="'+TH+'">'+esc(h)+'</th>').join('')+'</tr></thead>'
       +'<tbody>'+body+totalRow+'</tbody></table>'
       +'<p style="font-size:9.5pt;font-style:italic;margin:6px 0 0;">Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7, Chủ nhật và các ngày có ghi tên làm ngoài giờ; mục không có thông tin ghi “Không”.</p>'
@@ -17354,26 +17357,26 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       ['BỘ Y TẾ'],['BỆNH VIỆN PHONG – DA LIỄU TW QUY HÒA'],['KHOA VI SINH – MIỄN DỊCH'],[],
       ['TỔNG HỢP TRỰC & NGOÀI GIỜ'],[monthTitle(y,m)],[]
     ];
-    const data=rows.map((r,i)=>{const t=rowTexts(r);return [i+1,r.name,t.duty,t.dutyWd,t.dutyWe,t.ot,t.otN,t.bu,t.phep];});
-    const totalLine=['TỔNG CỘNG','','',tt.dutyWd,tt.dutyWe,'',tt.otN,tt.bu,tt.phep];
-    const HDR1=['STT','Họ và tên nhân viên','Ngày trực',GROUP,'','Ngày làm ngoài giờ','Tổng hợp ngoài giờ','Nghỉ bù','Nghỉ phép'];
-    const HDR2=['','','',HEADERS[4],HEADERS[5],'','','',''];
+    const data=rows.map((r,i)=>{const t=rowTexts(r);return [i+1,r.name,t.duty,t.dutyWd,t.dutyWe,t.dutyLe,t.ot,t.otN,t.bu,t.phep];});
+    const totalLine=['TỔNG CỘNG','','',tt.dutyWd,tt.dutyWe,tt.dutyLe,'',tt.otN,tt.bu,tt.phep];
+    const HDR1=['STT','Họ và tên nhân viên','Ngày trực',GROUP,'','','Ngày làm ngoài giờ','Tổng hợp ngoài giờ','Nghỉ bù','Nghỉ phép'];
+    const HDR2=['','','',HEADERS[4],HEADERS[5],HEADERS[9],'','','',''];
     if(window.ExcelJS){
       const wb=new ExcelJS.Workbook();wb.creator='SMART VSMD';wb.created=new Date();
       const ws=wb.addWorksheet('T'+pad(m)+'-'+y,{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3}}});
-      [6,28,20,14,14,20,18,18,18].forEach((w,i)=>{ws.getColumn(i+1).width=w;});
+      [6,28,20,14,14,14,20,18,18,18].forEach((w,i)=>{ws.getColumn(i+1).width=w;});
       const font=(o)=>Object.assign({name:'Times New Roman',size:11},o||{});
       const thin={style:'thin',color:{argb:'FF333333'}};
       const border={top:thin,left:thin,bottom:thin,right:thin};
       lines.forEach(l=>ws.addRow(l));
       [1,2,3].forEach(r=>{ws.mergeCells(r,1,r,4);const c=ws.getCell(r,1);c.font=font({bold:true});c.alignment={horizontal:'left'};});
-      ws.mergeCells(5,1,5,9);ws.getCell(5,1).font=font({bold:true,size:16});ws.getCell(5,1).alignment={horizontal:'center',vertical:'middle'};
-      ws.mergeCells(6,1,6,9);ws.getCell(6,1).font=font({size:12.5});ws.getCell(6,1).alignment={horizontal:'center'};
+      ws.mergeCells(5,1,5,10);ws.getCell(5,1).font=font({bold:true,size:16});ws.getCell(5,1).alignment={horizontal:'center',vertical:'middle'};
+      ws.mergeCells(6,1,6,10);ws.getCell(6,1).font=font({size:12.5});ws.getCell(6,1).alignment={horizontal:'center'};
       const hr=ws.addRow(HDR1),hr2=ws.addRow(HDR2);
       hr.height=30;
       [hr,hr2].forEach(row=>row.eachCell({includeEmpty:true},c=>{c.font=font({bold:true});c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=border;c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF3FB'}};}));
-      [1,2,3,6,7,8,9].forEach(c=>ws.mergeCells(hr.number,c,hr2.number,c));
-      ws.mergeCells(hr.number,4,hr.number,5);
+      [1,2,3,7,8,9,10].forEach(c=>ws.mergeCells(hr.number,c,hr2.number,c));
+      ws.mergeCells(hr.number,4,hr.number,6);
       data.forEach(arr=>{
         const r=ws.addRow(arr);
         r.eachCell({includeEmpty:true},(c,col)=>{
@@ -17392,25 +17395,25 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       });
       ws.addRow([]);
       const note=ws.addRow(['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7, Chủ nhật và các ngày có ghi tên làm ngoài giờ; mục không có thông tin ghi “Không”.']);
-      ws.mergeCells(note.number,1,note.number,9);note.getCell(1).font=font({italic:true,size:10});
+      ws.mergeCells(note.number,1,note.number,10);note.getCell(1).font=font({italic:true,size:10});
       ws.addRow([]);
-      const d1=ws.addRow(['','','','','','','Ngày lập: '+todayVN()]);ws.mergeCells(d1.number,7,d1.number,9);d1.getCell(7).font=font();d1.getCell(7).alignment={horizontal:'center'};
-      const s1=ws.addRow(['','Người lập biểu','','','','','Trưởng khoa']);
-      ws.mergeCells(s1.number,2,s1.number,3);ws.mergeCells(s1.number,7,s1.number,9);
-      [2,7].forEach(c=>{s1.getCell(c).font=font({bold:true});s1.getCell(c).alignment={horizontal:'center'};});
-      const s2=ws.addRow(['','(Ký, ghi rõ họ tên)','','','','','(Ký, ghi rõ họ tên)']);
-      ws.mergeCells(s2.number,2,s2.number,3);ws.mergeCells(s2.number,7,s2.number,9);
-      [2,7].forEach(c=>{s2.getCell(c).font=font({italic:true});s2.getCell(c).alignment={horizontal:'center'};});
+      const d1=ws.addRow(['','','','','','','','Ngày lập: '+todayVN()]);ws.mergeCells(d1.number,8,d1.number,10);d1.getCell(8).font=font();d1.getCell(8).alignment={horizontal:'center'};
+      const s1=ws.addRow(['','Người lập biểu','','','','','','Trưởng khoa']);
+      ws.mergeCells(s1.number,2,s1.number,3);ws.mergeCells(s1.number,8,s1.number,10);
+      [2,8].forEach(c=>{s1.getCell(c).font=font({bold:true});s1.getCell(c).alignment={horizontal:'center'};});
+      const s2=ws.addRow(['','(Ký, ghi rõ họ tên)','','','','','','(Ký, ghi rõ họ tên)']);
+      ws.mergeCells(s2.number,2,s2.number,3);ws.mergeCells(s2.number,8,s2.number,10);
+      [2,8].forEach(c=>{s2.getCell(c).font=font({italic:true});s2.getCell(c).alignment={horizontal:'center'};});
       ws.views=[{state:'frozen',ySplit:7}];
       const buf=await wb.xlsx.writeBuffer();
       downloadFile(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),fileName);
       return;
     }
     if(window.XLSX){
-      const aoa=[...lines,HDR1,HDR2,...data,totalLine,[],['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7, Chủ nhật và các ngày có ghi tên làm ngoài giờ; mục không có thông tin ghi “Không”.'],[],['','','','','','','Ngày lập: '+todayVN()],['','Người lập biểu','','','','','Trưởng khoa'],['','(Ký, ghi rõ họ tên)','','','','','(Ký, ghi rõ họ tên)']];
+      const aoa=[...lines,HDR1,HDR2,...data,totalLine,[],['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7, Chủ nhật và các ngày có ghi tên làm ngoài giờ; mục không có thông tin ghi “Không”.'],[],['','','','','','','','Ngày lập: '+todayVN()],['','Người lập biểu','','','','','','Trưởng khoa'],['','(Ký, ghi rõ họ tên)','','','','','','(Ký, ghi rõ họ tên)']];
       const ws=XLSX.utils.aoa_to_sheet(aoa);
-      ws['!cols']=[6,28,20,14,14,20,18,18,18].map(w=>({wch:w}));
-      ws['!merges']=[[1,2,3,6,7,8,9].map(c=>({s:{r:7,c:c-1},e:{r:8,c:c-1}}))][0].concat([{s:{r:7,c:3},e:{r:7,c:4}}]);
+      ws['!cols']=[6,28,20,14,14,14,20,18,18,18].map(w=>({wch:w}));
+      ws['!merges']=[[1,2,3,7,8,9,10].map(c=>({s:{r:7,c:c-1},e:{r:8,c:c-1}}))][0].concat([{s:{r:7,c:3},e:{r:7,c:5}}]);
       const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'T'+pad(m)+'-'+y);
       XLSX.writeFile(wb,fileName);return;
     }
@@ -17468,7 +17471,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     const order=r=>{const k=nameKey(r.name),i=SUMMARY_ORDER.indexOf(k);return i>=0?i:1000;};
     const summary=(rows||[]).map((r,i)=>({r,i})).filter(o=>o.r&&o.r.duty&&o.r.duty.length)
       .sort((a,b)=>(order(a.r)-order(b.r))||(a.i-b.i))
-      .map(o=>{const nWe=o.r.duty.filter(isWeekend).length;return {name:o.r.name,short:short(o.r.name),wd:o.r.duty.length-nWe,we:nWe};});
+      .map(o=>{const nLe=o.r.duty.filter(x=>!!holLabel(x)).length,nWe=o.r.duty.filter(x=>!holLabel(x)&&isWeekend(x)).length;return {name:o.r.name,short:short(o.r.name),wd:o.r.duty.length-nWe-nLe,we:nWe,le:nLe};});
     const outside=days.filter(d=>(d.md.length||d.vs.length)).map((d,i)=>({stt:i+1,dateText:d.dateText,md:d.md.join(', '),vs:d.vs.join(', ')}));
     return {y,m,title:'THÁNG '+m+'/'+y,days,summary,outside};
   }
@@ -17481,7 +17484,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     const line=(t,x)=>'<div style="text-align:center;font-family:'+TNR+';line-height:1.15;'+x+'">'+t+'</div>';
     const A=F.days.map(d=>{const g=d.we?'background:#BFBFBF;font-weight:700;':'';
       return '<tr>'+td(d.label,g)+td(d.dateText,g)+td(d.dutyShort,g)+td(d.mdShort.join(', '),g)+td(d.vsShort.join(', '),g)+'</tr>';}).join('');
-    const S=F.summary.map(s=>'<tr>'+td(s.short)+td(s.wd?String(s.wd):'')+td(s.we?String(s.we):'','color:#FF0000;')+td('')+td('')+td('')+'</tr>').join('');
+    const S=F.summary.map(s=>'<tr>'+td(s.short)+td(s.wd?String(s.wd):'')+td(s.we?String(s.we):'','color:#FF0000;')+td(s.le?String(s.le):'')+td('')+td('')+'</tr>').join('');
     const hs='font-family:'+CAM+';font-size:12pt;font-weight:700;';
     const B=F.outside.map(o=>'<tr style="height:9.7mm">'+td(String(o.stt))+td(o.dateText)+td(o.md)+td(o.vs)+'</tr>').join('');
     return '<div class="duty-form" style="box-sizing:border-box;padding:2mm 9mm 3mm 23mm;color:#000;background:#fff;">'
@@ -17526,7 +17529,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     const wS=[1458,1590,1953,1134,1259,1672];
     let xS=R(['Tên','Ngày thường','Thứ 7, CN','Lễ, Tết','Buổi trưa','Tổng tiền'].map((t,i)=>C(wS[i],t,Object.assign({kn:true},hs))).join(''),{h:520});
     F.summary.forEach((s,i)=>{const kn=i<F.summary.length-1;
-      xS+=R(C(wS[0],s.short,body({kn}))+C(wS[1],s.wd?String(s.wd):'',body({kn}))+C(wS[2],s.we?String(s.we):'',body({kn,color:'FF0000'}))+C(wS[3],'',body({kn}))+C(wS[4],'',body({kn}))+C(wS[5],'',body({kn})));});
+      xS+=R(C(wS[0],s.short,body({kn}))+C(wS[1],s.wd?String(s.wd):'',body({kn}))+C(wS[2],s.we?String(s.we):'',body({kn,color:'FF0000'}))+C(wS[3],s.le?String(s.le):'',body({kn}))+C(wS[4],'',body({kn}))+C(wS[5],'',body({kn})));});
     /* bảng làm ngoài giờ */
     const gB=[851,2410,3119,3118];
     let xB=R(C(851,'STT',Object.assign({kn:true},hd))+C(2410,'Ngày/Tháng/Năm',Object.assign({kn:true},hd))+C(6237,'Ngoài giờ',Object.assign({kn:true,span:2},hd)),{h:548});
@@ -17659,7 +17662,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     for(let r=FIRST;r<=LAST;r++){
       const old=xlGetRow(xml,r);if(!old)continue;
       let row=xlSet(old,'D'+r,fill[r]&&fill[r].wd?fill[r].wd:''),s=fill[r];
-      row=xlSet(row,'E'+r,s&&s.we?s.we:'');
+      row=xlSet(row,'E'+r,s&&s.we?s.we:'');row=xlSet(row,'G'+r,s&&s.le?s.le:'');
       xml=xml.replace(old,()=>row);
     }
     /* nhân viên chưa có trong mẫu: thêm dòng mới ngay dưới, cùng định dạng dòng cuối */
@@ -17667,7 +17670,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     extra.forEach(s=>{
       let row=xlRenumber(tpl,nr);
       row=xlSet(row,'A'+nr,nr-FIRST+1);row=xlSet(row,'B'+nr,s.name);row=xlSet(row,'C'+nr,'');
-      row=xlSet(row,'D'+nr,s.wd?s.wd:'');row=xlSet(row,'E'+nr,s.we?s.we:'');
+      row=xlSet(row,'D'+nr,s.wd?s.wd:'');row=xlSet(row,'E'+nr,s.we?s.we:'');row=xlSet(row,'G'+nr,s.le?s.le:'');
       const old=xlGetRow(xml,nr);
       if(old)xml=xml.replace(old,()=>row);else xml=xml.replace('</sheetData>',()=>row+'</sheetData>');
       nr++;
@@ -17753,20 +17756,20 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       /* Ngày làm ngoài giờ: ghi kèm Thứ 7 / CN sau ngày, giống cột Ngày trực (chỉ màn hình chính) */
       const ot=r.ot.length?r.ot.map(x=>dutyLabel(x)).join('\n'):NONE;
       return '<tr><td class="ds-c">'+(i+1)+'</td><td class="ds-name">'+esc(r.name)+(r.extra?' <span class="hint">(ngoài danh sách)</span>':'')+'</td>'
-        +cell(t.duty,'ds-gs ds-t-duty')+cell(t.dutyWd,'ds-gs ds-t-duty')+cell(t.dutyWe,'ds-t-duty')
+        +cell(t.duty,'ds-gs ds-t-duty')+cell(t.dutyWd,'ds-gs ds-t-duty')+cell(t.dutyWe,'ds-t-duty')+cell(t.dutyLe,'ds-t-duty')
         +cell(ot,'ds-gs ds-t-ot')+cell(t.otN,'ds-gs ds-t-ot')+buCellHTML(r,t)+cell(t.phep,'ds-gs ds-t-leave')+'</tr>';
     }).join('');
     const tt=totals(rows);
     return '<div class="table-wrap"><table class="ds-table ds-sum"><thead><tr>'
       +'<th rowspan="2">'+esc(HEADERS[0])+'</th><th rowspan="2">'+esc(HEADERS[1])+'</th>'
       +'<th rowspan="2" class="ds-gs ds-h-duty">'+esc(HEADERS[2])+'</th>'
-      +'<th colspan="2" class="ds-gs ds-h-duty">'+esc(GROUP)+'</th>'
+      +'<th colspan="3" class="ds-gs ds-h-duty">'+esc(GROUP)+'</th>'
       +'<th rowspan="2" class="ds-gs ds-h-ot">'+esc(HEADERS[3])+'</th>'
       +'<th rowspan="2" class="ds-gs ds-h-ot">'+esc(HEADERS[6])+'</th>'
       +'<th rowspan="2" class="ds-gs ds-h-leave">'+esc(HEADERS[7])+'</th>'
       +'<th rowspan="2" class="ds-gs ds-h-leave">'+esc(HEADERS[8])+'</th>'
-      +'</tr><tr><th class="ds-gs ds-h-duty">'+esc(HEADERS[4])+'</th><th class="ds-h-duty">'+esc(HEADERS[5])+'</th></tr></thead><tbody>'+body
-      +'<tr class="ds-total"><td colspan="3" class="ds-c">TỔNG CỘNG</td><td class="ds-c ds-gs">'+esc(tt.dutyWd)+'</td><td class="ds-c">'+esc(tt.dutyWe)+'</td><td class="ds-c ds-gs"></td><td class="ds-c ds-gs">'+esc(tt.otN)+'</td><td class="ds-c ds-gs">'+esc(tt.bu)+'</td><td class="ds-c ds-gs">'+esc(tt.phep)+'</td></tr>'
+      +'</tr><tr><th class="ds-gs ds-h-duty">'+esc(HEADERS[4])+'</th><th class="ds-h-duty">'+esc(HEADERS[5])+'</th><th class="ds-h-duty">'+esc(HEADERS[9])+'</th></tr></thead><tbody>'+body
+      +'<tr class="ds-total"><td colspan="3" class="ds-c">TỔNG CỘNG</td><td class="ds-c ds-gs">'+esc(tt.dutyWd)+'</td><td class="ds-c">'+esc(tt.dutyWe)+'</td><td class="ds-c">'+esc(tt.dutyLe)+'</td><td class="ds-c ds-gs"></td><td class="ds-c ds-gs">'+esc(tt.otN)+'</td><td class="ds-c ds-gs">'+esc(tt.bu)+'</td><td class="ds-c ds-gs">'+esc(tt.phep)+'</td></tr>'
       +'</tbody></table></div>';
   }
   /* ---------- Tổng xem: bảng thu gọn (chỉ hiện sau khi đã chốt tháng) ---------- */
