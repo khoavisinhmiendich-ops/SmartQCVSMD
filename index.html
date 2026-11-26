@@ -313,7 +313,10 @@
         var inp=document.getElementById('appPassKey'); if(inp) inp.value='';
         return;
       }
+      /* unlockApp là hàm async (kiểm tra băm Pass Key): phải CHỜ kết quả rồi mới đếm lần sai,
+         nếu không mọi lần nhập (kể cả đúng) đều bị tính là sai. */
       var r=orig.apply(this,arguments);
+      return Promise.resolve(r).then(function(res){
       var ok=(typeof smartQcUnlocked!=='undefined')&&smartQcUnlocked===true;
       if(ok){lsSet(AUTHK,JSON.stringify({fails:0,rounds:a.rounds||0,lockUntil:0}));}
       else{
@@ -323,7 +326,8 @@
           var el2=document.getElementById('passKeyError'); if(el2){el2.textContent='Nhập sai quá nhiều lần. Đăng nhập bị khóa tạm thời.';el2.style.display='block';}}
         lsSet(AUTHK,JSON.stringify({fails:fails,rounds:rounds,lockUntil:lock}));
       }
-      return r;
+      return res;
+      });
     };
     w.__smq=true; window.unlockApp=w; return true;
   }
