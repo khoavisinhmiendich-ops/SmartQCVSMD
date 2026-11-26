@@ -3742,7 +3742,7 @@ function renderNav(){
         <span class="ic ic-${it.id}">${it.icon}</span><span>${it.label}</span>${badge}
       </div>`;
       if(hasChild && parentActive){
-        html+=`<div class="nav-subitems">${it.children.filter(c=>c.id!=='hop-giao-ban'||(window.__hgbAllowed&&window.__hgbAllowed())).filter(c=>c.id!=='so-kiem-tra'||(window.__skAllowed&&window.__skAllowed())).map(c=>`<div class="nav-subitem ${currentView===c.id?'active':''}" role="button" tabindex="0" ${currentView===c.id?'aria-current="page"':''} onkeydown="vsmdKey(event)" onclick="event.stopPropagation();go('${c.id}')"><span class="ic ic-${c.id}">${c.icon}</span><span>${c.label}</span></div>`).join('')}</div>`;
+        html+=`<div class="nav-subitems">${it.children.filter(c=>c.id!=='duty-summary'||(window.__dsAllowed&&window.__dsAllowed())).filter(c=>c.id!=='hop-giao-ban'||(window.__hgbAllowed&&window.__hgbAllowed())).filter(c=>c.id!=='so-kiem-tra'||(window.__skAllowed&&window.__skAllowed())).map(c=>`<div class="nav-subitem ${currentView===c.id?'active':''}" role="button" tabindex="0" ${currentView===c.id?'aria-current="page"':''} onkeydown="vsmdKey(event)" onclick="event.stopPropagation();go('${c.id}')"><span class="ic ic-${c.id}">${c.icon}</span><span>${c.label}</span></div>`).join('')}</div>`;
       }
       return html;
     }).join('')}
@@ -6616,13 +6616,13 @@ function virologyTCGridHtml(strain, values){
     const rowKey=ri+1;
     const lotCells=cols.map((c,ci)=>`<td class="vt-result-cell"><div class="vt-result-lot-wrap"><input class="vtc-result-lot" data-row="${rowKey}" data-abx="${ci}" placeholder="Nhập LOT" aria-label="LOT"></div></td>`).join('');
     const hsdCells=cols.map((c,ci)=>`<td class="vt-result-cell"><div class="vt-result-lot-wrap"><input class="vtc-result-hsd" data-row="${rowKey}" data-abx="${ci}" placeholder="Nhập HSD" autocomplete="off" aria-label="HSD"></div></td>`).join('');
-    const mmCells=cols.map((c,ci)=>`<td class="vt-result-cell"><input type="number" min="0" step="0.1" class="vtc-result" data-row="${rowKey}" data-abx="${ci}" placeholder="mm" aria-label="Kết quả QC (mm)"></td>`).join('');
+    const mmCells=cols.map((c,ci)=>`<td class="vt-result-cell"><input type="text" class="vtc-result" data-row="${rowKey}" data-abx="${ci}" placeholder="mm" aria-label="Kết quả QC (mm)"></td>`).join('');
     const resultMeta=`<div class="vt-result-meta"><label>Ngày SX:<input type="date" class="vtc-meta-date" data-row="${rowKey}" aria-label="Ngày SX"></label><label>HSD:<input type="date" class="vtc-meta-hsd" data-row="${rowKey}" aria-label="HSD"></label><label>SL QC:<input class="vtc-meta-qty" data-row="${rowKey}" placeholder="" aria-label="SL QC"></label></div>`;
     return `<tr class="vt-lot-row"><td rowspan="3" class="vt-left">${resultMeta}</td><td class="vt-rowlabel"><b>LOT</b></td>${lotCells}${metaCells(rowKey)}</tr><tr class="vt-hsd-row"><td class="vt-rowlabel"><b>HSD</b></td>${hsdCells}</tr><tr><td class="vt-rowlabel"><b>${r.label}</b>${ri===0?'<span class="vt-sub">Nhập số đo thật</span>':''}</td>${mmCells}</tr>`;
   }).join('');
   return `<div class="virology-sheet">
     <div class="virology-head"><div><b>BỆNH VIỆN PHONG - DA LIỄU TW QUY HÒA</b><span>KHOA: VI SINH - MIỄN DỊCH</span></div><div class="virology-title"><b>QC ĐĨA GIẤY KHÁNG SINH - MÔI TRƯỜNG MUELLER HINTON AGAR (MHA)</b><span>Giới hạn cho phép đối với chủng ${escapeHtml(t.title)}</span></div></div>
-    <div class="virology-lotbar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div class="vt-lot-instruction">Nhập LOT cho từng kết quả QC (mm) tương ứng với kháng sinh và lần QC.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary sm" type="button" onclick="openAddVirologyTCAbx()">Thêm kháng sinh mới</button><button class="btn danger sm" type="button" onclick="openDeleteVirologyTCAbx()">Xóa kháng sinh</button></div></div>
+    <div class="virology-lotbar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div class="vt-lot-instruction">Nhập LOT cho từng kết quả QC (mm) tương ứng với kháng sinh và lần QC.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary sm" type="button" onclick="openAddVirologyTCAbx()">Thêm kháng sinh mới</button><button class="btn ghost sm" type="button" onclick="openEditVirologyTCAbx()">Sửa kháng sinh</button><button class="btn danger sm" type="button" onclick="openDeleteVirologyTCAbx()">Xóa kháng sinh</button></div></div>
     <div class="virology-table-wrap"><table class="virology-table"><thead><tr><th rowspan="2" class="vt-left vt-media-head">Môi trường LOT:<input id="vtc_media_lot" value="${escapeHtml((virologyLotFor(strain)||{}).lot||'')}" placeholder="Nhập LOT" aria-label="Môi trường LOT"></th><th class="vt-rowlabel">Kháng sinh</th>${cols.map(c=>`<th class="vt-abx-head">${escapeHtml(c[0])}<br><span>${escapeHtml(c[1])}</span></th>`).join('')}<th rowspan="2" class="vt-side-col vt-patient-col">Đánh giá</th><th rowspan="2" class="vt-side-col vt-date-col">Ngày QC / Nhân viên</th><th rowspan="2" class="vt-side-col vt-note-col">Nhận xét / giám sát</th></tr><tr><th class="vt-rowlabel">(mm)</th>${cols.map(c=>`<th class="vt-abx-subhead">(mm)${c[2]?' <span class="vt-range">'+escapeHtml(c[2])+'</span>':''}</th>`).join('')}</tr></thead><tbody>
       ${resultRows}
     </tbody></table></div>
@@ -9925,7 +9925,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
       <div class="form-grid c3">
         <label class="field"><span class="fl-label">Tên kháng sinh</span><input id="new_tc_one_abx_name" placeholder="Ví dụ: Ak" autocomplete="off"></label>
         <label class="field"><span class="fl-label">(MM)</span><input id="new_tc_one_abx_mm" placeholder="Ví dụ: 19-26" autocomplete="off"></label>
-        <label class="field"><span class="fl-label">Bao nhiêu MG</span><input id="new_tc_one_abx_mg" type="number" min="0" step="any" placeholder="Nhập số" autocomplete="off"></label>
+        <label class="field"><span class="fl-label">Bao nhiêu MG</span><input id="new_tc_one_abx_mg" placeholder="Nhập số hoặc chữ" autocomplete="off"></label>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Kháng sinh mới được thêm vào chủng đang chọn; số MG hiển thị dưới tên kháng sinh, (MM) hiển thị ở dòng bên dưới.</div>
       <div class="btn-row" style="margin-top:14px">
@@ -9979,6 +9979,67 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     });
     toast('pass','Đã xóa kháng sinh',`${abx[0]} đã được xóa khỏi bảng phiếu điền của chủng ${strain}.`);
   };
+
+  // ---------------- TC: Sửa kháng sinh (của chủng đang chọn) ----------------
+  window.fillEditVirologyTCAbx=function(){
+    const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
+    const strain=root?.dataset.strain||document.getElementById('vtc_strain')?.value||'';
+    const t=VIROLOGY_TEMPLATES[strain];const i=Number(document.getElementById('edit_tc_abx_idx')?.value);
+    const a=t&&t.antibiotics[i];if(!a)return;
+    document.getElementById('edit_tc_abx_name').value=a[0]||'';
+    document.getElementById('edit_tc_abx_mm').value=a[2]||'';
+    document.getElementById('edit_tc_abx_mg').value=a[1]||'';
+  };
+  window.openEditVirologyTCAbx=function(){
+    const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
+    const strain=root?.dataset.strain||document.getElementById('vtc_strain')?.value||'';
+    const t=VIROLOGY_TEMPLATES[strain];
+    if(!t||!t.antibiotics.length){toast('warning','Không có kháng sinh','Chủng đang chọn chưa có kháng sinh để sửa.');return;}
+    showModal('Sửa kháng sinh',`
+      <div class="form-grid c3">
+        <label class="field" style="grid-column:1/-1"><span class="fl-label">Chọn kháng sinh cần sửa (chủng ${escapeHtml(strain)})</span>
+          <select id="edit_tc_abx_idx" onchange="fillEditVirologyTCAbx()">${t.antibiotics.map((a,i)=>`<option value="${i}">${escapeHtml(a[0])}${a[1]?' · '+escapeHtml(a[1]):''}${a[2]?' · '+escapeHtml(a[2])+' mm':''}</option>`).join('')}</select></label>
+        <label class="field"><span class="fl-label">Tên kháng sinh</span><input id="edit_tc_abx_name" autocomplete="off"></label>
+        <label class="field"><span class="fl-label">(MM)</span><input id="edit_tc_abx_mm" placeholder="Ví dụ: 19-26" autocomplete="off"></label>
+        <label class="field"><span class="fl-label">Bao nhiêu MG</span><input id="edit_tc_abx_mg" placeholder="Nhập số hoặc chữ" autocomplete="off"></label>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Chỉ sửa thông tin của kháng sinh đã chọn trong bảng phiếu điền của chủng đang chọn; dữ liệu đang nhập và các phiếu QC đã lưu không bị thay đổi.</div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn primary" onclick="saveEditVirologyTCAbx()">Lưu thay đổi</button>
+        <button class="btn ghost" onclick="closeModal()">Đóng</button>
+      </div>`);
+    fillEditVirologyTCAbx();
+  };
+  window.saveEditVirologyTCAbx=function(){
+    ensureState();
+    const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
+    const strain=root?.dataset.strain||document.getElementById('vtc_strain')?.value||'';
+    const t=VIROLOGY_TEMPLATES[strain];
+    const idx=Number(document.getElementById('edit_tc_abx_idx')?.value);
+    if(!t||!Number.isInteger(idx)||!t.antibiotics[idx]){toast('warning','Chưa chọn kháng sinh','Vui lòng chọn kháng sinh cần sửa.');return;}
+    const name=(document.getElementById('edit_tc_abx_name')?.value||'').trim();
+    const mm=(document.getElementById('edit_tc_abx_mm')?.value||'').trim();
+    const mg=(document.getElementById('edit_tc_abx_mg')?.value||'').trim();
+    if(!name){toast('warning','Thiếu tên kháng sinh','Vui lòng nhập Tên kháng sinh.');return;}
+    const old=t.antibiotics[idx];
+    const snap=Array.from(root?.querySelectorAll('.virology-table input,.virology-table textarea')||[]).map(e=>({c:(e.className||'').split(' ')[0],r:e.dataset.row,a:e.dataset.abx,v:e.value}));
+    const antibiotics=t.antibiotics.map((a,i)=>i===idx?[name,mg?(/^\d+(?:[.,]\d+)?$/.test(mg)?`${mg} µg`:mg):'',mm]:a);
+    const template={title:t.title||strain,antibiotics,codes:t.codes||''};
+    VIROLOGY_TEMPLATES[strain]=template;
+    state.virologyCustomTCTemplates[strain]=template;
+    state.audit.unshift({id:uid('AU'),time:new Date().toISOString(),user:state.settings.currentUser,action:'Sửa kháng sinh QC Vi sinh (TC)',detail:`${strain} · ${old[0]}${old[1]?' '+old[1]:''}${old[2]?' ('+old[2]+' mm)':''} → ${name}${antibiotics[idx][1]?' '+antibiotics[idx][1]:''}${mm?' ('+mm+' mm)':''}`});
+    queueSave();
+    closeModal();
+    renderVirologyHubPanel('virology-tc');
+    const nr=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
+    snap.forEach(x=>{
+      if(!x.c||x.r===undefined||x.v==='')return;
+      const q=nr?.querySelector(`.${x.c}[data-row="${x.r}"]${x.a!==undefined?`[data-abx="${x.a}"]`:''}`);
+      if(q)q.value=x.v;
+    });
+    toast('pass','Đã sửa kháng sinh',`${name} đã được cập nhật trong bảng phiếu điền của chủng ${strain}.`);
+  };
+
   window.saveNewVirologyTCAbx=function(){
     ensureState();
     const root=document.getElementById('virologyHubPanel')||document.getElementById('view-virology-tc');
@@ -9991,7 +10052,7 @@ body.printing-virology-annual-td #view-virology-reports-td .vr-chart-card{break-
     if(!name){toast('warning','Thiếu tên kháng sinh','Vui lòng nhập Tên kháng sinh.');return;}
     // Giữ lại dữ liệu đang nhập trong bảng trước khi dựng lại
     const snap=Array.from(root?.querySelectorAll('.virology-table input,.virology-table textarea')||[]).map(e=>({c:(e.className||'').split(' ')[0],r:e.dataset.row,a:e.dataset.abx,v:e.value}));
-    const antibiotics=[...t.antibiotics,[name,mg?`${mg} µg`:'',mm]];
+    const antibiotics=[...t.antibiotics,[name,mg?(/^\d+(?:[.,]\d+)?$/.test(mg)?`${mg} µg`:mg):'',mm]];
     const template={title:t.title||strain,antibiotics,codes:t.codes||''};
     VIROLOGY_TEMPLATES[strain]=template;
     state.virologyCustomTCTemplates[strain]=template;
@@ -11595,13 +11656,13 @@ if(typeof currentView!=='undefined' && ['chemical-vs','external-qc','reports-cls
     const years=[];for(let y=new Date().getFullYear();y>=1900;y--)years.push(y);const deps=['Khoa khám bệnh','Hồi sức cấp cứu','Phục hồi chức năng','Y học cổ truyền','Gây mê hồi sức','Ngoại tạo hình','Ngoại tổng hợp','Nội tổng hợp','Vảy nến - Tự miễn','Da tổng hợp','Da lây nhiễm','Sản','Ngoại KTC','Nhi','Mắt-RHM-TMH','Phong','Lão khoa','Bệnh nhiệt đới','Phẫu thuật - Gây mê hồi sức','PT - TH Thẩm mỹ','Phòng lưu'];
     return rows.map((x,i)=>`<tr><td>${i+1}</td><td><input data-final-case="${type}" data-i="${i}" data-k="patient" value="${esc(x.patient)}"></td><td><select data-final-case="${type}" data-i="${i}" data-k="year"><option value="">—</option>${years.map(y=>`<option value="${y}" ${String(x.year)===String(y)?'selected':''}>${y}</option>`).join('')}</select></td><td>${(()=>{const oth=!!(x.dept&&!deps.includes(x.dept));return `<select class="cls-dept-sel" data-final-case="${type}" data-i="${i}" data-k="dept"><option value="">—</option>${deps.map(d=>`<option value="${esc(d)}" ${x.dept===d?'selected':''}>${esc(d)}</option>`).join('')}<option value="__other__" ${oth?'selected':''}>+ Nhập khoa mới…</option></select><input class="cls-dept-new" data-dept-new placeholder="Nhập tên khoa mới" value="${oth?esc(x.dept):''}" ${oth?'':'hidden'}>`;})()}</td><td><input data-final-case="${type}" data-i="${i}" data-k="diagnosis" value="${esc(x.diagnosis)}"></td><td>${type==='em'?(typeof window.__smartXnCellHTML==='function'?window.__smartXnCellHTML(x,i,type):`<textarea class="cls-em-test" rows="1" data-final-case="${type}" data-i="${i}" data-k="test">\n${esc(x.test)}</textarea>`):`<input data-final-case="${type}" data-i="${i}" data-k="test" value="${esc(x.test)}">`}</td></tr>`).join('');
   }
-  /* ---- Ô "Nghỉ bù" (cạnh Tổng bệnh nhân VSMD): chỉ hiện khi ngày trực là Thứ 7.
+  /* ---- Ô "Nghỉ bù" (cạnh Tổng bệnh nhân VSMD): chỉ hiện khi ngày trực là Thứ 7 hoặc ngày liền trước kỳ nghỉ Lễ/Tết.
          Mặc định Thứ 3 tuần sau; có thể chọn Thứ 4 / 5 / 6 nếu nghỉ ngày khác.
          Giá trị được Tổng hợp trực & Ngoài giờ lấy sang tự động; KHÔNG đưa vào in / xuất PDF, Word, Excel. ---- */
   const COMP_WD=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
   const compDate=iso=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);return(d.getFullYear()===+m[1]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[3])?d:null;};
   const compIso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  const compIsSat=iso=>{const d=compDate(iso);return !!d&&d.getDay()===6;};
+  const compIsSat=iso=>{const d=compDate(iso);if(!d)return false;if(d.getDay()===6)return true;try{return !!(window.SMART_DUTY_BU&&typeof window.SMART_DUTY_BU.needsPick==='function'&&window.SMART_DUTY_BU.needsPick(iso));}catch(e){}return false;};
   const compLabel=iso=>{const d=compDate(iso);return d?COMP_WD[d.getDay()]+' - '+String(iso).split('-').reverse().join('/'):String(iso||'');};
   function compOptions(iso){
     let o=[];try{if(window.SMART_DUTY_BU&&typeof window.SMART_DUTY_BU.options==='function')o=(window.SMART_DUTY_BU.options(iso)||[]).slice();}catch(e){}
@@ -16311,6 +16372,31 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
   const DENGUE_OPTS=['Âm tính IgM+IgG','Âm tính IgM, Dương tính IgG','Dương tính IgM, Âm tính IgG'];
   const IGM_OPTS=['Âm tính IgM','Dương tính IgM'];
   const MALARIA_OPTS=['Âm tính','Dương tính Pf','Dương tính Pv','Dương tính Pf+Pv'];
+
+  /* Xét nghiệm Vi sinh (theo file "Danh sách xét nghiệm vi sinh"): chọn kết quả có sẵn, vẫn sửa/nhập tự do được */
+  const MIC_OPTS=[
+   ['Soi trực tiếp nhuộm soi (nấm da)',['Hiện tại không tìm thấy nấm','Tìm thấy bào tử nấm','Tìm thấy sợi nấm','Tìm thấy TB nấm men và sợi nấm ngắn','Tìm thấy TB nấm men và sợi tơ nấm giả']],
+   ['Soi trực tiếp nhuộm soi (nhuộm Gram, nhuộm xanh Methylen)',['Hiện tại không tìm thấy vi khuẩn','Có CK Gram (+)','Có CK Gram (+), TK Gram (+)','Có CK Gram (+), TK Gram (+) và TK Gram (-)','Có CK Gram (+), TK Gram (-)','Có TB nấm men KT nhỏ, Có CK Gram (+), TK Gram (+)']],
+   ['Soi trực tiếp nhuộm soi (nấm miệng)',['Hiện tại không tìm thấy nấm','Tìm thấy TB nấm men và sợi tơ nấm giả','Tìm thấy tế bào nấm men']],
+   ['Soi trực tiếp nhuộm soi (nấm móng)',['Hiện tại không tìm thấy nấm','Tìm thấy TB nấm men và sợi tơ nấm giả']],
+   ['Soi tươi tìm ký sinh trùng (nấm sinh dục)',['Hiện tại không tìm thấy nấm','BC <5TB/VT','Tìm thấy TB nấm men và sợi tơ nấm giả']],
+   ['Soi trực tiếp nhuộm soi (nấm tóc)',['Hiện tại không tìm thấy nấm','Có bào tử, sợi nấm nằm trong & ngoài sợi tóc']],
+   ['Soi trực tiếp nhuộm soi (Demodex)',['Hiện tại không tìm thấy KST Demodex','Tìm thấy KST Demodex/VT']],
+   ['Soi trực tiếp nhuộm soi (ghẻ)',['Hiện tại không tìm thấy cái ghẻ']],
+   ['Soi trực tiếp nhuộm soi (rận mu)',['Hiện tại không tìm thấy rận mu']],
+   ['Soi tươi tìm KST (đường ruột)',['Hiện tại không tìm thấy KSTĐR']],
+   ['AFB trực tiếp nhuộm Ziehl-Neelsen',['Dương tính']],
+   ['AFB trực tiếp nhuộm Ziehl-Neelsen (trong mủ dịch)',['Dương tính']],
+   ['Mycobacterium leprae (BH)',['Dương tính']],
+   ['Neisseria gonorrhoeae nhuộm soi',['Song cầu Gram (-) hình hạt cafe trong & ngoài TB']],
+   ['Kí sinh trùng khẳng định (đường ruột)',['Hiện tại không tìm thấy KSTĐR']],
+   ['Vi nấm soi tươi (đường ruột)',['Hiện tại không tìm thấy nấm','Tìm thấy tế bào nấm men']],
+   ['Soi trực tiếp tìm hồng cầu, bạch cầu trong phân',['Hiện tại không tìm thấy HC, BC','Tìm thấy HC (), BC ()']],
+   ['Trứng giun sán soi tươi',['Hiện tại không tìm thấy trứng giun, sán']]
+  ];
+  const MIC_MAP=new Map(MIC_OPTS.map(a=>[fold(a[0]),a[1]]));
+  const micOpts=n=>MIC_MAP.get(fold(n))||null;
+  const micMerge=list=>{const own=MIC_OPTS.map(a=>a[0]),seen=new Set(own.map(fold));return own.concat((list||[]).filter(n=>{const k=fold(n);if(seen.has(k))return false;seen.add(k);return true;}));};
   const isRapid=n=>/test\s*nhanh/i.test(n);
   /* Danh sách lựa chọn theo từng xét nghiệm (kiểu 'sel' và phần định tính của 'selnum') */
   function optsFor(n){
@@ -16380,7 +16466,8 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
     if(it.t==='sel')body=selHTML();
     else if(it.t==='selnum')body=selHTML()+`<div style="margin-top:4px">${numRow('cls-xn-v2',it.v2)}</div>`;
     else if(it.t==='auto')body=sexHTML(it)+numRow('cls-xn-v',it.v);
-    else body=`<input class="cls-xn-v" value="${esc(it.v)}" placeholder="Kết quả">`;
+    else{const mo=(it.t==='mic')?micOpts(it.n):null;
+      body=mo?`<select class="cls-xn-pick"><option value="">— Chọn kết quả có sẵn —</option>${mo.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select><input class="cls-xn-v" style="margin-top:4px" value="${esc(it.v)}" placeholder="Kết quả (chọn ở trên hoặc tự nhập / sửa)">`:`<input class="cls-xn-v" value="${esc(it.v)}" placeholder="Kết quả">`;}
     return `<div ${attrs}><div class="cls-xn-head"><span class="cls-xn-name">${esc(label(it.n))}</span>${del}</div>${body}</div>`;
   }
 
@@ -16409,8 +16496,8 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
       const r=typeof window.normalizeCLS==='function'?window.normalizeCLS(state.clsDraft||{}):{};
       const imm=typeof window.listFor==='function'?window.listFor('imm',r):(window.IMM_STD||[]);
       const mic=typeof window.listFor==='function'?window.listFor('mic',r):(window.MIC_STD||[]);
-      return {imm,mic};
-    }catch(e){return {imm:window.IMM_STD||[],mic:window.MIC_STD||[]};}
+      return {imm,mic:micMerge(mic)};
+    }catch(e){return {imm:window.IMM_STD||[],mic:micMerge(window.MIC_STD||[])};}
   }
 
   /* ---------- Menu nổi (không bị cắt bởi vùng cuộn của bảng) ---------- */
@@ -16482,6 +16569,12 @@ html body .cls-export-v3.cls-export-v3 table.cls-case-v3 > tbody > tr > td:nth-c
     const t=e.target;if(!t||!t.classList)return;
     if(t.classList.contains('cls-xn-filter')){curFilter=t;render();return;}
     if(t.classList.contains('cls-xn-v')||t.classList.contains('cls-xn-v2')||t.classList.contains('cls-xn-sex')){const c=t.closest('[data-xn-cell]');if(c)sync(c);}
+  });
+  document.addEventListener('change',e=>{
+    const t=e.target;if(!t||!t.classList||!t.classList.contains('cls-xn-pick'))return;
+    const inp=t.closest('.cls-xn-item')&&t.closest('.cls-xn-item').querySelector('.cls-xn-v');
+    if(inp&&t.value){inp.value=t.value;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.focus();}
+    t.value='';
   });
   document.addEventListener('change',e=>{
     const t=e.target;if(t&&t.classList&&(t.classList.contains('cls-xn-v')||t.classList.contains('cls-xn-v2')||t.classList.contains('cls-xn-sex'))){const c=t.closest('[data-xn-cell]');if(c)sync(c);}
@@ -16814,6 +16907,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
          Ngày, Người trực, Người làm ngoài giờ (chỉ tính Thứ 7 và Chủ nhật).
      - Nghỉ bù / Nghỉ phép nhập tay (chọn nhân viên trong 12 người, chọn khoảng ngày).
      - Ngày cuối tháng (30/31, hoặc 28/29 với tháng 2) hệ thống tự chốt & lưu vào module.
+     - Module chỉ hiển thị cho: Nguyễn Thị Bình, Nguyễn Thái Hòa, Nguyễn Gia Khang (không dùng mật khẩu).
      - In / xuất PDF, Word, Excel.
      Không thay đổi bất kỳ module nào khác.
      ====================================================================== */
@@ -16961,6 +17055,15 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     return {from:s,to:e,len:n};
   }
   const isLongHoliday=iso=>!!holInfo(iso)&&offRun(iso).len>=LONG_MIN;
+  /* Trực TRƯỚC Lễ/Tết: ngày trực không phải Lễ/Tết, không phải Thứ 7 (Thứ 7 đã có quy tắc riêng) và chuỗi ngày nghỉ liền sau đó có ngày Lễ/Tết
+     -> được tự chọn ngày nghỉ bù SAU kỳ nghỉ (giống ô Nghỉ bù của trực Thứ 7). */
+  function preHoliday(iso){
+    if(holInfo(iso))return false;
+    const a=parseISO(iso);if(!a||a.getDay()===6)return false;
+    let cur=addDaysISO(iso,1),g=0;
+    while(g++<40&&isOffDay(cur)){if(holInfo(cur))return true;cur=addDaysISO(cur,1);}
+    return false;
+  }
 
   /* ---------- nghỉ bù tự động theo ngày trực ---------- */
   const dd=iso=>String(iso||'').slice(8,10);
@@ -16979,6 +17082,12 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     if(holInfo(dutyISO)){
       const out=[];let cur=nextWorkday(dutyISO),g=0;
       while(out.length<10&&g++<60){if(!isOffDay(cur))out.push(cur);cur=addDaysISO(cur,1);}
+      return out;
+    }
+    if(preHoliday(dutyISO)){
+      /* trực trước Lễ/Tết: 4 ngày làm việc đầu tiên sau kỳ nghỉ */
+      const out=[];let cur=nextWorkday(dutyISO),g=0;
+      while(out.length<4&&g++<60){if(!isOffDay(cur))out.push(cur);cur=addDaysISO(cur,1);}
       return out;
     }
     const base=weekDays(dutyISO);if(!base.length)return [];
@@ -17000,6 +17109,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       if(isLongHoliday(dutyISO))return {kind:'pick'};
       return {kind:'auto',date:nextWorkday(dutyISO)};
     }
+    if(preHoliday(dutyISO))return {kind:'pick'};
     const w=a.getDay();
     if(w===5)return {kind:'none'};
     if(w===6)return {kind:'pick'};
@@ -17029,7 +17139,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
         if(out.has(buKey(nk,d)))return;
         const opts=pickDays(d);if(!opts.length)return;
         const tue=weekDays(d)[1];
-        let v=holInfo(d)?opts[0]:(opts.indexOf(tue)>=0?tue:opts[0]);
+        let v=(holInfo(d)||preHoliday(d))?opts[0]:(opts.indexOf(tue)>=0?tue:opts[0]);
         if(taken.has(v)){const free=opts.find(o=>!taken.has(o));if(free)v=free;}
         out.set(buKey(nk,d),v);taken.add(v);
       });
@@ -17039,12 +17149,13 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   /* Dùng chung một quy tắc ngày nghỉ bù cho Báo cáo trực CLS (ô "Nghỉ bù" khi trực Thứ 7). */
   window.SMART_DUTY_BU={
     options:function(dutyISO){const d=normDate(dutyISO);return d?pickDays(d):[];},
+    needsPick:function(dutyISO){const d=normDate(dutyISO);return !!d&&preHoliday(d);},
     defaultFor:function(dutyISO,staff){
       const d=normDate(dutyISO);if(!d)return '';
       const opts=pickDays(d);if(!opts.length)return '';
       try{const nk=nameKey(String(staff==null?'':staff).trim()),bp=hasState()&&state.dutySummary&&state.dutySummary.buPick,lv=bp&&bp[buKey(nk,d)];if(lv&&opts.indexOf(lv)>=0)return lv;}catch(e){}
       const tue=weekDays(d)[1];
-      return holInfo(d)?opts[0]:(opts.indexOf(tue)>=0?tue:opts[0]);
+      return (holInfo(d)||preHoliday(d))?opts[0]:(opts.indexOf(tue)>=0?tue:opts[0]);
     }
   };
   function workdayList(fromISO,toISO_){
@@ -17089,7 +17200,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       if(inYm){
         const rowD=pick(r.staff);if(rowD)rowD.duty.add(d);
         const wk=parseISO(d).getDay();
-        if(wk===0||wk===6){
+        if(true){
           /* những người làm ngoài giờ (đã tách đủ từng tên, loại trùng) */
           const outRows=[];
           splitNames(r.outsideHours).forEach(n=>{const rw=pick(n);if(rw&&outRows.indexOf(rw)<0)outRows.push(rw);});
@@ -17222,7 +17333,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       +'<thead><tr>'+PH.map((h,i)=>i===3?'<th colspan="2" style="'+TH+'">'+esc(GROUP)+'</th>':(i===4?'':'<th style="border:none;background:#fff;padding:0;"></th>')).join('')+'</tr>'
       +'<tr>'+PH.map(h=>'<th style="'+TH+'">'+esc(h)+'</th>').join('')+'</tr></thead>'
       +'<tbody>'+body+totalRow+'</tbody></table>'
-      +'<p style="font-size:9.5pt;font-style:italic;margin:6px 0 0;">Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.</p>'
+      +'<p style="font-size:9.5pt;font-style:italic;margin:6px 0 0;">Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7, Chủ nhật và các ngày có ghi tên làm ngoài giờ; mục không có thông tin ghi “Không”.</p>'
       +'<table class="no-border word-no-border" style="width:100%;border-collapse:collapse;border:none;margin-top:18px;page-break-inside:avoid;"><tr>'
       +'<td style="'+NB+'text-align:center;width:50%;"><b>Người lập biểu</b><br><i>(Ký, ghi rõ họ tên)</i><br><br><br></td>'
       +'<td style="'+NB+'text-align:center;width:50%;"><b>Trưởng khoa</b><br><i>(Ký, ghi rõ họ tên)</i><br><br><br></td>'
@@ -17280,7 +17391,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
         c.alignment={vertical:'middle',wrapText:true,horizontal:'center'};
       });
       ws.addRow([]);
-      const note=ws.addRow(['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.']);
+      const note=ws.addRow(['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7, Chủ nhật và các ngày có ghi tên làm ngoài giờ; mục không có thông tin ghi “Không”.']);
       ws.mergeCells(note.number,1,note.number,9);note.getCell(1).font=font({italic:true,size:10});
       ws.addRow([]);
       const d1=ws.addRow(['','','','','','','Ngày lập: '+todayVN()]);ws.mergeCells(d1.number,7,d1.number,9);d1.getCell(7).font=font();d1.getCell(7).alignment={horizontal:'center'};
@@ -17296,7 +17407,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       return;
     }
     if(window.XLSX){
-      const aoa=[...lines,HDR1,HDR2,...data,totalLine,[],['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.'],[],['','','','','','','Ngày lập: '+todayVN()],['','Người lập biểu','','','','','Trưởng khoa'],['','(Ký, ghi rõ họ tên)','','','','','(Ký, ghi rõ họ tên)']];
+      const aoa=[...lines,HDR1,HDR2,...data,totalLine,[],['Ghi chú: Ngày làm ngoài giờ tính theo Thứ 7, Chủ nhật và các ngày có ghi tên làm ngoài giờ; mục không có thông tin ghi “Không”.'],[],['','','','','','','Ngày lập: '+todayVN()],['','Người lập biểu','','','','','Trưởng khoa'],['','(Ký, ghi rõ họ tên)','','','','','(Ký, ghi rõ họ tên)']];
       const ws=XLSX.utils.aoa_to_sheet(aoa);
       ws['!cols']=[6,28,20,14,14,20,18,18,18].map(w=>({wch:w}));
       ws['!merges']=[[1,2,3,6,7,8,9].map(c=>({s:{r:7,c:c-1},e:{r:8,c:c-1}}))][0].concat([{s:{r:7,c:3},e:{r:7,c:4}}]);
@@ -17345,7 +17456,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       const iso=y+'-'+pad(m)+'-'+pad(i),wk=parseISO(iso).getDay(),we=(wk===0||wk===6),rs=byDate.get(iso)||[];
       let duty='';for(const r of rs){const c=canon(r.staff);if(c){duty=c;break;}}
       let shown=[],md=[],vs=[];
-      if(we){
+      {
         const outs=[];rs.forEach(r=>splitNames(r.outsideHours).forEach(n=>{const c=canon(n);if(c&&outs.indexOf(c)<0)outs.push(c);}));
         const others=outs.filter(x=>x!==duty);
         /* TH1: 1 người trực + 1 người ngoài giờ → cả hai làm ngoài giờ; TH2: từ 2 người ngoài giờ → chỉ những người đó */
@@ -17358,7 +17469,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     const summary=(rows||[]).map((r,i)=>({r,i})).filter(o=>o.r&&o.r.duty&&o.r.duty.length)
       .sort((a,b)=>(order(a.r)-order(b.r))||(a.i-b.i))
       .map(o=>{const nWe=o.r.duty.filter(isWeekend).length;return {name:o.r.name,short:short(o.r.name),wd:o.r.duty.length-nWe,we:nWe};});
-    const outside=days.filter(d=>d.we&&(d.md.length||d.vs.length)).map((d,i)=>({stt:i+1,dateText:d.dateText,md:d.md.join(', '),vs:d.vs.join(', ')}));
+    const outside=days.filter(d=>(d.md.length||d.vs.length)).map((d,i)=>({stt:i+1,dateText:d.dateText,md:d.md.join(', '),vs:d.vs.join(', ')}));
     return {y,m,title:'THÁNG '+m+'/'+y,days,summary,outside};
   }
 
@@ -17574,28 +17685,20 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     downloadFile(b2,'Excel VS-MD.xlsx');
   }
 
-  /* ---------- khóa mật khẩu cho mục Tổng hợp trực & Ngoài giờ ---------- */
-  const PASS_HASH='6596090684378693';
-  let unlocked=false;
-  function passHash(s){
-    s=String(s==null?'':s).normalize('NFC');
-    let a=0xdeadbeef,b=0x41c6ce57;
-    for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677);}
-    a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);
-    b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);
-    return String(4294967296*(2097151&b)+(a>>>0));
+  /* ---------- phân quyền: module chỉ hiển thị cho 3 người dùng (không dùng mật khẩu) ---------- */
+  const DS_USERS=['nguyen thi binh','nguyen thai hoa','nguyen gia khang'];
+  const dsStrip=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase();
+  const dsNrm=v=>dsStrip(v).replace(/\b(?:nv|nnv|bs|ks|cnxn|qlcl|ths|tk|ktvtk|ktv|cn)\b/g,' ').replace(/[()[\]{}:;,.\/\\_-]+/g,' ').replace(/\s+/g,' ').trim();
+  function dsAllowed(){
+    let ok=false;
+    try{
+      const n=dsNrm(hasState()&&state.settings?state.settings.currentUser:'');
+      ok=!!n&&DS_USERS.some(a=>(' '+n+' ').indexOf(' '+a+' ')>=0);
+    }catch(e){ok=false;}
+    if(!ok){try{const v=document.getElementById('view-'+VIEW);if(v&&v.innerHTML)v.innerHTML='';}catch(e){}}
+    return ok;
   }
-  function lockHTML(){
-    return '<div class="card"><div class="card-head"><div><h3>TỔNG HỢP TRỰC &amp; NGOÀI GIỜ</h3><span class="hint">Mục này được bảo vệ bằng mật khẩu — nhập mật khẩu để xem</span></div></div>'
-      +'<div class="card-body"><div class="ds-toolbar" style="justify-content:flex-start"><label class="field" style="margin:0"><span class="fl-label">Mật khẩu</span><input type="password" id="ds_pass" autocomplete="off" style="min-width:220px"></label>'
-      +'<div class="btn-row"><button type="button" class="btn primary" data-ds-act="unlock">Mở khóa</button></div></div></div></div>';
-  }
-  function tryUnlock(){
-    const inp=document.getElementById('ds_pass');
-    if(inp&&passHash(inp.value)===PASS_HASH){unlocked=true;render();return;}
-    toast2('danger','Sai mật khẩu','Mật khẩu không đúng, vui lòng nhập lại.');
-    if(inp){inp.value='';inp.focus();}
-  }
+  window.__dsAllowed=dsAllowed;
 
   /* ---------- giao diện ---------- */
   const ui={y:null,m:null,form:{name:'',type:'phep',from:'',to:'',days:'',dirty:false},filter:{name:'',type:'',from:'',to:''}};
@@ -17636,7 +17739,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       /* Ca trực Thứ 7: ngày nghỉ bù lấy từ ô "Nghỉ bù" của Báo cáo trực (không chọn tay ở đây).
          Chỉ giữ thanh chọn cho ca trực Lễ/Tết dài ngày (không có ô Nghỉ bù bên Báo cáo trực). */
       const dow=x.duty?parseISO(x.duty):null;
-      if(x.sel&&dow&&dow.getDay()!==6)lines.push(buSelectHTML(r,x));
+      if(x.sel&&dow&&dow.getDay()!==6&&!preHoliday(x.duty))lines.push(buSelectHTML(r,x));
       else if(x.sel&&dow)lines.push(esc(WDN[parseISO(x.from).getDay()]+' - '+(String(x.from).slice(0,7)===ymKey(ui.y,ui.m)?dd(x.from):dd(x.from)+'/'+String(x.from).slice(5,7))));
       else leaveLines([x]).forEach(s=>lines.push(esc(s)));
     });
@@ -17691,7 +17794,7 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
     ov.forEach(o=>{s.wd+=o.wd;s.we+=o.we;s.le+=o.le;s.tet+=o.tet;s.otN+=o.otN;s.sat+=o.sat.length;s.sun+=o.sun.length;s.bu+=o.buDays;});
     return ['TỔNG CỘNG','',cntText(s.wd),cntText(s.we),cntText(s.le),cntText(s.tet),cntText(s.otN),cntText(s.sat),cntText(s.sun),cntText(s.bu)];
   }
-  const OV_NOTE='Ghi chú: mỗi ngày trực chỉ tính vào 1 nhóm theo thứ tự ưu tiên Tết → Lễ → Thứ 7 & CN → Ngày thường; ngoài giờ tính theo Thứ 7 và Chủ nhật; mục không có thông tin ghi “Không”.';
+  const OV_NOTE='Ghi chú: mỗi ngày trực chỉ tính vào 1 nhóm theo thứ tự ưu tiên Tết → Lễ → Thứ 7 & CN → Ngày thường; ngoài giờ tính theo Thứ 7, Chủ nhật và các ngày có ghi tên làm ngoài giờ; mục không có thông tin ghi “Không”.';
   let ovOpen=false,ovPreview=false;
   function ovHTML(y,m,data){
     const ov=overviewRows(data.rows),tt=ovTotals(ov),c=data.closed,pv=!c;
@@ -17873,7 +17976,6 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
       const wk=nameKey(r.weekday),wi=wk==='cn'?0:WK.indexOf(wk);
       if(wk&&wi>=0&&wi!==w)list.push(pre+'ghi “'+String(r.weekday).trim()+'” nhưng ngày này là '+WKV[w]+'.');
       ons.forEach(n=>{if(!known.has(nameKey(n)))list.push(pre+'người làm ngoài giờ “'+n+'” không có trong danh sách nhân viên.');});
-      if(ons.length&&w!==0&&w!==6)list.push(pre+'có ghi ngoài giờ vào '+WKV[w]+' nhưng bảng chỉ tính Thứ 7 và Chủ nhật nên mục này không được tính.');
     });
     dutyBy.forEach((mp,dt)=>{if(mp.size>1)list.push('Ngày '+toVN(dt)+' có nhiều hơn một người trực: '+[...mp.values()].join(', ')+'.');});
     if(badDate)list.push(badDate+' phiếu trực có ngày để trống hoặc sai định dạng nên không được tính vào bảng.');
@@ -17906,19 +18008,12 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   }
   function render(){
     const el=ensureShell();if(!el)return;
+    if(!dsAllowed()){closeOverview();return;}
     initUI();autoCheck();
-    if(!unlocked){
-      closeOverview();
-      el.innerHTML=lockHTML();
-      el.onclick=onClick;el.onchange=null;el.oninput=null;
-      el.onkeydown=function(e){if(e.key==='Enter'&&e.target&&e.target.id==='ds_pass'){e.preventDefault();tryUnlock();}};
-      setTimeout(function(){const i=document.getElementById('ds_pass');if(i)i.focus();},0);
-      return;
-    }
     const data=dataFor(ui.y,ui.m),names=staffList(),f=ui.form,fl=ui.filter;
     const opt=(v,t,sel)=>'<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(t)+'</option>';
     el.innerHTML=
-      '<div class="card"><div class="card-head"><div><h3>TỔNG HỢP TRỰC &amp; NGOÀI GIỜ</h3><span class="hint">Tự lấy Ngày, Người trực, Người làm ngoài giờ (Thứ 7, Chủ nhật) từ Báo cáo trực CLS · Nghỉ bù tự tính theo ngày trực, Nghỉ phép nhập bên dưới</span></div></div>'
+      '<div class="card"><div class="card-head"><div><h3>TỔNG HỢP TRỰC &amp; NGOÀI GIỜ</h3><span class="hint">Tự lấy Ngày, Người trực, Người làm ngoài giờ (Thứ 7, Chủ nhật hoặc ngày có ghi tên) từ Báo cáo trực CLS · Nghỉ bù tự tính theo ngày trực, Nghỉ phép nhập bên dưới</span></div></div>'
       +'<div class="card-body">'
       +'<div class="ds-toolbar"><label class="field" style="margin:0"><span class="fl-label">Tháng</span><input type="month" id="ds_month" value="'+ymKey(ui.y,ui.m)+'" style="min-width:150px"></label>'
       +'<div class="ds-status">'+statusHTML(ui.y,ui.m,data)+'</div>'
@@ -17979,7 +18074,6 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   function onClick(e){
     const b=e.target.closest&&e.target.closest('[data-ds-act]');if(!b)return;
     const act=b.dataset.dsAct;
-    if(act==='unlock')return tryUnlock();
     if(act==='add-leave')return addLeave();
     if(act==='del-leave')return delLeave(b.dataset.id);
     if(act==='clear-filter'){ui.filter={name:'',type:'',from:'',to:''};render();return;}
@@ -18109,8 +18203,8 @@ html.td-combo-full .td-combo>select.td-combo-pick{left:0;right:0;width:100%;poin
   window.go=function(view){
     if(view!==VIEW)closeOverview();
     if(view===VIEW){
+      if(!dsAllowed()){toast2('warning','Không có quyền truy cập','Module Tổng hợp trực & Ngoài giờ chỉ dành cho Nguyễn Thị Bình, Nguyễn Thái Hòa và Nguyễn Gia Khang.');return;}
       const el=ensureShell();if(!el)return;
-      if(typeof currentView==='undefined'||currentView!==VIEW)unlocked=false;
       currentView=VIEW;
       document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
       el.classList.add('active');
@@ -19517,14 +19611,14 @@ function modBar(){const b=document.getElementById('modBar');if(!b)return;
 /* gắn vào luồng có sẵn */
 const _go=go;go=function(v){if((REG[v]||v==='gioi-thieu')&&!document.getElementById('view-'+v)){const s=document.createElement('div');s.className='view';s.id='view-'+v;document.getElementById('content').appendChild(s);}const m=modOf(v);if(m)VP.cur=m;_go(v);modBar();};
 const _rv=renderView;renderView=function(v){if(REG[v])renderReg(v);else if(v==='gioi-thieu')renderGioiThieu();else _rv(v);};
-const _rn=renderNav;renderNav=function(){const m=MODS.find(x=>x.id===VP.cur)||MODS[0];NAV.length=0;m.g.forEach(g=>NAV.push({group:g[0],items:g[1].map(i=>flat[i]).filter(Boolean).filter(x=>x.id!=='hop-giao-ban'||(window.__hgbAllowed&&window.__hgbAllowed())).filter(x=>x.id!=='so-kiem-tra'||(window.__skAllowed&&window.__skAllowed()))}));try{_rn();}finally{NAV.length=0;FULL.forEach(g=>NAV.push(g));}};
+const _rn=renderNav;renderNav=function(){const m=MODS.find(x=>x.id===VP.cur)||MODS[0];NAV.length=0;m.g.forEach(g=>NAV.push({group:g[0],items:g[1].map(i=>flat[i]).filter(Boolean).filter(x=>x.id!=='duty-summary'||(window.__dsAllowed&&window.__dsAllowed())).filter(x=>x.id!=='hop-giao-ban'||(window.__hgbAllowed&&window.__hgbAllowed())).filter(x=>x.id!=='so-kiem-tra'||(window.__skAllowed&&window.__skAllowed()))}));try{_rn();}finally{NAV.length=0;FULL.forEach(g=>NAV.push(g));}};
 const _rd=renderDashboard;renderDashboard=function(){_rd();const h=document.querySelector('#view-dashboard .dash-hero');if(!h)return;const t=[];
   Object.keys(REG).forEach(k=>{const c=REG[k];if(!c.due)return;rows(k).forEach(x=>{const d=c.due(x);if(d&&days(d)<=30)t.push({k,n:days(d),s:x[c.f[0][0]]});});});
   t.sort((a,b)=>a.n-b.n);
   h.insertAdjacentHTML('afterend',`<section class="card vp-todo" aria-label="Việc cần làm"><div class="card-head"><h3>Việc cần làm</h3><span class="hint">${t.length} mục trong 30 ngày tới</span></div><ul>${t.length?t.slice(0,8).map(x=>`<li><button class="vp-link" onclick="go('${x.k}')">${e(x.s)}</button><span class="vp-src">${e(REG[x.k].label)}</span>${chip(D(todayISO(),x.n))}</li>`).join(''):'<li class="vp-empty">Không có mục nào sắp đến hạn.</li>'}</ul></section>`);};
 /* tìm nhanh Ctrl+K */
 VP.cmd=()=>{const d=dlg('vpCmd');d.className='vp-cmd';d.innerHTML='<input id="vpCI" placeholder="Gõ để tìm màn hình hoặc bản ghi…" aria-label="Tìm nhanh"><ul id="vpCL" role="listbox"></ul>';d.showModal();const L=d.querySelector('#vpCL'),I=d.querySelector('#vpCI');
-  const items=[];Object.keys(flat).forEach(i=>{if(['users','system','audit','mail-notice'].includes(i)&&!isAdm())return;const hgbOk=!!(window.__hgbAllowed&&window.__hgbAllowed());if(i==='hop-giao-ban'&&!hgbOk)return;if(i==='so-kiem-tra'&&!(window.__skAllowed&&window.__skAllowed()))return;items.push({t:flat[i].label,h:'Mở màn hình',r:()=>go(i)});(flat[i].children||[]).forEach(c=>{if(c.id==='hop-giao-ban'&&!hgbOk)return;items.push({t:c.label,h:'Mở màn hình',r:()=>go(c.id)});});});
+  const items=[];Object.keys(flat).forEach(i=>{if(['users','system','audit','mail-notice'].includes(i)&&!isAdm())return;const hgbOk=!!(window.__hgbAllowed&&window.__hgbAllowed());if(i==='duty-summary'&&!(window.__dsAllowed&&window.__dsAllowed()))return;if(i==='hop-giao-ban'&&!hgbOk)return;if(i==='so-kiem-tra'&&!(window.__skAllowed&&window.__skAllowed()))return;items.push({t:flat[i].label,h:'Mở màn hình',r:()=>go(i)});(flat[i].children||[]).forEach(c=>{if(c.id==='hop-giao-ban'&&!hgbOk)return;items.push({t:c.label,h:'Mở màn hình',r:()=>go(c.id)});});});
   Object.keys(REG).forEach(k=>rows(k).forEach(x=>items.push({t:String(x[REG[k].f[0][0]]||'').trim()||'(trống)',h:REG[k].label,r:()=>go(k)})));
   const draw=()=>{const q=I.value.toLowerCase();L.innerHTML=items.filter(x=>!q||x.t.toLowerCase().includes(q)).slice(0,10).map((x,i)=>`<li role="option" tabindex="0" data-i="${items.indexOf(x)}"><b>${e(x.t)}</b><span>${e(x.h)}</span></li>`).join('')||'<li class="vp-empty">Không tìm thấy.</li>';};
   const run=li=>{if(!li||li.dataset.i==null)return;d.close();items[li.dataset.i].r();};
